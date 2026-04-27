@@ -11,6 +11,7 @@ add_library(midi2_cpp
     src/midi2.c
     src/midi2_device.cpp
     src/midi2_ci.cpp
+    src/midi2_host.cpp
 )
 
 target_include_directories(midi2_cpp

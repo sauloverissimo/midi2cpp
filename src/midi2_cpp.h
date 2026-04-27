@@ -29,16 +29,18 @@
 // C++ wrapper classes in namespace midi2::
 #include "midi2_device.h"
 #include "midi2_ci.h"
+#include "midi2_host.h"
 
 namespace midi2 {
 
-// Ergonomic aliases for user code. The canonical class names are Device
-// and CI; the aliases below let sketches use a shorter form without
-// renaming anything internal. Usable in sketches via `using namespace
-// midi2;` (idiomatic Arduino style) or fully qualified as
-// `midi2::m2device`. v0.1 ships only the device shape; m2host and
-// m2bridge classes land in v0.2 — see CHANGELOG.
+// Ergonomic aliases for user code. The canonical class names are Device,
+// CI, and Host; the aliases below let sketches use a shorter form
+// without renaming anything internal. Usable in sketches via
+// `using namespace midi2;` (idiomatic Arduino style) or fully qualified
+// as `midi2::m2device`. v0.1 ships the device + host shapes; m2bridge
+// (composition of host + device with an UMP router) lands in v0.2.
 using m2device = Device;
 using m2ci     = CI;
+using m2host   = Host;
 
 }  // namespace midi2
