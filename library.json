@@ -1,0 +1,25 @@
+{
+  "name": "midi2_cpp",
+  "version": "0.1.0",
+  "description": "C++17 Arduino-style wrapper for MIDI 2.0 on embedded devices. Thin wrapper over the portable midi2 C99 library. Covers UMP, MIDI-CI with Appendix E, Profile, PE Subscribe/Notify, Process Inquiry, Flex Data, Bit Scaling.",
+  "keywords": "midi, midi2, usb, ump, capability-inquiry, property-exchange, profile",
+  "authors": [
+    {
+      "name": "Saulo Verissimo",
+      "email": "sauloverissimo@gmail.com",
+      "url": "https://github.com/sauloverissimo",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "frameworks": ["arduino"],
+  "platforms": ["raspberrypi", "teensy", "espressif32", "nordicnrf52"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sauloverissimo/midi2_cpp.git"
+  },
+  "headers": "midi2_cpp.h",
+  "export": {
+    "exclude": ["tests/build/*", "build/*", ".github/*"]
+  }
+}
