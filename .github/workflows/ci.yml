@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  host-tests:
+    name: Host tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DMIDI2_CPP_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure
+
+  warnings:
+    name: Strict warnings (gcc + clang)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - { cc: gcc,   cxx: g++ }
+          - { cc: clang, cxx: clang++ }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        env:
+          CC: ${{ matrix.compiler.cc }}
+          CXX: ${{ matrix.compiler.cxx }}
+        run: cmake -B build -DMIDI2_CPP_BUILD_TESTS=ON
+
+      - name: Build with -Werror
+        run: cmake --build build --parallel -- CXXFLAGS=-Werror CFLAGS=-Werror
+
+  arduino-compile:
+    name: Arduino compile (${{ matrix.fqbn }})
+    runs-on: ubuntu-latest
+    needs: host-tests
+    # Non-blocking until namespace pollution from arduino-pico's
+    # newlib/libstdc++ headers is investigated (see issue #TBD). Hardware
+    # validation happens via D.11 with the Arduino IDE / PlatformIO directly.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        fqbn:
+          - rp2040:rp2040:rpipico
+          # Teensy and ESP32 cores require additional setup; enable when
+          # the boards manager URL + tool toolchain are stable in CI.
+          # - teensy:avr:teensy41
+          # - esp32:esp32:esp32s3
+        include:
+          - fqbn: rp2040:rp2040:rpipico
+            platform: rp2040:rp2040
+            url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup arduino-cli
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install board core
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls ${{ matrix.url }}
+          arduino-cli core update-index
+          arduino-cli core install ${{ matrix.platform }}
+
+      - name: Symlink lib for arduino-cli sketch resolution
+        run: |
+          mkdir -p ~/Arduino/libraries
+          ln -s "$GITHUB_WORKSPACE" ~/Arduino/libraries/midi2_cpp
+
+      - name: Compile examples
+        run: |
+          for sketch in examples/*/; do
+            name=$(basename "$sketch")
+            echo "::group::Compile $name"
+            arduino-cli compile --fqbn ${{ matrix.fqbn }} --warnings all "$sketch" || exit 1
+            echo "::endgroup::"
+          done
