@@ -16,6 +16,14 @@
 #include "tusb.h"
 #include "class/midi/midi2_host.h"
 
+// Hot-swap watchdog window. After all devices unmount, TinyUSB host on
+// RP2040 occasionally fails to re-enumerate the next plug. If we
+// observe "no devices for N ms" with N > 0 we reset the host stack
+// (tuh_deinit + tusb_init). Set to 0 at compile time to disable.
+#ifndef MIDI2_CPP_HOST_WATCHDOG_MS
+#define MIDI2_CPP_HOST_WATCHDOG_MS 3000
+#endif
+
 namespace feather_host {
 
 // We hold the m2host reference for the duration of the program so the
@@ -36,6 +44,11 @@ namespace {
 // Outbound UMP — invoked by m2host for every sendXxx and the JR
 // heartbeat injection. Forwards to TinyUSB MIDI 2.0 host stream write
 // for the addressed device idx.
+//
+// We flush after every write for predictable latency. Auto-discovery
+// on mount fires three small SysEx7 inquiries back-to-back so we pay
+// three URBs there; for steady-state Channel Voice traffic the flush
+// matches the message rate and keeps roundtrip times tight.
 void platform_write_fn(uint8_t idx, const uint32_t* words, size_t count) {
     if (!tuh_midi2_mounted(idx)) return;
     tuh_midi2_ump_write(idx, words, (uint32_t)count);
@@ -51,6 +64,43 @@ uint32_t platform_now_fn() {
 uint32_t platform_rng_fn() {
     return get_rand_32();
 }
+
+#if MIDI2_CPP_HOST_WATCHDOG_MS > 0
+// Watchdog state — only walked from feather_host::task (single-threaded
+// main loop), so plain globals are safe.
+bool     g_had_device      = false;
+uint32_t g_devices_lost_ms = 0;
+
+void watchdog_tick(uint32_t now_ms) {
+    bool any = false;
+    for (uint8_t i = 0; i < midi2::Host::MAX_DEVICES; ++i) {
+        if (tuh_midi2_mounted(i)) { any = true; break; }
+    }
+    if (any) {
+        g_had_device      = true;
+        g_devices_lost_ms = 0;
+        return;
+    }
+    if (!g_had_device) return;
+    if (g_devices_lost_ms == 0) {
+        g_devices_lost_ms = now_ms;
+        return;
+    }
+    if (now_ms - g_devices_lost_ms < MIDI2_CPP_HOST_WATCHDOG_MS) return;
+
+    // Stack reset. tuh_deinit drops endpoints + frees the device pool;
+    // tusb_init rebuilds it. PIO-USB state machines are restarted by
+    // the host driver as part of init.
+    tuh_deinit(BOARD_TUH_RHPORT);
+    tusb_rhport_init_t host_init = {
+        .role  = TUSB_ROLE_HOST,
+        .speed = TUSB_SPEED_FULL,
+    };
+    tusb_init(BOARD_TUH_RHPORT, &host_init);
+    g_had_device      = false;
+    g_devices_lost_ms = 0;
+}
+#endif
 
 }  // namespace
 
@@ -102,6 +152,10 @@ void task(midi2::m2host& midi) {
 
     // Library housekeeping (CI Discovery timeout sweep).
     midi.task();
+
+#if MIDI2_CPP_HOST_WATCHDOG_MS > 0
+    watchdog_tick(platform_now_fn());
+#endif
 }
 
 }  // namespace feather_host

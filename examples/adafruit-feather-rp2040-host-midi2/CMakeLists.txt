@@ -12,6 +12,12 @@ set(PICO_BOARD adafruit_feather_rp2040_usb_host CACHE STRING "Board type")
 # merged upstream). Pinned by SHA for reproducibility; GIT_SHALLOW
 # keeps the fetch around 5 MB. Exposed to Pico SDK via PICO_TINYUSB_PATH.
 #
+# Note on the pinned SHA: the fork branch may be rebased as the PR
+# evolves, which can make this SHA disappear from the public branch
+# tip. If the fetch fails with "object not found", bump GIT_TAG to a
+# current commit on feat/midi2-device-host-driver, or use a local
+# checkout via -DPICO_TINYUSB_PATH (see override below).
+#
 # Override available: pass -DPICO_TINYUSB_PATH=/path/to/local/fork to
 # cmake to point at a working copy on disk (skips the fetch entirely).
 include(FetchContent)
@@ -111,6 +117,13 @@ target_compile_definitions(adafruit-feather-rp2040-host-midi2-showcase PRIVATE
     PIO_USB_DP_PIN_DEFAULT=16
     PICO_DEFAULT_PIO_USB_DP_PIN=16
 )
+
+# Hot-swap watchdog window (ms). 0 disables the watchdog. Default of
+# 3000 matches the README; override with -DMIDI2_CPP_HOST_WATCHDOG_MS=N.
+if(DEFINED MIDI2_CPP_HOST_WATCHDOG_MS)
+    target_compile_definitions(adafruit-feather-rp2040-host-midi2-showcase
+        PRIVATE MIDI2_CPP_HOST_WATCHDOG_MS=${MIDI2_CPP_HOST_WATCHDOG_MS})
+endif()
 
 # Disable USB CDC stdio. Use UART on default GP0/GP1 @ 115200 for debug.
 pico_enable_stdio_usb(adafruit-feather-rp2040-host-midi2-showcase 0)

@@ -40,9 +40,11 @@ static void note_name(uint8_t pitch, char* buf, size_t len) {
 }
 
 // ----------------------------------------------------------------------------
-// Per-device note counter (one per connected idx)
+// Per-device note counter (one per connected idx). Monotonic — increments
+// on every NoteOn, never decremented on NoteOff. Surfaced in the status
+// bar as a quick "is this thing still alive" indicator.
 // ----------------------------------------------------------------------------
-static uint32_t g_note_count[Host::MAX_DEVICES] = {0};
+static uint32_t g_notes_pressed[Host::MAX_DEVICES] = {0};
 
 // ----------------------------------------------------------------------------
 // Display colors (16-bit RGB565). The SSD1306 is monochrome — non-zero
@@ -65,22 +67,30 @@ constexpr uint16_t COLOR_WARN      = 0xF800;  // red
 // ----------------------------------------------------------------------------
 static void install_callbacks(m2host& midi) {
     midi.onDeviceConnected([](uint8_t idx, const m2host::DeviceIdentity& id) {
+        // protocolVersion is the bcdMSC reported by the device (e.g.
+        // 0x0100 for MIDI 1.0, 0x0200 for MIDI 2.0). Use the >= 0x0200
+        // check rather than truthiness — both values are non-zero.
+        const char* proto = (id.protocolVersion >= 0x0200) ? "MIDI 2.0"
+                                                            : "MIDI 1.0";
         char line[32];
-        std::snprintf(line, sizeof(line), "[%u] %s", (unsigned)idx,
-                       id.protocolVersion ? "MIDI 2.0" : "MIDI 1.0");
+        std::snprintf(line, sizeof(line), "[%u] %s", (unsigned)idx, proto);
         display_log(line, COLOR_INFO);
         display_status("Connecting...");
-        g_note_count[idx] = 0;
+        if (idx < Host::MAX_DEVICES) g_notes_pressed[idx] = 0;
     });
 
     midi.onIdentityUpdated([](uint8_t idx, const m2host::DeviceIdentity& id) {
         char line[32];
         // Pick the most informative line we can: prefer endpoint name,
-        // fall back to manufacturer.family.model triple.
+        // fall back to manufacturer.family.model triple. Always
+        // idx-prefixed so multi-device topologies stay readable.
         if (id.endpointName[0]) {
-            std::snprintf(line, sizeof(line), "name: %s", id.endpointName);
+            std::snprintf(line, sizeof(line), "[%u] name: %s",
+                           (unsigned)idx, id.endpointName);
         } else if (id.familyId || id.modelId) {
-            std::snprintf(line, sizeof(line), "%02X%02X%02X f%04X m%04X",
+            std::snprintf(line, sizeof(line),
+                           "[%u] %02X%02X%02X f%04X m%04X",
+                           (unsigned)idx,
                            id.manufacturerId[0], id.manufacturerId[1],
                            id.manufacturerId[2], id.familyId, id.modelId);
         } else {
@@ -94,20 +104,20 @@ static void install_callbacks(m2host& midi) {
         std::snprintf(line, sizeof(line), "[%u] disconnected", (unsigned)idx);
         display_log(line, COLOR_WARN);
         display_status("Waiting...");
-        g_note_count[idx] = 0;
+        if (idx < Host::MAX_DEVICES) g_notes_pressed[idx] = 0;
     });
 
     // MIDI 2.0 Channel Voice
     midi.onNoteOn([](uint8_t idx, uint8_t ch, uint8_t note, uint16_t vel) {
-        char nn[6]; note_name(note, nn, sizeof(nn));
+        char nn[8]; note_name(note, nn, sizeof(nn));
         char line[32];
         std::snprintf(line, sizeof(line), "[%u] On %s ch%u v%04X",
                        (unsigned)idx, nn, (unsigned)ch, (unsigned)vel);
         display_log(line, COLOR_NOTE_ON);
-        if (idx < Host::MAX_DEVICES) ++g_note_count[idx];
+        if (idx < Host::MAX_DEVICES) ++g_notes_pressed[idx];
     });
     midi.onNoteOff([](uint8_t idx, uint8_t ch, uint8_t note, uint16_t /*vel*/) {
-        char nn[6]; note_name(note, nn, sizeof(nn));
+        char nn[8]; note_name(note, nn, sizeof(nn));
         char line[32];
         std::snprintf(line, sizeof(line), "[%u] Off %s ch%u",
                        (unsigned)idx, nn, (unsigned)ch);
@@ -133,7 +143,7 @@ static void install_callbacks(m2host& midi) {
         display_log(line, COLOR_PRESSURE);
     });
     midi.onPolyPressure([](uint8_t idx, uint8_t ch, uint8_t note, uint32_t v) {
-        char nn[6]; note_name(note, nn, sizeof(nn));
+        char nn[8]; note_name(note, nn, sizeof(nn));
         char line[32];
         std::snprintf(line, sizeof(line), "[%u] PolyP %s %08lX",
                        (unsigned)idx, nn, (unsigned long)v);
@@ -141,7 +151,7 @@ static void install_callbacks(m2host& midi) {
     });
     midi.onPerNotePitchBend([](uint8_t idx, uint8_t /*g*/, uint8_t ch,
                                 uint8_t note, uint32_t v) {
-        char nn[6]; note_name(note, nn, sizeof(nn));
+        char nn[8]; note_name(note, nn, sizeof(nn));
         char line[32];
         std::snprintf(line, sizeof(line), "[%u] PNPB %s ch%u %08lX",
                        (unsigned)idx, nn, (unsigned)ch, (unsigned long)v);
@@ -171,6 +181,7 @@ int main() {
     feather_host::init(midi);
 
     display_live_begin();
+    display_log("BETA: TinyUSB PR #3571 fork", COLOR_WARN);
     display_status("Waiting...");
 
     uint32_t last_status_ms = 0;
@@ -188,14 +199,19 @@ int main() {
                 display_connecting(now);
             }
         } else {
-            // First mount transition: switch from spinner to live view.
-            if (!any_mounted_prev) display_live_begin();
+            // First mount transition: switch from spinner to live view
+            // and force the next status-bar update on this tick instead
+            // of waiting up to 2 s for the periodic refresh.
+            if (!any_mounted_prev) {
+                display_live_begin();
+                last_status_ms = 0;
+            }
 
             if (now - last_status_ms > 2000) {
                 last_status_ms = now;
                 uint32_t total_notes = 0;
                 for (uint8_t i = 0; i < Host::MAX_DEVICES; ++i) {
-                    total_notes += g_note_count[i];
+                    total_notes += g_notes_pressed[i];
                 }
                 char line[24];
                 std::snprintf(line, sizeof(line), "n=%u devs=%u",
