@@ -157,6 +157,7 @@ Validated on real hardware against forks and PRs maintained internally while the
 | **Raspberry Pi Pico** | RP2040 | ✅ | - | TinyUSB | TinyUSB PR #3571, recipe in [`examples/rp2040-midi2`](examples/rp2040-midi2) |
 | **Waveshare RP2040 Pi Zero** | RP2040 | ✅ | - | TinyUSB | TinyUSB PR #3571, recipe in [`examples/waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2) |
 | **Adafruit Feather RP2040 USB Host** | RP2040 | ✅ | ✅ | TinyUSB, PIO-USB | TinyUSB PR #3571 + Pico-PIO-USB `675543b` (handshake delay fix), recipes in [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2) and [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2) |
+| **Waveshare RP2350-USB-A** | RP2350 | ✅ | ✅ | TinyUSB, PIO-USB on GP12/GP13 | TinyUSB PR #3571 + Pico-PIO-USB `675543b` + R13 hardware mod for host mode (desolder the 1.5 kΩ pull-up on USB-A D+), recipes in [`waveshare-rp2350-usb-a-midi2`](examples/waveshare-rp2350-usb-a-midi2) (device) and [`waveshare-rp2350-usb-a-bridge-midi2`](examples/waveshare-rp2350-usb-a-bridge-midi2) (bridge) |
 | Raspberry Pi Pico 2 | RP2350 | ✅ | ✅ | TinyUSB, PIO-USB | TinyUSB PR #3571 |
 | ESP32-C6 | ESP32-C6 | ✅ | - | TinyUSB, BLE | TinyUSB PR #3571 |
 | Nordic nRF52840 | nRF52840 | ✅ | - | TinyUSB, BLE | TinyUSB PR #3571 |
@@ -244,7 +245,7 @@ midi2_cpp is the platform layer of a 4-layer MIDI 2.0 stack:
 ┌──────────────────────────────────────┐
 │ Sketch                               │  user code
 ├──────────────────────────────────────┤
-│ midi2_cpp                            │  this library
+│ midi2_cpp                            │  ***this library***
 ├──────────────────────────────────────┤
 │ midi2                                │  portable C99 core (vendored)
 ├──────────────────────────────────────┤
