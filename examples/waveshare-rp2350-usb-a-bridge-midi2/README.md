@@ -163,6 +163,12 @@ For PC-side validation, plug the bridge USB-C into a laptop and inspect the enum
 - Name: `waveshare-RP2350-USB-A bridge`
 - USB VID / PID: `CAFE / 4077`
 
+### Bench setup
+
+![bench top-down with the Waveshare RP2350-USB-A wired up](monitor/stack.png)
+![laptop running Microsoft MIDI Services Console next to the bench](monitor/bridge.png)
+![Microsoft MIDI Services Console message log](monitor/windows.png)
+
 ## What lives where
 
 ```
@@ -174,10 +180,14 @@ midi2_cpp/
     ├── pico_sdk_import.cmake
     ├── README.md
     ├── board/
-    │   ├── banner.png                       repo banner (used in this README; same image as board_photo.jpg)
-    │   ├── board_photo.jpg                  Waveshare RP2350-USB-A product photo (sourced from Waveshare wiki)
-    │   ├── RP2350-USB-A-Schematic.pdf       Waveshare RP2350-USB-A schematic
-    │   └── RP2350-datasheet.pdf             Raspberry Pi RP2350 silicon datasheet (vendor copy)
+    │   ├── banner.png                       repo banner (used at the top of this README)
+    │   ├── board.png                        Waveshare RP2350-USB-A product photo (sourced from Waveshare wiki)
+    │   ├── pinout.png                       Pro Micro pinout diagram for the RP2350-USB-A
+    │   └── RP2350-USB-A-Schematic.pdf       Waveshare RP2350-USB-A schematic
+    ├── monitor/
+    │   ├── bridge.png                       laptop running Microsoft MIDI Services Console next to the bench
+    │   ├── stack.png                        bench top-down with the board on a protoboard
+    │   └── windows.png                      Microsoft MIDI Services Console message log capture
     └── src/
         ├── feather_bridge.{h,cpp}  dual TinyUSB init + task pump + cable→UMP
         ├── ump_router.{h,c}        single-threaded ring buffer (64 msgs/queue)
@@ -188,8 +198,8 @@ midi2_cpp/
         └── main.cpp                showcase entry, bridge callbacks → display_log
 ```
 
-The TinyUSB PR #3571 fork and Pico-PIO-USB are fetched at configure time into `build/_deps/` (gitignored). This example folder is around 8 MB on disk, dominated by the bundled RP2350 datasheet PDF.
+The TinyUSB PR #3571 fork and Pico-PIO-USB are fetched at configure time into `build/_deps/` (gitignored). This example folder is under 4 MB on disk; the heaviest items are the bench photographs under `monitor/`.
 
 ## License
 
-MIT, inherits the parent [`midi2_cpp` LICENSE](../../LICENSE). The TinyUSB fork (fetched on demand) is MIT (upstream by hathach, fork by sauloverissimo carrying the MIDI 2.0 class drivers from the still-open [PR #3571](https://github.com/hathach/tinyusb/pull/3571)). Pico-PIO-USB is MIT. The Waveshare RP2350-USB-A hardware reference assets bundled under `board/` (board photo, schematic) are © Waveshare Electronics, redistributed for documentation purposes. The Raspberry Pi RP2350 datasheet is © Raspberry Pi Ltd., redistributed for documentation purposes. The R13 hardware modification reference and photographs at qsantos.fr are © Quentin Santos.
+MIT, inherits the parent [`midi2_cpp` LICENSE](../../LICENSE). The TinyUSB fork (fetched on demand) is MIT (upstream by hathach, fork by sauloverissimo carrying the MIDI 2.0 class drivers from the still-open [PR #3571](https://github.com/hathach/tinyusb/pull/3571)). Pico-PIO-USB is MIT. The Waveshare RP2350-USB-A hardware reference assets bundled under `board/` (board photo, pinout, schematic) are © Waveshare Electronics, redistributed for documentation purposes. The R13 hardware modification reference and photographs at qsantos.fr are © Quentin Santos.
