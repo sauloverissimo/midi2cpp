@@ -1,0 +1,32 @@
+# ESP-IDF target + console
+# UART stdio on the CH343 USB-to-UART bridge ("ToUART" USB-C jack on
+# the Waveshare ESP32-P4-WIFI6-DEV-KIT). The host role uses the UTMI
+# PHY routed to the USB-A jacks; the USB-Device USB-C jack stays free
+# (the future bridge variant claims it for the device side).
+CONFIG_IDF_TARGET="esp32p4"
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
+# Secondary console on USB-Serial-JTAG (panic backtraces visible during
+# early boot debug; coexists with TinyUSB host on UTMI because the two
+# USB controllers are independent on P4).
+CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG=y
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# Host stack pulls in tuh_task + auto-discovery + CI Initiator state
+# machine (m2host). 8 KB main task stack covers the worst case during
+# host.begin() and the first mount callback.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# P4 default core clock 360 MHz (HP CPU), kept default so the build
+# does not depend on an option that may rename across IDF versions.
+
+# Compiler: C++17 to match the parent library and Pico SDK recipes.
+# midi2_cpp uses std::function callbacks; exceptions stay off.
+CONFIG_COMPILER_CXX_EXCEPTIONS=n
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Note: TinyUSB MIDI 2.0 toggles live in main/tusb_config.h
+# (CFG_TUD_MIDI2 etc), not in Kconfig, because the shim component at
+# components/tinyusb registers TinyUSB sources directly without going
+# through the Espressif esp_tinyusb Kconfig.
