@@ -1,0 +1,11 @@
+## Managed dependencies for esp32-p4-devkit-usb-midi2.
+##
+## TinyUSB PR #3571 fork is NOT listed here because ESP-IDF's built-in
+## tinyusb is overridden by a local copy in ../components/tinyusb. Run
+## ./scripts/fetch_tinyusb.sh once to clone the fork at the pinned SHA.
+##
+## The Waveshare P4 dev-kit has no user-controllable RGB LED on a
+## fixed pin, so no led_strip dependency is pulled here. The mounted
+## indicator is a no-op (see esp32_p4_devkit_midi2.cpp).
+dependencies:
+  idf: ">=5.4"
