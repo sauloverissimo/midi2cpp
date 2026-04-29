@@ -1,0 +1,10 @@
+## Managed dependencies for esp32-s3-devkitc-usb-midi2.
+##
+## TinyUSB PR #3571 fork is NOT listed here because ESP-IDF's built-in
+## tinyusb is overridden by a local copy in ../components/tinyusb. Run
+## ./scripts/fetch_tinyusb.sh once to clone the fork at the pinned SHA.
+##
+## led_strip drives the on-board RGB LED on GPIO48 (mounted indicator).
+dependencies:
+  idf: ">=5.4"
+  espressif/led_strip: "^2.5"

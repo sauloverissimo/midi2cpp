@@ -1,0 +1,22 @@
+# ESP-IDF target + console
+# UART stdio on the USB-to-UART bridge (left USB jack on the DevKitC-1).
+# The right USB jack is the native USB-OTG that carries MIDI 2.0; do NOT
+# enable USB-CDC stdio, it would steal endpoints from TinyUSB.
+CONFIG_IDF_TARGET="esp32s3"
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# CPU at full speed for tighter UMP loop timing.
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+
+# Compiler: C++17 to match the parent library and Pico SDK recipes.
+# midi2_cpp uses std::function callbacks; exceptions stay off.
+CONFIG_COMPILER_CXX_EXCEPTIONS=n
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Note: TinyUSB MIDI 2.0 toggles live in main/tusb_config.h
+# (CFG_TUD_MIDI2 etc), not in Kconfig, because the shim component at
+# components/tinyusb registers TinyUSB sources directly without going
+# through the Espressif esp_tinyusb Kconfig.

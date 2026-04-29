@@ -20,5 +20,15 @@ cmake_install.cmake
 Makefile
 compile_commands.json
 
+# ESP-IDF generated artifacts and on-demand component clones.
+# fetch_tinyusb.sh drops the TinyUSB PR #3571 fork into idf/external/tinyusb;
+# the fork is huge (~36 MB working tree) and pinned by SHA, so keep it out of
+# this repo and let users bootstrap on first build.
+**/idf/external/
+**/idf/managed_components/
+**/idf/dependencies.lock
+**/idf/sdkconfig
+**/idf/sdkconfig.old
+
 # untested-on-hardware boards (uncomment to track once validated)
 examples/sparkfun-promicro-rp2350-midi2/
