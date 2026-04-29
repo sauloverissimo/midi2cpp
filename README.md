@@ -149,7 +149,8 @@ Validated on real hardware against forks and PRs maintained internally while the
 
 | Board | MCU | Device | Host | Transport | Status |
 |-------|-----|:-:|:-:|-----------|--------|
-| Waveshare ESP32-P4 DEV-KIT | ESP32-P4 | ✅ | ✅ | TinyUSB, BLE | TinyUSB PR #3571 |
+| **ESP32-S3 DevKitC-1** | ESP32-S3 | ✅ | - | TinyUSB | TinyUSB PR #3571, recipe in [`esp32-s3-devkitc-usb-midi2`](examples/esp32-s3-devkitc-usb-midi2) |
+| **Waveshare ESP32-P4-WIFI6-DEV-KIT** | ESP32-P4 | ✅ | ✅ | TinyUSB | TinyUSB PR #3571 + mandatory `LP_SYS.usb_ctrl` PHY swap on the device side, recipe in [`esp32-p4-devkit-usb-midi2`](examples/esp32-p4-devkit-usb-midi2) (host + bridge variants pending) |
 | T-Display S3 | ESP32-S3 | ✅ | ✅ | TinyUSB, ESP-NOW, BLE, UART, USB-OTG | TinyUSB PR #3571 |
 | T-Display S3 AMOLED | ESP32-S3 | ✅ | ✅ | TinyUSB, ESP-NOW, BLE, UART, USB-OTG | TinyUSB PR #3571 |
 | Teensy 4.1 | i.MX RT1062 | ✅ | ✅ | Native USB MIDI 2.0 (AS0 + AS1) | Teensy core fork (local) |
