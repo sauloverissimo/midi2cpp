@@ -154,7 +154,6 @@ Validated on real hardware against forks and PRs maintained internally while the
 | T-Display S3 | ESP32-S3 | ✅ | ✅ | - | - | TinyUSB PR #3571 |
 | T-Display S3 AMOLED | ESP32-S3 | ✅ | ✅ | - | - | TinyUSB PR #3571 |
 | Teensy 4.1 | i.MX RT1062 | ✅ | ✅ | - | - | direct consumer of midi2 (Teensy core fork, native USB MIDI 2.0 with AS0 + AS1) |
-| Daisy Seed | STM32H750 | ✅ | - | - | - | [libDaisy fork `feat/midi2`](https://github.com/sauloverissimo/libDaisy/tree/feat/midi2) (DaisyDuino recipe planned) |
 | **Raspberry Pi Pico** | RP2040 | ✅ | - | - | ![override](https://img.shields.io/badge/-override-blueviolet.svg) TinyUSB | TinyUSB PR #3571, recipe in [`examples/rp2040-midi2`](examples/rp2040-midi2) |
 | **Waveshare RP2040 Pi Zero** | RP2040 | ✅ | - | - | ![override](https://img.shields.io/badge/-override-blueviolet.svg) TinyUSB | TinyUSB PR #3571, recipe in [`examples/waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2) |
 | **Adafruit Feather RP2040 USB Host** | RP2040 | ✅ | ✅ | ✅ | ![override](https://img.shields.io/badge/-override-blueviolet.svg) TinyUSB, PIO-USB | TinyUSB PR #3571 + Pico-PIO-USB `675543b` (handshake delay fix), recipes in [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2) and [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2) |
@@ -167,7 +166,7 @@ Validated on real hardware against forks and PRs maintained internally while the
 | Xiao SAMD21 | SAMD21 | ✅ | - | - | - | TinyUSB PR #3571 |
 | T-PicoC3 | RP2040 + ESP32-C3 | ✅ | - | - | - | TinyUSB PR #3571 |
 
-Four override sources cover everything: [TinyUSB PR #3571](https://github.com/hathach/tinyusb/pull/3571) (the bulk of the matrix, USB MIDI 2.0 device + host driver), [Pico-PIO-USB](https://github.com/sekigon-gonnoc/Pico-PIO-USB) at SHA `675543b` (PR #186 "reduce handshake delay", required for MIDI 2.0 host enumeration over PIO-USB; predates the next tagged release), a local Teensy core fork (native USB MIDI 2.0 with AS0 + AS1 alt settings), and the [libDaisy fork `feat/midi2`](https://github.com/sauloverissimo/libDaisy/tree/feat/midi2). Each will retire from the Status column as it merges into its respective upstream.
+Three override sources cover everything: [TinyUSB PR #3571](https://github.com/hathach/tinyusb/pull/3571) (the bulk of the matrix, USB MIDI 2.0 device + host driver), [Pico-PIO-USB](https://github.com/sekigon-gonnoc/Pico-PIO-USB) at SHA `675543b` (PR #186 "reduce handshake delay", required for MIDI 2.0 host enumeration over PIO-USB; predates the next tagged release), and a local Teensy core fork (native USB MIDI 2.0 with AS0 + AS1 alt settings). Each will retire from the Status column as it merges into its respective upstream.
 
 ### Coming soon
 
