@@ -76,12 +76,12 @@ Confirm GP0 / GP1 expose the UART on your specific Pro Micro variant. Some clone
 
 | Mode | Trigger | Behavior |
 |---|---|---|
-| Boot auto-emit | mount + alt=1 | Emits indices 0..100 in order, 50 ms pause between entries. Runs once per power-up. |
-| NoteOn trigger | inbound MIDI 2.0 NoteOn, group=15, channel=0 | Emits catalog index = `noteNumber`. Velocity ignored. |
-| CC loop start | inbound MIDI 2.0 CC controller=120, group=15, channel=0 | Top byte of the 32-bit CC value is the catalog index. Re-emits that entry every 50 ms. |
-| CC loop stop | inbound MIDI 2.0 CC controller=121, group=15, channel=0 | Stops the loop started by CC 120. |
+| Continuous cycle | always on while mounted + alt=1 | Catalog cycles `0..100..0..100..` forever, one entry every 50 ms (one full pass takes ~5 s). Open the Windows MIDI Services monitor at any time and the next pass is captured. |
+| NoteOn trigger | inbound MIDI 2.0 NoteOn, group=15, channel=0 | Fires catalog index = `noteNumber` once, immediately, alongside the running cycle. Velocity ignored. |
+| CC loop start | inbound MIDI 2.0 CC controller=120, group=15, channel=0 | Pauses the cycle. Top byte of the 32-bit CC value is the index to lock on; re-emits that entry every 50 ms. |
+| CC loop stop | inbound MIDI 2.0 CC controller=121, group=15, channel=0 | Resumes the cycle from where it was. |
 
-The boot auto-emit and the on-demand triggers coexist; once the auto-emit finishes, the device idles waiting for triggers.
+The cycle is the default; the on-demand triggers exist for pinpoint testing of a single index. Plug-in is enough to see UMPs flowing.
 
 ## Spec coverage
 

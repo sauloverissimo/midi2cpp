@@ -56,6 +56,32 @@ static const char     kProductInstId[]  = "UMPReferenceEmitter-bench-0001";
 static const char     kFbName[]         = "Test Bench Group 0";
 
 /*--------------------------------------------------------------------+
+ * Bench state
+ *
+ * The bench is a continuous emitter: the catalog cycles 0..100..0..
+ * forever while mounted. The operator can open the Windows MIDI
+ * Services monitor at any time and the next catalog pass will be
+ * captured. NoteOn group=15 still fires a one-shot interleaved with
+ * the cycle; CC 120 idx pauses the cycle and re-emits a single index
+ * every kLoopPeriodMs; CC 121 resumes the cycle.
+ *--------------------------------------------------------------------*/
+struct BenchState {
+    uint8_t  cycle_idx       = 0;        // next entry the cycle will emit
+    uint32_t cycle_last_ms   = 0;        // last cycle-step timestamp
+    bool     loop_active     = false;    // CC 120 pause-and-loop mode
+    uint8_t  loop_idx        = 0;
+    uint32_t loop_last_ms    = 0;
+};
+
+constexpr uint32_t kCycleStepMs  = 50;   // gap between consecutive catalog entries
+constexpr uint32_t kLoopPeriodMs = 50;   // gap between re-emits in CC 120 loop mode
+
+// Inbound triggers are captured in flags consumed by the main loop, so
+// the emit work runs outside the USB dispatch context.
+static volatile uint8_t g_pending_noteon_idx = 0xFF;
+static BenchState       g_state{};
+
+/*--------------------------------------------------------------------+
  * UMP Stream responder. Required for Windows MIDI Services to enumerate
  * the bench as a MIDI 2.0 endpoint with the right Endpoint Name and
  * Function Block.
@@ -92,24 +118,6 @@ static void install_stream_responder(m2device& midi) {
         midi.sendStreamConfigNotify(protocol);
     });
 }
-
-/*--------------------------------------------------------------------+
- * Bench state
- *--------------------------------------------------------------------*/
-struct BenchState {
-    bool     auto_emit_done = false;
-    bool     loop_active    = false;
-    uint8_t  loop_idx       = 0;
-    uint32_t loop_last_ms   = 0;
-};
-
-constexpr uint32_t kAutoEmitPauseMs = 50;
-constexpr uint32_t kLoopPeriodMs    = 50;
-
-// Inbound triggers are captured in flags consumed by the main loop, so
-// the emit work runs outside the USB dispatch context.
-static volatile uint8_t g_pending_noteon_idx = 0xFF;
-static BenchState       g_state{};
 
 /*--------------------------------------------------------------------+
  * Trigger handlers (§4.2 NoteOn, §4.3 CC)
@@ -178,29 +186,34 @@ int main() {
         rp2040_midi2::task(midi);
         board_led_write(midi.isMounted());
 
-        const bool ready = midi.isMounted() && midi.altSetting() == 1;
+        const bool     ready = midi.isMounted() && midi.altSetting() == 1;
+        const uint32_t now   = (uint32_t)(time_us_64() / 1000ULL);
 
-        // §4.1 boot auto-emit, runs once after the host enumerates and
-        // selects the MIDI 2.0 alt setting.
-        if (ready && !g_state.auto_emit_done) {
-            std::printf("[auto-emit] start, %u entries, %u ms pause\r\n",
-                        (unsigned)ump_test_bench::kCatalogSize,
-                        (unsigned)kAutoEmitPauseMs);
-            ump_test_bench::catalogEmitAll(midi, kAutoEmitPauseMs);
-            std::printf("[auto-emit] done\r\n");
-            g_state.auto_emit_done = true;
+        // §4.1 continuous catalog cycle. Default mode: 0..100..0..,
+        // one entry every kCycleStepMs. Paused while CC 120 loop mode
+        // is active (resumed by CC 121).
+        if (ready && !g_state.loop_active) {
+            if (g_state.cycle_last_ms == 0 ||
+                (now - g_state.cycle_last_ms) >= kCycleStepMs) {
+                ump_test_bench::catalogEmit(g_state.cycle_idx, midi);
+                g_state.cycle_last_ms = now;
+                g_state.cycle_idx     = (uint8_t)((g_state.cycle_idx + 1)
+                                                  % ump_test_bench::kCatalogSize);
+            }
         }
 
-        // §4.2 NoteOn-driven on-demand emit.
+        // §4.2 NoteOn-driven on-demand emit. Fires once, immediately,
+        // alongside whatever the cycle was about to do; useful for
+        // pinpoint testing of a single index without stopping the cycle.
         if (ready && g_pending_noteon_idx != 0xFF) {
             uint8_t idx = g_pending_noteon_idx;
             g_pending_noteon_idx = 0xFF;
             ump_test_bench::catalogEmit(idx, midi);
         }
 
-        // §4.3 CC-driven loop, re-emit at kLoopPeriodMs intervals.
+        // §4.3 CC-driven single-index loop. While active, the cycle is
+        // paused and only loop_idx is re-emitted at kLoopPeriodMs.
         if (ready && g_state.loop_active) {
-            uint32_t now = (uint32_t)(time_us_64() / 1000ULL);
             if (g_state.loop_last_ms == 0 ||
                 (now - g_state.loop_last_ms) >= kLoopPeriodMs) {
                 ump_test_bench::catalogEmit(g_state.loop_idx, midi);
