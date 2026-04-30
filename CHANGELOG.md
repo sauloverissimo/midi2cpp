@@ -26,11 +26,21 @@ mirrored from the upstream midi2 C99 policy.
   ALSA shows `Group 1 (Main)`, chromatic walk + 32-bit CC #74 sweep
   streaming live. Final size: text 34884 / 256K flash (13%), bss
   9832 / 32K SRAM (30%).
-- `nrf52840-promicro-midi2`, nRF52840 Pro Micro / Nice!Nano-class
-  boards (PID 0x40F1). Status: **under revision**, replacing the
-  earlier Adafruit_TinyUSB_Arduino-based attempt with the same
-  TinyUSB native CMake path used by `xiao-samd21-midi2` (BSP
-  `feather_nrf52840_express` + Nice!Nano variant override).
+- `nrf52840-promicro-midi2`, nRF52840 Pro Micro / Nice!Nano class
+  boards (PID 0x40F1). Tier B standard subset: Per-Note Pitch Bend
+  vibrato + chromatic walk + RPN / NRPN / RelRPN / RelNRPN burst +
+  UMP Stream Discovery + MIDI-CI Discovery + JR Timestamp heartbeat.
+  Build via the same TinyUSB native CMake path used by
+  `xiao-samd21-midi2` (BSP `feather_nrf52840_express` upstream, Nice!Nano
+  shares the same nRF52840 + Adafruit UF2 bootloader region layout +
+  S140 v6 SoftDevice RAM reservation). Drops the earlier
+  Adafruit_TinyUSB_Arduino-based attempt that did not work on Seeed /
+  Nice!Nano cores. Hardware validated 2026-04-30 on Nice!Nano: device
+  enumerates `cafe:40F1`, ALSA shows `Group 1 (Main)`, full Tier B
+  cycle streaming live in `aseqdump`. Final size: text 38832 / 1 MB
+  flash (3.7%), bss 2526 / 256 KB SRAM (1%) — the chip is wildly
+  oversized for the recipe, leaving room for BLE-MIDI 2.0 +
+  application code on top.
 
 ## [0.1.0]
 

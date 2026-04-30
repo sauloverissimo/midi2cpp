@@ -1,173 +1,235 @@
 # [midi2_cpp](../..) | Device MIDI 2.0
-## nRF52840 Pro Micro
+## Pro Micro nRF52840 (Nice!Nano class)
 
-Tier B standard-subset USB MIDI 2.0 device example for **nRF52840 Pro Micro**-class boards (Nice!Nano, BlueMicro840, FYSETC nRF52840 Pro Micro, generic clones). nRF52840 Cortex-M4F at 64 MHz, 256 KB SRAM, 1 MB flash, native USB FS. Single-file Arduino sketch with chromatic walk + Per-Note Pitch Bend + RPN/NRPN/Relative + Stream Discovery + JR Timestamp heartbeat. Lives at `midi2_cpp/examples/nrf52840-promicro-midi2/`.
+Tier B standard-subset USB MIDI 2.0 device example for **Pro Micro nRF52840** class boards (Nice!Nano, BlueMicro840, FYSETC nRF52840 Pro Micro, generic Pro Micro nRF52840 clones). nRF52840 Cortex-M4F at 64 MHz, 256 KB SRAM, 1 MB flash, native USB FS. Native CMake build via TinyUSB's `family_support.cmake`, ARM GNU toolchain, no Arduino IDE involvement. Lives at `midi2_cpp/examples/nrf52840-promicro-midi2/` and consumes the parent `midi2_cpp` library directly via `../../src`.
 
-![nRF52840 Pro Micro pinout](board/pinout.png)
+![nrf52840-promicro-midi2 banner](board/board.png)
 
-> ⚠️ **Adafruit_TinyUSB_Arduino fork required, not yet upstream.** This sketch depends on `Adafruit_USBD_MIDI2`, the wrapper class added by a fork of [`adafruit/Adafruit_TinyUSB_Arduino`](https://github.com/adafruit/Adafruit_TinyUSB_Arduino) that vendors TinyUSB at the [PR #3571](https://github.com/hathach/tinyusb/pull/3571) commit (`31d730d8b...`). Until both upstreams (Adafruit + TinyUSB) merge the support, install the fork manually. See **Build** below.
+> ⚠️ **TinyUSB override, not yet upstream.** The USB MIDI 2.0 device class driver this recipe depends on lives in TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571), still under review. Until that PR merges into `hathach/tinyusb`, the build pulls a personal fork ([`sauloverissimo/tinyusb`](https://github.com/sauloverissimo/tinyusb)) at a pinned SHA via CMake FetchContent. Treat as **beta**; when the PR lands the override goes away.
 
-PID `0x40F1` distinguishes this device from the other Tier 3 / experimental recipes. The window is `0x40F0..0x40FF`.
+PID `0x40F1` distinguishes this device from the other midi2_cpp recipes; window `0x40D0..0x40EF` (other Tier 2, TinyUSB native CMake on SAMD/nRF52/STM32/RA).
 
 ## What this is
 
-`nrf52840-promicro-midi2.ino` is a single-file sketch demonstrating Tier B MIDI 2.0 device scope on the nRF52840:
+`nrf52840-promicro-midi2` is a sibling of [`xiao-samd21-midi2`](../xiao-samd21-midi2/) on the same TinyUSB native CMake build path, swapping the Seeed XIAO SAMD21 for any nRF52840 Pro Micro class board. Both recipes share the same five midi2_cpp platform hooks, the same FetchContent-based pull of the TinyUSB PR #3571 fork, and the same skill template (`tier-2-tinyusb-native-cmake`).
 
-- **MIDI-CI Discovery responder**
-- **UMP Stream Discovery responder**
-- **JR Timestamp heartbeat** every 500 ms (MT 0x0)
-- **13 s scene cycle**:
-  - **Per-Note Pitch Bend** vibrato on note C4 (5 Hz, ~3.6 s sustained)
-  - **Chromatic walk** C5 to G#5 with 16-bit velocity ramp + 32-bit CC #74 sweep
-  - **RPN 0/0** (Pitch Bend Sensitivity), **NRPN 0x12/0x34**, **Relative RPN +delta**, **Relative NRPN -delta**
+The recipe owns:
+- TinyUSB BSP `feather_nrf52840_express` (already upstream in TinyUSB fork)
+- Nordic nrfx SDK + ARM CMSIS_5 (auto-fetched via `tools/get_deps.py nrf` at first configure)
+- USB descriptors (VID `0xCAFE`, PID `0x40F1`, Product "Nrf52840ProMicro")
+- midi2_cpp C++17 wrapper compiled against the nRF52840 (Cortex-M4F thumb) target
+- The five midi2_cpp platform hooks: `setWriteFn`, `feedRx`, `setNowFn`, `setMounted` / `setAltSetting`, `CI::setRngFn`
+- LED activity via the BSP (P1.15 on Feather Express; not visible on most generic Pro Micro clones — see **Hardware** below)
 
-No SysEx, no Flex Data, no Property Exchange storage, no Process Inquiry advertising. The nRF52840 has the cycles and SRAM for those, but the v0.1 recipe stays Tier B to keep the sketch under 400 lines and to leave headroom for the user's own code (sensor inputs, BLE peer link, Nordic SoftDevice).
+After `nrf52840_promicro_midi2::init(midi, ci)`, the application sees only `m2device` and `m2ci`. It never touches `tud_*`, `board_*`, or any TinyUSB symbol directly.
+
+### Why `feather_nrf52840_express` BSP for a generic Pro Micro
+
+TinyUSB upstream does NOT carry a Pro Micro nRF52840 / Nice!Nano BSP. The Feather Express BSP is the nearest match because all three of the things that matter for this recipe line up:
+
+1. **Same MCU**: nRF52840 Cortex-M4F, native USB FS peripheral.
+2. **Same flash layout**: linker `nrf52840_s140_v6.ld` puts FLASH ORIGIN at `0x26000`, matching the Adafruit nRF52 UF2 bootloader + SoftDevice S140 v6.x region the Nice!Nano shipping image uses.
+3. **Same SoftDevice RAM reservation**: RAM ORIGIN at `0x20003400`, leaving the lower 12 KB for S140 v6.x even though this recipe runs `noos` and never calls into SoftDevice.
+
+The only divergence is the on-board LED pin (Feather: P1.15 with `LED_STATE_ON=1`; typical Pro Micro clones: P1.06 / P1.07 with active-low). The activity LED may light a non-visible GPIO on the generic Pro Micro, but USB enumeration and MIDI streaming are unaffected. A future `nice_nano` BSP (already in community discussion for upstream) would replace this BSP one-for-one without touching the rest of the recipe.
 
 ## What this is not
 
-Not a finished product. Real-world nRF52840 Pro Micro applications can extend this sketch with:
+Not a finished product. The bundled `nrf52840-promicro-midi2` executable is a smoke-test demo (Per-Note Pitch Bend vibrato + chromatic walk + RPN/NRPN burst + Discovery responder + JR heartbeat). Real applications copy this core and add their own behaviour:
 
-- **BLE-MIDI 2.0** transport on the same firmware (nRF52840 has SoftDevice radio)
-- **Capacitive keys** via the QSPI / TWI peripherals emitting Per-Note expression
-- **Persistent identity** in QSPI flash (the sketch regenerates MUID per boot today)
+- A Nice!Nano-based wireless keyboard could pair this MIDI 2.0 USB surface with BLE-MIDI 2.0 over the radio (the SoftDevice S140 v6 is already on flash).
+- A Pro Micro hand controller could expose its capacitive touch / encoder / pot inputs as Per-Note Pitch Bend / Per-Note Controllers / 32-bit CCs.
+- A bridge variant could wrap the nRF52840 USB device side around an external host (MAX3421E + the BSP's MAX3421 pins on the Feather Express, or a peer transport over UART / SPI on bare Pro Micros).
 
 ## Identification
 
 | Field | Value |
 |---|---|
-| USB VID | `0xCAFE` |
+| USB VID | `0xCAFE` (TinyUSB educational, development-only) |
 | USB PID | `0x40F1` |
 | USB Manufacturer | `github.com/sauloverissimo` |
 | USB Product | `Nrf52840ProMicro` |
+| USB Serial (fallback) | `Nrf52840ProMicro-0001` |
 | Endpoint Name | `Nrf52840ProMicro` |
 | Product Instance ID | `Nrf52840ProMicro-showcase-0001` |
+| Function Block Name | `Main` |
 | MIDI-CI Manufacturer ID | `{0x7D, 0x00, 0x00}` (MIDI Association educational/non-commercial prefix) |
 | MIDI-CI Family / Model / Version | `0x0001 / 0x0001 / 0x00010000` |
 
-The USB VID `0xCAFE` is the TinyUSB educational identifier. **Production firmware MUST replace both `idVendor` and `idProduct`** with a real allocation (`0x1209` pid.codes, `0x16C0` V-USB, or a purchased USB-IF VID).
+> **VID `0xCAFE` is development-only.** Production firmware MUST replace both `idVendor` and `idProduct` with a real allocation (`0x1209` pid.codes, `0x16C0` V-USB, or a purchased USB-IF VID).
 
 ## Build
 
 Requirements:
 
-1. **Arduino IDE 2.x** or **arduino-cli 1.0+**
-2. **Adafruit nRF52 board package** in the Arduino Boards Manager (URL: `https://www.adafruit.com/package_adafruit_index.json`); choose **Adafruit Bluefruit nRF52** core, then board "Nice!Nano", "Adafruit Feather nRF52840 Express", or your specific Pro Micro variant
-3. **Adafruit_TinyUSB_Arduino fork** with TinyUSB PR #3571 vendored (see below)
-4. **midi2_cpp library** in the Arduino sketchbook's `libraries/` folder
-
-### Install the Adafruit_TinyUSB_Arduino fork
+- **CMake 3.20+**
+- **arm-none-eabi-gcc** (Arm GNU embedded toolchain, 9+ recommended; tested with 13.2.1)
+- **Python 3** (for TinyUSB's `tools/get_deps.py` to fetch the Nordic nrfx SDK + CMSIS_5 at first configure)
+- Internet on the first `cmake -B build` (FetchContent of the TinyUSB fork + first run of get_deps.py)
 
 ```bash
-cd ~/Arduino/libraries
-git clone https://github.com/sauloverissimo/Adafruit_TinyUSB_Arduino.git
-cd Adafruit_TinyUSB_Arduino
-git checkout feat/midi2  # branch carrying the PR #3571 vendored TinyUSB
-```
-
-If the fork branch does not exist yet, the user can build it locally per the steps in [`xiao-samd21-midi2`](../xiao-samd21-midi2/README.md#install-the-adafruit_tinyusb_arduino-fork). The path is the same for SAMD21 and nRF52840.
-
-### Install midi2_cpp
-
-```bash
-cd ~/Arduino/libraries
 git clone https://github.com/sauloverissimo/midi2_cpp.git
+cd midi2_cpp/examples/nrf52840-promicro-midi2
+cmake -B build         # first run fetches TinyUSB fork + nRF deps
+cmake --build build -j # offline from here on
 ```
 
-### Compile and upload
-
-For Nice!Nano (Adafruit nRF52 core, board id `nice_nano`):
+Output: `build/nrf52840-promicro-midi2.elf` + `build/nrf52840-promicro-midi2.bin` + `build/nrf52840-promicro-midi2.hex`. UF2 conversion is a separate step (TinyUSB's `family_support.cmake` does not run uf2conv automatically):
 
 ```bash
-arduino-cli compile --fqbn adafruit:nrf52:nice_nano examples/nrf52840-promicro-midi2/
-arduino-cli upload  --fqbn adafruit:nrf52:nice_nano -p /dev/ttyACM0 examples/nrf52840-promicro-midi2/
+python3 build/_deps/tinyusb_fork-src/tools/uf2/utils/uf2conv.py \
+    -c -b 0x26000 -f 0xADA52840 \
+    -o build/nrf52840-promicro-midi2.uf2 build/nrf52840-promicro-midi2.bin
 ```
 
-For BlueMicro840 / FYSETC Pro Micro nRF52840, swap the FQBN to the matching board id from the Adafruit core. Pro Micro nRF52840 boards typically ship the Adafruit-style UF2 bootloader; **double-tap RST** to enter UF2 mode and drag-and-drop the .uf2 alternative.
+The `0x26000` offset matches the Adafruit nRF52 UF2 bootloader region; firmware lives above the bootloader + SoftDevice S140 v6 reservation. `0xADA52840` is the Adafruit nRF52840 family identifier accepted by `uf2conv.py` (alias `ADAFRUIT_NRF52840`).
+
+To point at a working copy of the TinyUSB fork already on disk:
+
+```bash
+cmake -B build -DTINYUSB_FORK_PATH=/path/to/your/tinyusb
+```
+
+## Flash
+
+Pro Micro nRF52840 boards (Nice!Nano and clones) ship with the [Adafruit nRF52 UF2 bootloader](https://github.com/adafruit/Adafruit_nRF52_Bootloader) pre-flashed. Two flash paths:
+
+### Drag-and-drop (UF2)
+
+1. Enter bootloader on the board. Two ways:
+   - **Double-tap RST**: tap the on-board RST button (or short the RST pad to GND on bare Pro Micros) twice in quick succession (interval < 500 ms). Board re-enumerates as `NICENANO` UF2 mass-storage with VID:PID `239a:00b3`.
+   - **1200 bps touch**: `stty -F /dev/ttyACM<N> 1200; sleep 1`. The Adafruit nRF52 bootloader reacts to a 1200 bps open by jumping to bootloader. This works without touching the hardware.
+2. Mount the `NICENANO` drive (most desktop file managers auto-mount; otherwise `udisksctl mount -b /dev/sd<x>`).
+3. Copy `build/nrf52840-promicro-midi2.uf2` to the mounted drive. Board auto-reboots into the firmware. After ~3 s, `lsusb | grep cafe:40f1` should show `Nrf52840ProMicro`.
+
+### adafruit-nrfutil (binary upload, alternative)
+
+```bash
+# Enter bootloader first (double-tap RST or 1200 bps touch as above)
+adafruit-nrfutil --verbose dfu serial \
+    --package build/nrf52840-promicro-midi2.zip \
+    -p /dev/ttyACM<N> -b 115200 --singlebank --touch 1200
+```
+
+### Empty flash (no bootloader)
+
+If the board is brand new and `lsusb` shows nothing on plug-in, flash the [Adafruit nRF52 bootloader](https://github.com/adafruit/Adafruit_nRF52_Bootloader) first via SWD. Four wires (SWDIO + SWDCLK + GND + 3V3) and any of: J-Link, DAPLink, Raspberry Pi Pico running picoprobe firmware, ST-Link with the Black Magic Probe firmware. Then:
+
+```bash
+git clone --recursive https://github.com/adafruit/Adafruit_nRF52_Bootloader
+cd Adafruit_nRF52_Bootloader
+make BOARD=nice_nano flash-pyocd      # or flash-jlink, flash-openocd
+```
+
+After this, the bootloader sticks; from now on the UF2 drag-and-drop path works.
 
 ## Hardware
 
 | Pin | Use |
 |---|---|
-| USB-C | Native USB-FS, MIDI 2.0 device interface |
-| `LED_BUILTIN` | Single LED, varies per board variant. Nice!Nano: P0.15 (blue, active LOW). BlueMicro840: P1.10. Library does not toggle this in the v0.1 sketch |
-| RST | Double-tap to enter the Adafruit UF2 bootloader |
+| USB-C / micro-USB | USB FS device interface (MIDI 2.0) |
+| RST button (or pad) | Double-tap to enter UF2 bootloader |
+| P1.15 (Feather BSP `LED_PIN`) | Activity LED in the recipe; **not exposed on most generic Pro Micro clones** |
+| P1.06 / P1.07 (typical clone LEDs) | Visible LEDs on chinese Pro Micro nRF52840 boards; ignored by this recipe |
+| GPIO breakouts (D0 to D31, A0 to A7) | Free for application use |
 
-The nRF52840 has a hardware True-Random-Number-Generator. The sketch uses it via the Adafruit Bluefruit core helpers when available, falling back to `random()` seeded from an analog pin otherwise.
+The mismatch between the BSP `LED_PIN` (P1.15) and the visible LEDs on a generic Pro Micro clone (P1.06 / P1.07) is cosmetic. To get a visual mount indicator on a clone, edit `src/nrf52840_promicro_midi2.cpp::led_show_mounted` and drive the right pin via `nrf_gpio_pin_set` / `nrf_gpio_pin_clear` instead of `board_led_write`. This recipe leaves the BSP default in place to match Feather Express deployments and to keep the diff minimal.
+
+The MCU silicon datasheet ([nRF52840 Product Specification](https://infocenter.nordicsemi.com/topic/ps_nrf52840/keyfeatures_html5.html)) is shared across every nRF52 recipe and is hosted on Nordic's Infocenter.
 
 ## Spec coverage
 
-**Tier B** (standard subset). Hardware-bracket reference for nRF52840 (256 KB SRAM, 1 MB flash, USB FS).
+**Tier B** (standard subset). Hardware-bracket reference for nRF52840-class chips with 256 KB SRAM and 1 MB flash. Same Tier as the Adafruit Feather RP2040 device sibling.
 
 ### What this recipe emits and demonstrates
 
 | UMP MT | Transport | Spec section | Showcase Scene | Notes |
 |---|---|---|---|---|
 | 0x0 Utility | USB | M2-104-UM §3 | JR heartbeat | 500 ms periodicity |
-| 0x4 MIDI 2.0 Channel Voice | USB | M2-104-UM §7 | Per-Note + Walk + RPN/NRPN | NoteOn/Off, CC, RPN, NRPN, Relative RPN/NRPN, Per-Note Pitch Bend |
+| 0x4 MIDI 2.0 Channel Voice | USB | M2-104-UM §7 | Vibrato (Per-Note PB) + chromatic walk (NoteOn/Off + 32-bit CC #74) + RPN/NRPN/RelRPN/RelNRPN | sub-statuses 0x2 (RPN), 0x3 (NRPN), 0x4 (RelRPN), 0x5 (RelNRPN), 0x6 (Per-Note PB), 0x8 (CC), 0x9 (NoteOff), 0x9 (NoteOn) |
 | 0xF UMP Stream | USB | M2-104-UM §10 | (responder, not a Scene) | Endpoint Discovery, Device Identity, Endpoint Name, Product Instance ID, Stream Config Notify, FB Info, FB Name |
 
 ### MIDI-CI surface (M2-101-UM)
 
 | Subsystem | Coverage |
 |---|---|
-| Discovery (Initiator + Responder) | responder: yes |
-| Profile Configuration | not advertised in v0.1 (hardware OK, deferred) |
-| Property Exchange | not advertised in v0.1 |
-| Process Inquiry | not advertised in v0.1 |
+| Discovery (Initiator + Responder) | responder: yes (MUID, Manufacturer, Family, Model, Version) |
+| Profile Configuration | not advertised (Tier B drop) |
+| Property Exchange | not advertised (Tier B drop) |
+| Process Inquiry | not advertised (Tier B drop) |
 
 ### What this recipe does NOT cover (and why)
 
-- **MT 0x3 SysEx7 / MT 0x5 SysEx8**, the parent library reassembly buffers (default 512 bytes each) fit comfortably; v0.1 simply does not exercise SysEx. Add via `midi.sendSysEx*` in the sketch's main cycle if needed.
-- **MT 0xD Flex Data full suite**, Tempo + Time Sig fit in Tier B but the v0.1 cycle keeps focus on channel voice. A `_flex` follow-up recipe could opt into the full suite.
-- **Mixed Data Set (MT 0x5/0x8/0x9/0xC)**, parent library supports it; out of v0.1 scope.
-- **Property Exchange storage**, the nRF52840 SRAM affords 8 properties + subscriber list; v0.1 keeps the demo loop minimal. Future recipes (`-pe`, `-controller`) opt into it.
-- **Process Inquiry advertising**, drops with PE.
+- **MT 0x3 SysEx7 / MT 0x5 SysEx8**: scope drop. The nRF52840 has the SRAM headroom, but the recipe stays focused on Channel Voice + Stream Discovery. A future `nrf52840-sysex-bench` variant could add SysEx out + reassembly stress.
+- **MT 0xD Flex Data**: scope drop. A future variant could opt into Tempo + Time Sig + Chord Name.
+- **Property Exchange storage + Process Inquiry advertising**: not advertised at the MIDI-CI layer; nRF52840 SRAM can afford it, but the recipe keeps to Tier B parity with the Feather RP2040 device sibling.
+- **MIDI 2.0 Initiator role for CI**: this is a device-side responder; an Initiator demo lives in the project's host recipes.
+- **BLE-MIDI 2.0**: out of scope for this recipe. The Nice!Nano's S140 v6 SoftDevice is already on flash, so a follow-up `nice-nano-ble-midi2` could enable BLE alongside USB.
+
+For full Tier A coverage on an nRF52-class chip, the future `nrf5340-bench` recipe (Phase 2; Cortex-M33 application core + dedicated network core) is the canonical target.
 
 ## Showcase
 
-What the sketch emits after enumeration, while `usb_midi2.mounted() && altSetting()==1`:
+What the bundled `nrf52840-promicro-midi2` executable demonstrates after enumeration, while `usb_midi2.altSetting() == 1`:
 
 **Always-on:**
 
-- **JR Timestamp heartbeat** every 500 ms
-- **UMP Stream Discovery responder**
-- **MIDI-CI Discovery responder**
+- **JR Timestamp heartbeat** every 500 ms (MT 0x0 status 0x2)
+- **UMP Stream Discovery responder** (full Endpoint + FB Discovery surface)
+- **MIDI-CI Discovery responder** (MUID, Manufacturer, Family, Model, Version)
+- **Activity LED on P1.15** lit while mounted (Feather BSP default; not visible on most clones)
 
 **Per cycle (~13 s):**
 
-| Scene | Window | Detail |
-|---|---|---|
-| **Per-Note PB vibrato** | 0.4 s to 4.0 s | Note On C4 (vel 0xC000), Per-Note Pitch Bend at 5 Hz, ~40 Hz update rate, Note Off |
-| **Chromatic walk** | 4.5 s to 8.5 s | C5 to G#5, 8 steps, 16-bit velocity ramp, 32-bit CC #74 sweep |
-| **RPN 0/0** | 9.0 s | Pitch Bend Sensitivity, val 0x40000000 |
-| **NRPN 0x12/0x34** | 9.5 s | val 0xDEADBEEF |
-| **Relative RPN 0/0** | 10.0 s | delta +0x01000000 |
-| **Relative NRPN 0x12/0x34** | 10.5 s | delta -0x00800000 |
-| **gap** | 10.5 s to 13.0 s | next cycle starts |
+| Window | Detail |
+|---|---|
+| 0 to 3.6 s | Sustained C4 with Per-Note Pitch Bend vibrato (5 Hz, +/- half a semitone, 50 ms update period) |
+| 3.6 to 7.6 s | Chromatic walk C5 to G#5 (8 steps, 500 ms each), 16-bit velocity ramp `0x2000` to `0xFFFF`, 32-bit CC #74 sweep |
+| 7.6 to 8.2 s | Final NoteOff |
+| 8.2 to 10.6 s | RPN 0/0 (Pitch Bend Sensitivity), NRPN 0x12/0x34, Relative RPN +delta, Relative NRPN -delta (one each, 600 ms apart) |
+| 10.6 to 12.6 s | Gap before next cycle |
 
 ## Validation
 
-Hardware steps:
+Hardware steps (Linux):
 
-1. Plug the nRF52840 Pro Micro into a Linux / macOS / Windows host via USB-C.
+1. Flash via UF2 drag-and-drop or `adafruit-nrfutil` per the **Flash** section above.
 2. Confirm enumeration:
-   - **Linux**: `lsusb | grep cafe:40F1` shows `Nrf52840ProMicro`. `amidi -l` lists `Group 1 (Main)`. `aseqdump -p <port>` shows the showcase live.
-   - **Windows**: Microsoft MIDI Services Console shows `Nrf52840ProMicro` with Native data format = UMP, MIDI 2.0 Protocol = True.
-   - **macOS**: Audio MIDI Setup shows `Nrf52840ProMicro`.
-3. Pair with a known-good MIDI 2.0 host recipe ([`adafruit-feather-rp2040-host-midi2`](../adafruit-feather-rp2040-host-midi2/), [`esp32-p4-devkit-host-midi2`](../esp32-p4-devkit-host-midi2/)) for a cross-platform sanity check.
+   ```bash
+   lsusb | grep cafe:40f1
+   # expected: Bus 001 Device NN: ID cafe:40f1 github.com/sauloverissimo Nrf52840ProMicro
+   amidi -l
+   # expected: IO  hw:N,1,0  Group 1 (Main)
+   ```
+3. Capture UMPs:
+   ```bash
+   PORT=$(aseqdump -l | grep -i Nrf52840 | awk '{print $1}' | tr -d ':')
+   timeout 15 aseqdump -p ${PORT}
+   # expected: NoteOn C4 -> Per-Note PB stream -> NoteOff C4 ->
+   # NoteOn/Off C5..G#5 sequence with rising velocity ->
+   # RPN/NRPN/RelRPN/RelNRPN burst -> 2 s gap -> repeat
+   ```
+4. Pair with a known-good MIDI 2.0 host recipe ([`adafruit-feather-rp2040-host-midi2`](../adafruit-feather-rp2040-host-midi2/)) for cross-validation: plug the Pro Micro into the Feather's USB-A, the Feather's OLED should display `[0] MIDI 2.0` with the showcase events scrolling.
 
 ## What lives where
 
 ```
 midi2_cpp/examples/nrf52840-promicro-midi2/
-├── README.md
+├── README.md                                this file
+├── CMakeLists.txt                           FetchContent TinyUSB fork + family_support
 ├── board/
-│   ├── board.png                       board photo
-│   └── pinout.png                      pin map
-├── monitor/                            Microsoft MIDI Console captures (TBD)
-└── nrf52840-promicro-midi2.ino         Arduino sketch, single file
+│   ├── board.png                            board photo
+│   └── pinout.png                           Pro Micro nRF52840 pinout (silkscreen "ProMicro nRF52840")
+├── monitor/                                 bench / Microsoft MIDI Console captures (TBD)
+└── src/
+    ├── main.cpp                             showcase entry, Tier B demo
+    ├── nrf52840_promicro_midi2.{h,cpp}      board glue: board_init + tusb_init + hooks
+    ├── usb_descriptors.c                    VID/PID + descriptors
+    └── tusb_config.h                        CFG_TUD_MIDI2 + endpoint sizes
 ```
+
+The TinyUSB PR #3571 fork is fetched into `build/_deps/tinyusb_fork-src` (gitignored) on first configure. The Nordic nrfx SDK and ARM CMSIS_5 are fetched into the same tree under `hw/mcu/nordic/nrfx/` and `lib/CMSIS_5/` by `tools/get_deps.py nrf` (also auto-triggered at configure time).
 
 ## License
 
-MIT, inherits the parent [`midi2_cpp` LICENSE](../../LICENSE). The Adafruit_TinyUSB_Arduino fork (installed by the user into `~/Arduino/libraries/`) is MIT (upstream by Adafruit, fork by sauloverissimo carrying the MIDI 2.0 class drivers from the still-open [TinyUSB PR #3571](https://github.com/hathach/tinyusb/pull/3571)). Adafruit Bluefruit nRF52 core is BSD-3-Clause (Adafruit). The `board/` images are vendor-provided and follow their respective licenses.
+MIT, inherits the parent [`midi2_cpp` LICENSE](../../LICENSE). The TinyUSB fork (fetched on demand) is MIT (upstream by hathach, fork by sauloverissimo carrying the MIDI 2.0 class drivers from the still-open [PR #3571](https://github.com/hathach/tinyusb/pull/3571)). The Nordic nrfx SDK is BSD-3-Clause (Nordic Semiconductor ASA). The Adafruit nRF52 UF2 bootloader (referenced from the **Flash** section, not vendored) is GPL-3.0 (Adafruit Industries). Board pinout and photo images are © the original board vendors (educational use under fair-use scope of this open-source recipe).
