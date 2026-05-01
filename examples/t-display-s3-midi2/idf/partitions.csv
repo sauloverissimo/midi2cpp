@@ -1,0 +1,8 @@
+# Single-app partition layout for t-display-s3-midi2.
+# T-Display S3 ships with 16 MB flash; the recipe fits in well under
+# 3 MB, so the table reserves a single factory partition with headroom.
+# Future variants (BLE-MIDI 2.0, OTA, sample storage) can extend this.
+# Name,   Type, SubType,  Offset,   Size,  Flags
+nvs,      data, nvs,      0x9000,   0x6000,
+phy_init, data, phy,      0xf000,   0x1000,
+factory,  app,  factory,  0x10000,  0x300000,

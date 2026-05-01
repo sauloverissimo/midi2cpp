@@ -1,0 +1,42 @@
+# T-Display S3 specific defaults for t-display-s3-midi2 (ESP32-S3R8, 16 MB
+# flash, 8 MB PSRAM Octal, single USB-C port driven by the native USB-OTG
+# peripheral when this firmware runs).
+
+CONFIG_IDF_TARGET="esp32s3"
+
+# Flash + partitions. T-Display S3 ships with 16 MB QIO flash.
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# PSRAM 8 MB Octal (ESP32-S3R8 die marker on the T-Display S3 module).
+# The piano UI's full-screen sprite (320x170 16bpp = ~108 KB) lives in
+# PSRAM; without this the sprite alloc fails on init.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_BOOT_INIT=y
+
+# CPU at full speed for tighter UMP loop timing + display render budget.
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+
+# Console: UART0 (GP43 TX / GP44 RX on the T-Display S3 IO header). The
+# board has no on-board USB-to-UART bridge; runtime logs require an
+# external USB-TTL adapter wired to those pins. USB-Serial-JTAG is OFF
+# at runtime because the single USB-C port is owned by TinyUSB MIDI 2.0
+# while the firmware is running.
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG_ENABLED=n
+
+# Compiler: C++17 to match the parent library. midi2_cpp uses
+# std::function callbacks; exceptions stay off.
+CONFIG_COMPILER_CXX_EXCEPTIONS=n
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Note: TinyUSB MIDI 2.0 toggles live in main/tusb_config.h
+# (CFG_TUD_MIDI2 etc), not in Kconfig, because the shim component at
+# components/tinyusb registers TinyUSB sources directly without going
+# through the Espressif esp_tinyusb Kconfig.

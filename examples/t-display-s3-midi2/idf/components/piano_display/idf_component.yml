@@ -1,0 +1,11 @@
+## piano_display managed dependencies.
+##
+## LovyanGFX is the LCD library; not in the ESP-IDF Component Registry,
+## so the Component Manager pulls it directly from the upstream GitHub
+## repo at a pinned tag. v1.2.0 carries the v1 API used by the ST7789
+## parallel 8-bit driver on the T-Display S3.
+dependencies:
+  idf: ">=5.4"
+  lovyangfx:
+    git: https://github.com/lovyan03/LovyanGFX.git
+    version: "1.2.0"
