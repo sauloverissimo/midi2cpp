@@ -242,7 +242,7 @@ void tramp_device_identity(uint32_t mfr_id, uint16_t fam, uint16_t mod,
     if (c->host->cb_identity_updated) c->host->cb_identity_updated(c->idx, id);
 }
 
-void tramp_stream_text(uint16_t status, uint8_t /*format*/,
+void tramp_stream_text(uint16_t status, uint8_t format,
                         const uint8_t* data, uint8_t len, void* ctx) {
     auto* c = static_cast<HostDispatchContext*>(ctx);
     auto& id = c->host->identities[c->idx];
@@ -252,9 +252,16 @@ void tramp_stream_text(uint16_t status, uint8_t /*format*/,
     else if (status == 0x04) { dst = id.productInstanceId;  cap = sizeof(id.productInstanceId); }
     else                     { return; }   // FB Name uses tramp_fb_name below
     if (!dst) return;
-    size_t n = (len < cap - 1) ? len : (cap - 1);
-    std::memcpy(dst, data, n);
-    dst[n] = '\0';
+    // UMP Stream text uses 4-format multi-packet (M2-104-UM §7.1.5/7.1.7):
+    //   0 = complete (one packet), 1 = start, 2 = continue, 3 = end.
+    // Reset the buffer on complete/start; append on continue/end. Offset
+    // is tracked implicitly via strlen since we always NUL-terminate.
+    size_t offset = (format == 0 || format == 1) ? 0 : std::strlen(dst);
+    if (offset >= cap - 1) return;  // buffer already full
+    size_t room = cap - 1 - offset;
+    size_t n = (len < room) ? len : room;
+    std::memcpy(dst + offset, data, n);
+    dst[offset + n] = '\0';
     if (c->host->cb_identity_updated) c->host->cb_identity_updated(c->idx, id);
 }
 
