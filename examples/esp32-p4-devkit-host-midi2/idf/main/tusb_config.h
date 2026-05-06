@@ -59,9 +59,15 @@ extern "C" {
 
 /* Enable MIDI 2.0 Host class driver (from PR #3571 fork). The fork
  * also auto-uplifts MIDI 1.0 byte-stream cable events into UMP MT 0x2
- * when the upstream device negotiates Alt 0 (legacy USB MIDI 1.0). */
-#define CFG_TUH_MIDI            1
-#define CFG_TUH_MIDI2           1
+ * when the upstream device negotiates Alt 0 (legacy USB MIDI 1.0).
+ *
+ * Up to 4 upstream devices per driver (matches MIDI2_CPP_HOST_MAX_DEVICES
+ * in midi2_cpp). With CFG_TUH_MIDI=4 + CFG_TUH_MIDI2=4 the host can
+ * pick up 4 legacy MIDI 1.0 + 4 MIDI 2.0 devices simultaneously, each
+ * driver claiming only its matching protocol via the alt-walk defer
+ * (experiment/midi-coexistence branch). */
+#define CFG_TUH_MIDI            4
+#define CFG_TUH_MIDI2           4
 
 #define CFG_TUH_MIDI2_NUM_GROUPS           1
 #define CFG_TUH_MIDI2_NUM_FUNCTION_BLOCKS  1

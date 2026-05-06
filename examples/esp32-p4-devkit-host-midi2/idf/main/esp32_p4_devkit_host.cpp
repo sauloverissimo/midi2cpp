@@ -115,16 +115,34 @@ void init(midi2::m2host& midi) {
     ESP_LOGI(TAG, "TinyUSB host task started");
 }
 
+// UMP word count per Message Type (top nibble of word 0). Indexed by MT.
+static const uint8_t kMtWordCount[16] = {
+    1, 1, 1, 2,   // 0,1,2,3
+    2, 4, 1, 1,   // 4,5,6,7
+    2, 2, 2, 3,   // 8,9,A,B
+    3, 4, 4, 4    // C,D,E,F
+};
+
 void task(midi2::m2host& midi) {
     // RX drain runs from this task context. tuh_midi2_rx_cb is below as
-    // a notification-only marker that keeps the linker happy.
+    // a notification-only marker that keeps the linker happy. m2host's
+    // feedRx -> midi2_proc_feed processes one UMP packet per call
+    // (ignores word_count and uses MT to size the packet), so the buffer
+    // is iterated packet-by-packet here.
     for (uint8_t idx = 0; idx < midi2::Host::MAX_DEVICES; ++idx) {
         if (!tuh_midi2_mounted(idx)) continue;
         uint32_t buf[16];
         for (;;) {
             uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
             if (n == 0) break;
-            midi.feedRx(idx, buf, n);
+            uint32_t i = 0;
+            while (i < n) {
+                uint8_t mt = (uint8_t)((buf[i] >> 28) & 0x0F);
+                uint8_t wc = kMtWordCount[mt];
+                if (i + wc > n) break;
+                midi.feedRx(idx, &buf[i], wc);
+                i += wc;
+            }
         }
     }
 
