@@ -18,15 +18,21 @@ IDF_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET="${IDF_DIR}/external/tinyusb"
 
 # Pinned to the experiment/midi-coexistence branch tip on the fork.
-# The branch sits on top of the PR #3571 base (commit 31d730d8) and adds
-# an alt-walk bcdMSC defer that lets CFG_TUH_MIDI=1 and CFG_TUH_MIDI2=1
-# coexist (used by the dual-stack bridge sibling at
-# ../../esp32-p4-devkit-bridge-midi2/). The added code is fully gated by
-# `#if CFG_TUH_MIDI2` and `#if !CFG_TUH_MIDI2_LEGACY_FALLBACK`, so a
-# host-only build that disables one of the two flags compiles to
-# byte-identical output as the PR base.
+# Stack of follow-ups on top of the PR #3571 base (31d730d8):
+#   91a54581 - alt-walk bcdMSC defer that lets CFG_TUH_MIDI and
+#              CFG_TUH_MIDI2 coexist (used by the dual-stack bridge
+#              sibling at ../../esp32-p4-devkit-bridge-midi2/).
+#   b336ce0d - opt-in user responder via CFG_TUD_MIDI2_USER_RESPONDER
+#              (device-side feature, no effect on this host-only
+#              build, kept in lockstep with the bridge sibling because
+#              the bridge symlinks this clone).
+# The added code is fully gated by `#if CFG_TUH_MIDI2`,
+# `#if !CFG_TUH_MIDI2_LEGACY_FALLBACK`, and
+# `#if CFG_TUD_MIDI2_USER_RESPONDER`, so a host-only build that leaves
+# those flags at their defaults compiles to byte-identical output as
+# the PR base.
 TINYUSB_REPO="https://github.com/sauloverissimo/tinyusb.git"
-TINYUSB_SHA="91a54581044b04b2a3144ff10124d4b6e8551072"
+TINYUSB_SHA="b336ce0dab66b44b7cad686a6473c02010c22aaf"
 
 mkdir -p "${IDF_DIR}/external"
 
