@@ -1,5 +1,5 @@
 /*
- * main.cpp, ump-test-bench-rp2040-showcase.
+ * main.cpp, rp2040-promicro-ump-test-bench-showcase.
  *
  * Headless USB MIDI 2.0 device that emits a deterministic catalog of
  * 101 UMPs for the Windows MIDI Services consumer side (see
@@ -161,7 +161,7 @@ int main() {
     sleep_ms(200);
 
     std::printf("\r\n==================================================\r\n");
-    std::printf("  ump-test-bench-rp2040  (VID:PID 0xCAFE:0x4078)\r\n");
+    std::printf("  rp2040-promicro-ump-test-bench  (VID:PID 0xCAFE:0x4078)\r\n");
     std::printf("  Manufacturer  : MIDI 2.0 Test Bench\r\n");
     std::printf("  Product       : UMP Reference Emitter\r\n");
     std::printf("  Catalog size  : %u entries (0..%u)\r\n",

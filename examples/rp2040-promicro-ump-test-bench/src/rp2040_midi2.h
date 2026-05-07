@@ -1,5 +1,5 @@
 /*
- * rp2040_midi2.h, public API of the ump-test-bench-rp2040 board core.
+ * rp2040_midi2.h, public API of the rp2040-promicro-ump-test-bench board core.
  *
  * Same shape as the rp2040-midi2 sibling: the application layer (here,
  * the catalog emitter + trigger handler) consumes this header and

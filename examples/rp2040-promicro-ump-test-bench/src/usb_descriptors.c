@@ -1,5 +1,5 @@
 /*
- * usb_descriptors.c, USB Device descriptors for ump-test-bench-rp2040.
+ * usb_descriptors.c, USB Device descriptors for rp2040-promicro-ump-test-bench.
  *
  * Identification:
  *   USB VID:PID         0xCAFE:0x4078   (TinyUSB educational VID + project PID)

@@ -1,5 +1,5 @@
 /*
- * tusb_config.h, TinyUSB configuration for ump-test-bench-rp2040 (RP2040)
+ * tusb_config.h, TinyUSB configuration for rp2040-promicro-ump-test-bench (RP2040)
  *
  * Device-only MIDI 2.0 class. Full speed (RP2040 native USB).
  */
