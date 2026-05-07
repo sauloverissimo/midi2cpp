@@ -3,7 +3,7 @@
 
 Tier B USB MIDI 2.0 device on **Pro Micro nRF52840** class boards (Nice!Nano, BlueMicro840, FYSETC nRF52840 Pro Micro, generic clones). Cortex-M4F at 64 MHz, 256 KB SRAM. Native CMake build via TinyUSB's `family_support.cmake`, ARM GNU toolchain, no Arduino IDE.
 
-![nrf52840-promicro-midi2 banner](board/pinout.png)
+![nrf52840-promicro-midi2 banner](monitor/banner.png)
 
 > Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via FetchContent.
 
@@ -51,6 +51,8 @@ If the board is brand new and `lsusb` shows nothing on plug-in, flash the [Adafr
 
 ## Hardware
 
+![nrf52840-promicro-midi2 banner](board/hardware.png)
+
 | Pin | Use |
 |---|---|
 | USB-C / micro-USB | USB FS device (MIDI 2.0) |
@@ -82,7 +84,7 @@ timeout 15 aseqdump -p ${PORT}
 MIDI-CI: Discovery responder only (MUID, Manufacturer, Family, Model, Version).
 
 ## Showcase
-
+![nrf52840-promicro-midi2 banner](monitor/stack.png)
 Always on while mounted: JR heartbeat (500 ms), UMP Stream + MIDI-CI Discovery responders, P1.15 LED lit (Feather BSP default).
 
 Per cycle (~13 s):
