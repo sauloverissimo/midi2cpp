@@ -3,7 +3,7 @@
 
 Full-spec USB MIDI 2.0 device on the **Raspberry Pi Pico (RP2040)**. Headless single-file showcase of every MIDI 2.0 message category beyond MIDI 1.0. Pico SDK build, no Arduino IDE.
 
-![rp2040-midi2 banner](board/banner.png)
+![rp2040-midi2 banner](monitor/banner.png)
 
 > Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via FetchContent.
 
@@ -31,7 +31,7 @@ Pointing at a local TinyUSB checkout: `cmake -B build -DPICO_TINYUSB_PATH=/path/
 Hold BOOTSEL on the Pico, plug USB, drag `build/rp2040-midi2-showcase.uf2` to the mounted `RPI-RP2` drive. Or `picotool load build/rp2040-midi2-showcase.uf2 -fx`.
 
 ## Hardware
-
+![rp2040-midi2 banner](board/hardware.png)
 | Pin | Use |
 |---|---|
 | USB | MIDI 2.0 device (only USB function, no CDC) |
@@ -62,7 +62,7 @@ timeout 30 aseqdump -p ${PORT}
 MIDI-CI: Discovery + Profiles (1 custom registered) + Property Exchange (3 properties: static, dynamic, subscribable) + Process Inquiry, all via the `m2ci` Appendix E convenience responder.
 
 ## Showcase
-
+![rp2040-midi2 banner](board/stack.png)
 Always on while mounted: JR heartbeat (500 ms), UMP Stream + MIDI-CI Discovery responders, 1 custom Profile, 3 PE properties, Process Inquiry replies. GP25 LED lit.
 
 Per cycle (~22 s):
