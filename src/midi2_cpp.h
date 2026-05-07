@@ -30,17 +30,20 @@
 #include "midi2_device.h"
 #include "midi2_ci.h"
 #include "midi2_host.h"
+#include "midi2_bridge.h"  // m2bridge alias is defined inside this header.
 
 namespace midi2 {
 
 // Ergonomic aliases for user code. The canonical class names are Device,
-// CI, and Host; the aliases below let sketches use a shorter form
-// without renaming anything internal. Usable in sketches via
+// CI, Host and Bridge; the aliases below let sketches use a shorter
+// form without renaming anything internal. Usable in sketches via
 // `using namespace midi2;` (idiomatic Arduino style) or fully qualified
-// as `midi2::m2device`. v0.1 ships the device + host shapes; m2bridge
-// (composition of host + device with an UMP router) lands in v0.2.
+// as `midi2::m2device`. m2bridge composes Device + Host + CI with an
+// internal multi-FB Stream Discovery responder and a multi-slot UMP
+// forward path; see midi2_bridge.h for the full contract.
 using m2device = Device;
 using m2ci     = CI;
 using m2host   = Host;
+// m2bridge is defined inside midi2_bridge.h.
 
 }  // namespace midi2
