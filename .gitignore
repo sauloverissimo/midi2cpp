@@ -14,11 +14,13 @@ build-*/
 *.pdb
 *.swp
 *~
+examples/esp32-c6-devkitc-multi-midi2/
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
 compile_commands.json
+.gitignore
 
 # ESP-IDF generated artifacts and on-demand component clones.
 # fetch_tinyusb.sh drops the TinyUSB PR #3571 fork into idf/external/tinyusb;
