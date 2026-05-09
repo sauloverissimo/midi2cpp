@@ -1,7 +1,7 @@
 {
   "name": "midi2_cpp",
-  "version": "0.1.0",
-  "description": "C++17 Arduino-style wrapper for MIDI 2.0 on embedded devices. Thin wrapper over the portable midi2 C99 library. Covers UMP, MIDI-CI with Appendix E, Profile, PE Subscribe/Notify, Process Inquiry, Flex Data, Bit Scaling.",
+  "version": "0.2.0",
+  "description": "C++17 Arduino-style wrapper for MIDI 2.0 on embedded devices. Thin wrapper over the portable midi2 C99 library. Covers UMP, MIDI-CI with Appendix E, Profile, PE Subscribe/Notify, Process Inquiry, Flex Data, and Bit Scaling. Targets RP2040, RP2350, Teensy, ESP32 family, nRF52, and SAMD21.",
   "keywords": "midi, midi2, usb, ump, capability-inquiry, property-exchange, profile",
   "authors": [
     {
@@ -17,6 +17,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/sauloverissimo/midi2_cpp.git"
+  },
+  "dependencies": {
+    "sauloverissimo/midi2": "^0.3.3"
   },
   "headers": "midi2_cpp.h",
   "export": {

@@ -5,42 +5,115 @@ All notable changes to `midi2_cpp` are recorded here. Format follows
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
-## [Unreleased]
+## [0.2.0]
 
-### Examples / Recipes (added)
+Single source of truth for the MIDI 2.0 stack: midi2_cpp no longer
+vendors the C99 core and is published as a regular Arduino /
+PlatformIO library that depends on midi2 explicitly. Every recipe
+under `examples/` was migrated to pull midi2 externally through the
+build system that fits its host (FetchContent for Pico SDK + TinyUSB
+native CMake, IDF Component Manager for ESP-IDF, lib_deps for
+PlatformIO).
 
-- `arduino-nano-esp32-midi2`, Arduino Nano ESP32 (ESP32-S3-MINI-1, PID
-  0x4093). Full Showcase mirroring `esp32-s3-devkitc-usb-midi2`, single
-  GPIO LED on D13 / GPIO48 instead of WS2812 (Arduino Nano ESP32 has no
-  RMT-driven addressable LED in this recipe; the on-board RGB LED on
-  D14 / D15 / D16 is left untouched).
+This is a breaking release. Consumers that previously vendored
+`midi2_cpp/src/midi2.{h,c}` directly will break; the migration path
+is documented in the manifest below and in the per-build-system
+patterns shipped under `examples/`.
+
+### Breaking
+
+- **Vendored `src/midi2.{h,c}` removed.** midi2_cpp now declares
+  midi2 as an external dependency:
+  - `library.properties` carries `depends=midi2 (>=0.3.3)`. Arduino
+    Library Manager auto-installs midi2 when a sketch includes
+    midi2_cpp.
+  - `library.json` carries `dependencies."sauloverissimo/midi2":
+    "^0.3.3"`. PlatformIO resolves midi2 from its registry.
+  - The root `CMakeLists.txt` exposes a three-layer fallback at the
+    top (`if(NOT TARGET midi2)` -> `find_package(midi2 0.3.3 CONFIG)`
+    -> `FetchContent_Declare(midi2 GIT_TAG v0.3.3)`), then links
+    midi2_cpp `PUBLIC midi2::midi2` so downstream targets see the
+    C99 core transitively.
+
+### Added
+
+- **`midi2::Bridge` (alias `m2bridge`)**: composes Device + CI + Host
+  with a multi-Function-Block topology, a per-slot group rewrite
+  window, dynamic FB names sourced from upstream Endpoint Names, and
+  a USB-MIDI 1.0 byte-stream uplift path (`feedHostMidi1Bytes`) for
+  legacy upstream devices that arrive on alt 0. Slot lifecycle via
+  `slotSetActive(idx, active, alt)`. Reusable across bridge recipes;
+  the multi-FB Stream Discovery responder lives inside the class so
+  each new bridge recipe gets it for free.
+- **`tests/test_midi2_bridge.cpp`**: 11 host-side sub-tests covering
+  m2bridge construct/destruct heap balance (50x cycle stress), topology
+  setter bounds and post-`begin()` lock, group rewrite formula on
+  slots 0/1/3, out-of-range slot rejection, and the USB-MIDI 1.0
+  byte-stream uplift path. Compiles and runs clean under
+  `-fsanitize=address,undefined`.
+- `architecture.png` referenced from the README, replacing the
+  previous inline ASCII layer diagram.
+- **CMake entry surface for downstream consumers**: the root
+  `CMakeLists.txt` follows the same `find_package` -> `FetchContent`
+  fallback pattern that midi2 itself ships. Subprojects pulling
+  midi2_cpp via `add_subdirectory` or `FetchContent` skip the
+  `find_package` step (`if(NOT TARGET midi2)` guard).
+
+### Changed
+
+- **README tagline** drops the `zero-allocation` claim. midi2_cpp
+  allocates in two narrow places (`m2bridge::begin()` slot tables and
+  `std::function` callback storage), so the wrapper is now described
+  as `static-by-default`. The C99 core (midi2) remains strictly
+  zero-allocation. Same shift applied to the logo and to the
+  `.intern/decisoes.md` design heritage notes.
+- **README "Manual vendor" path** rewritten: pre-v0.2 builds vendored
+  a single `midi2_cpp/src/midi2.{h,c}` copy; today the consumer
+  downloads both repositories side by side and adds `midi2/dist/`
+  plus `midi2_cpp/src/` to its include path.
+- **`paragraph` in `library.properties`** rewritten: drops
+  comparisons with other libraries, focuses on what midi2_cpp itself
+  ships and the embedded targets validated.
+
+### Examples / Recipes
+
+#### Migrated to depend on midi2 externally (all 20 recipes)
+
+| Build system | Mechanism | Recipes |
+|---|---|---|
+| Pico SDK | `FetchContent_Declare(midi2 GIT_TAG v0.3.3)` plus `target_link_libraries(midi2_cpp PUBLIC midi2::midi2)` | `rp2040-midi2`, `waveshare-rp2040-midi2`, `sparkfun-promicro-rp2350-midi2`, `waveshare-rp2350-usb-a-midi2`, `waveshare-rp2350-usb-a-bridge-midi2`, `adafruit-feather-rp2040-host-midi2`, `adafruit-feather-rp2040-bridge-midi2`, `rp2040-promicro-ump-test-bench` |
+| TinyUSB native CMake | same FetchContent pattern as Pico SDK | `xiao-samd21-midi2`, `nrf52840-promicro-midi2` |
+| ESP-IDF | `idf_component.yml` declares `midi2: { git: ..., version: ">=0.3.3" }` and `idf_component_register` lists `midi2` in `REQUIRES` | `arduino-nano-esp32-midi2`, `esp32-s3-devkitc-usb-midi2`, `esp32-p4-devkit-usb-midi2`, `esp32-p4-devkit-host-midi2`, `esp32-p4-devkit-bridge-midi2`, `esp32-p4-devkit-bridge2-midi2`, `t-display-s3-midi2` |
+| PlatformIO + ESP32_Host_MIDI | `lib_deps += sauloverissimo/midi2 @ ^0.3.3` | `esp32-c6-devkitc-multi-midi2`, `esp32-s3-devkitc-host-midi2`, `t-display-s3-shield-host-midi2` |
+
+Each recipe drops the `${MIDI2_CPP_ROOT}/src/midi2.c` (or `midi2_c99`
+helper library) from its source list. Other midi2_cpp sources
+(`midi2_device.cpp`, `midi2_ci.cpp`, `midi2_host.cpp`,
+`midi2_bridge.cpp`) keep being compiled inline from the parent tree
+via `${MIDI2_CPP_ROOT}/src` until the host helper-library shape is
+finalised in a future cycle.
+
+#### New recipes since v0.1.0
+
+- `arduino-nano-esp32-midi2`, Arduino Nano ESP32 (ESP32-S3-MINI-1,
+  PID 0x4093). Full Showcase mirroring `esp32-s3-devkitc-usb-midi2`;
+  single GPIO LED on D13 / GPIO48 instead of WS2812.
 - `xiao-samd21-midi2`, Seeed Studio XIAO SAMD21 (ATSAMD21G18A, PID
-  0x40F0). Tier C minimal core: NoteOn/Off + CC + UMP Stream Discovery
-  + MIDI-CI Discovery + JR Timestamp heartbeat. Build via TinyUSB
-  native CMake (`hw/bsp/family_support.cmake` + FetchContent of the
-  PR #3571 fork at the project's pinned SHA) on top of the upstream
-  TinyUSB BSP `seeeduino_xiao`. ARM GNU toolchain, no Arduino IDE
-  involved. First recipe in the project portfolio to use this build
-  system path; pattern documented in `.intern/decisions.md` D-033.
-  Hardware validated 2026-04-30: device enumerates `cafe:40F0`,
-  ALSA shows `Group 1 (Main)`, chromatic walk + 32-bit CC #74 sweep
-  streaming live. Final size: text 34884 / 256K flash (13%), bss
-  9832 / 32K SRAM (30%).
+  0x40F0). Tier C minimal core; first recipe to use the TinyUSB
+  native CMake build system path. Hardware validated: ALSA `Group 1
+  (Main)`, chromatic walk + 32-bit CC #74 sweep streaming. Final
+  size: text 34884 / 256K flash (13%), bss 9832 / 32K SRAM (30%).
 - `nrf52840-promicro-midi2`, nRF52840 Pro Micro / Nice!Nano class
-  boards (PID 0x40F1). Tier B standard subset: Per-Note Pitch Bend
-  vibrato + chromatic walk + RPN / NRPN / RelRPN / RelNRPN burst +
-  UMP Stream Discovery + MIDI-CI Discovery + JR Timestamp heartbeat.
-  Build via the same TinyUSB native CMake path used by
-  `xiao-samd21-midi2` (BSP `feather_nrf52840_express` upstream, Nice!Nano
-  shares the same nRF52840 + Adafruit UF2 bootloader region layout +
-  S140 v6 SoftDevice RAM reservation). Drops the earlier
-  Adafruit_TinyUSB_Arduino-based attempt that did not work on Seeed /
-  Nice!Nano cores. Hardware validated 2026-04-30 on Nice!Nano: device
-  enumerates `cafe:40F1`, ALSA shows `Group 1 (Main)`, full Tier B
-  cycle streaming live in `aseqdump`. Final size: text 38832 / 1 MB
-  flash (3.7%), bss 2526 / 256 KB SRAM (1%) — the chip is wildly
-  oversized for the recipe, leaving room for BLE-MIDI 2.0 +
-  application code on top.
+  (PID 0x40F1). Tier B subset: Per-Note Pitch Bend vibrato +
+  chromatic walk + RPN / NRPN / RelRPN / RelNRPN burst. Same TinyUSB
+  native CMake build path as the SAMD21 recipe. Hardware validated on
+  Nice!Nano. Final size: text 38832 / 1 MB flash (3.7%), bss 2526 /
+  256 KB SRAM (1%).
+- `esp32-p4-devkit-bridge2-midi2`, ESP32-P4 dual-stack bridge (PID
+  0x4095) built on top of `m2bridge`. Carries the same multi-FB
+  topology as `esp32-p4-devkit-bridge-midi2` but consumes the
+  reusable Bridge class instead of an inline slot table + Stream
+  Discovery responder.
 
 ## [0.1.0]
 
