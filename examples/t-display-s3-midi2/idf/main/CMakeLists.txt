@@ -14,13 +14,13 @@ idf_component_register(
     SRCS
         "main.cpp"
         "t_display_s3_midi2.cpp"
-        "${MIDI2_CPP_ROOT}/midi2.c"
         "${MIDI2_CPP_ROOT}/midi2_device.cpp"
         "${MIDI2_CPP_ROOT}/midi2_ci.cpp"
     INCLUDE_DIRS
         "."
         "${MIDI2_CPP_ROOT}"
     REQUIRES
+        midi2
         tinyusb
         piano_display
         driver

@@ -14,7 +14,6 @@ idf_component_register(
     SRCS
         "main.cpp"
         "esp32_p4_devkit_bridge.cpp"
-        "${MIDI2_CPP_ROOT}/midi2.c"
         "${MIDI2_CPP_ROOT}/midi2_device.cpp"
         "${MIDI2_CPP_ROOT}/midi2_ci.cpp"
         "${MIDI2_CPP_ROOT}/midi2_host.cpp"
@@ -22,6 +21,7 @@ idf_component_register(
         "."
         "${MIDI2_CPP_ROOT}"
     REQUIRES
+        midi2
         tinyusb
         driver
         esp_timer

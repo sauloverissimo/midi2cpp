@@ -8,3 +8,6 @@
 dependencies:
   idf: ">=5.4"
   espressif/led_strip: "^2.5"
+  midi2:
+    git: https://github.com/sauloverissimo/midi2.git
+    version: ">=0.3.3"

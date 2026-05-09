@@ -8,3 +8,6 @@
 ## see ../components/piano_display/idf_component.yml.
 dependencies:
   idf: ">=5.4"
+  midi2:
+    git: https://github.com/sauloverissimo/midi2.git
+    version: ">=0.3.3"
