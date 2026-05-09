@@ -27,7 +27,7 @@ Underneath, [midi2](https://github.com/sauloverissimo/midi2) (the portable C99 c
 
 ## Contents
 
-- [midi2\_cpp](#midi2cpp)
+- [midi2cpp](#midi2cpp)
     - [MIDI 2.0 engine for embedded systems](#midi-20-engine-for-embedded-systems)
   - [The library](#the-library)
   - [Contents](#contents)
