@@ -48,12 +48,30 @@ pico_sdk_init()
 # midi2_cpp, built from the parent library tree.
 # ---------------------------------------------------------------------------
 set(MIDI2_CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+
+# midi2 C99 core, pulled externally so the recipe shares one source
+# of truth with the rest of the ecosystem. Override with
+# -DMIDI2_LOCAL_PATH=/path/to/midi2 for offline builds.
+include(FetchContent)
+if(NOT TARGET midi2)
+    if(DEFINED MIDI2_LOCAL_PATH)
+        FetchContent_Declare(midi2 SOURCE_DIR ${MIDI2_LOCAL_PATH})
+    else()
+        FetchContent_Declare(midi2
+            GIT_REPOSITORY https://github.com/sauloverissimo/midi2.git
+            GIT_TAG        v0.3.2
+            GIT_SHALLOW    TRUE
+        )
+    endif()
+    FetchContent_MakeAvailable(midi2)
+endif()
+
 add_library(midi2_cpp STATIC
-    ${MIDI2_CPP_ROOT}/src/midi2.c
     ${MIDI2_CPP_ROOT}/src/midi2_device.cpp
     ${MIDI2_CPP_ROOT}/src/midi2_ci.cpp
 )
 target_include_directories(midi2_cpp PUBLIC ${MIDI2_CPP_ROOT}/src)
+target_link_libraries(midi2_cpp PUBLIC midi2::midi2)
 
 # ---------------------------------------------------------------------------
 # waveshare-rp2040-midi2, board core (Pico SDK + TinyUSB glue +

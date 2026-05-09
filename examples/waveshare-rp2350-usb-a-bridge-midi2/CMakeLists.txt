@@ -68,10 +68,23 @@ pico_sdk_init()
 # midi2 (C99), only midi2_msg_word_count is used by the router.
 # ---------------------------------------------------------------------------
 set(MIDI2_CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-add_library(midi2_c99 STATIC
-    ${MIDI2_CPP_ROOT}/src/midi2.c
-)
-target_include_directories(midi2_c99 PUBLIC ${MIDI2_CPP_ROOT}/src)
+
+# midi2 C99 core, pulled externally so the recipe shares one source
+# of truth with the rest of the ecosystem. Override with
+# -DMIDI2_LOCAL_PATH=/path/to/midi2 for offline builds.
+include(FetchContent)
+if(NOT TARGET midi2)
+    if(DEFINED MIDI2_LOCAL_PATH)
+        FetchContent_Declare(midi2 SOURCE_DIR ${MIDI2_LOCAL_PATH})
+    else()
+        FetchContent_Declare(midi2
+            GIT_REPOSITORY https://github.com/sauloverissimo/midi2.git
+            GIT_TAG        v0.3.2
+            GIT_SHALLOW    TRUE
+        )
+    endif()
+    FetchContent_MakeAvailable(midi2)
+endif()
 
 # ---------------------------------------------------------------------------
 # Showcase executable.
@@ -87,7 +100,7 @@ target_include_directories(waveshare-rp2350-usb-a-bridge-midi2-showcase PRIVATE 
 
 target_link_libraries(waveshare-rp2350-usb-a-bridge-midi2-showcase
     PRIVATE
-        midi2_c99
+        midi2::midi2
         pico_stdlib
         hardware_i2c            # optional SSD1306 over I2C1
         tinyusb_device
