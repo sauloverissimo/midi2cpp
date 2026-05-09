@@ -5,6 +5,35 @@ All notable changes to `midi2cpp` are recorded here. Format follows
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
+## [0.3.1]
+
+ESP Component Registry support. midi2cpp now ships an `idf_component.yml`
+at the root and an `if(ESP_PLATFORM)` gate in `CMakeLists.txt`, so
+ESP-IDF projects can pull it through the official Espressif registry
+with semver constraints instead of hard-pinning a git tag.
+
+### Added
+
+- **`idf_component.yml`** at the repo root (description, version,
+  url, license, maintainers, tags, and `dependencies.sauloverissimo/midi2`
+  + `idf >= 5.0`). Uploaded to https://components.espressif.com/components/sauloverissimo/midi2cpp
+- **ESP-IDF gate** at the top of `CMakeLists.txt`: when `ESP_PLATFORM`
+  is set, calls `idf_component_register(SRCS src/midi2_*.cpp INCLUDE_DIRS src REQUIRES midi2)`
+  with `cxx_std_17` and returns before `project()` runs. Native CMake
+  consumers (Pico SDK, vcpkg, FetchContent, system installs) are
+  unaffected by the gate.
+
+### Install (ESP-IDF, new)
+
+```yaml
+# main/idf_component.yml
+dependencies:
+  sauloverissimo/midi2cpp: ">=0.3.1"
+```
+
+The Component Manager pulls midi2cpp from the registry; midi2 is
+resolved transitively (declared in midi2cpp's own `idf_component.yml`).
+
 ## [0.3.0]
 
 Renamed from `midi2_cpp` to `midi2cpp` in deference to [`starfishmod/MIDI2_CPP`](https://github.com/starfishmod/MIDI2_CPP) (maintained since 2021 by Andrew Mee, MIDI Association TSB Rep), which operates in the same domain. Keeping the namespaces disjoint avoids confusion in package managers and search.

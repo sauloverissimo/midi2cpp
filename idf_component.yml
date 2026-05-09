@@ -1,0 +1,36 @@
+## ESP-IDF Component Manager manifest.
+##
+## Lets ESP-IDF projects pull midi2cpp directly from the
+## ESP Component Registry without vendoring src/ into the
+## consumer tree:
+##
+##   # in your_app/main/idf_component.yml
+##   dependencies:
+##     sauloverissimo/midi2cpp: ">=0.3.1"
+##
+## The Component Manager clones midi2cpp into managed_components/,
+## ESP-IDF picks it up as a component because the top-level CMakeLists
+## detects ESP_PLATFORM and calls idf_component_register at the top of
+## the file. midi2 (the C99 core) is pulled transitively because it
+## is declared in the dependencies block below.
+
+description: "C++17 callback-first wrapper for MIDI 2.0 on embedded devices, layered over the portable midi2 C99 library. Covers UMP transport (M2-104), MIDI-CI with Appendix E (M2-101), Property Exchange Subscribe/Notify, Profile Configuration, Process Inquiry, Flex Data, and Bit Scaling (M2-115)."
+version: "0.3.1"
+url: "https://github.com/sauloverissimo/midi2cpp"
+documentation: "https://github.com/sauloverissimo/midi2cpp#readme"
+issues: "https://github.com/sauloverissimo/midi2cpp/issues"
+license: "MIT"
+maintainers:
+  - "Saulo Verissimo <sauloverissimo@gmail.com>"
+tags:
+  - midi
+  - midi2
+  - ump
+  - usb
+  - capability-inquiry
+  - property-exchange
+  - cpp17
+
+dependencies:
+  idf: ">=5.0"
+  sauloverissimo/midi2: ">=0.3.4"

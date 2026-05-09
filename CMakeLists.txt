@@ -1,5 +1,26 @@
 cmake_minimum_required(VERSION 3.14)
-project(midi2cpp VERSION 0.3.0 LANGUAGES C CXX)
+
+# ESP-IDF Component Manager path. When IDF resolves this directory as
+# a component (clone under managed_components/midi2cpp + idf_component.yml
+# at the root), it sets ESP_PLATFORM before processing this file. Route
+# to idf_component_register and skip the rest, leaving the native CMake
+# build (project / install / export / find_package fallback) untouched
+# for every other consumer.
+if(ESP_PLATFORM)
+    idf_component_register(
+        SRCS
+            src/midi2_device.cpp
+            src/midi2_ci.cpp
+            src/midi2_host.cpp
+            src/midi2_bridge.cpp
+        INCLUDE_DIRS src
+        REQUIRES midi2
+    )
+    target_compile_features(${COMPONENT_LIB} PUBLIC cxx_std_17)
+    return()
+endif()
+
+project(midi2cpp VERSION 0.3.1 LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
