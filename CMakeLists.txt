@@ -13,12 +13,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # This is the same pattern the midi2 README documents for downstream
 # consumers, applied to midi2_cpp itself.
 if(NOT TARGET midi2)
-    find_package(midi2 0.3.2 QUIET CONFIG)
+    find_package(midi2 0.3.3 QUIET CONFIG)
     if(NOT midi2_FOUND)
         include(FetchContent)
         FetchContent_Declare(midi2
             GIT_REPOSITORY https://github.com/sauloverissimo/midi2.git
-            GIT_TAG        v0.3.2
+            GIT_TAG        v0.3.3
         )
         FetchContent_MakeAvailable(midi2)
     endif()
@@ -26,19 +26,18 @@ endif()
 
 # Library target.
 #
-# src/midi2.c is still compiled here so the host test suite, the
-# arduino-cli compile job, and the standalone CMake build all see a
-# single coherent translation unit. The recipes under examples/ are
-# being migrated to depend on midi2::midi2 directly; once every recipe
-# has migrated, src/midi2.{h,c} will be removed and midi2_cpp will
-# link against the external midi2 target unconditionally.
+# midi2_cpp ships the C++ wrapper sources only; the C99 core lives in
+# the external midi2 target this CMakeLists pulls above. Consumers
+# linking midi2_cpp transitively see midi2::midi2 because of the
+# PUBLIC link below.
 add_library(midi2_cpp
-    src/midi2.c
     src/midi2_device.cpp
     src/midi2_ci.cpp
     src/midi2_host.cpp
     src/midi2_bridge.cpp
 )
+
+target_link_libraries(midi2_cpp PUBLIC midi2::midi2)
 
 target_include_directories(midi2_cpp
     PUBLIC
