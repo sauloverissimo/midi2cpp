@@ -4,7 +4,7 @@
 
 ![midi2_cpp](logo_midi2_cpp.png)
 
-*C++17, callback-first, zero-allocation, zero external dependencies, MIT.* From DIY to professional products.
+*C++17, callback-first, static-by-default, zero external dependencies, MIT.* From DIY to professional products.
 
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C.svg)](https://en.cppreference.com/cpp/compiler_support)
 [![MIDI 2.0](https://img.shields.io/badge/MIDI-2.0-blueviolet.svg)](https://midi.org/specifications/midi-2-0-specifications)
@@ -22,7 +22,7 @@
 
 midi2_cpp is the layer where a sketch meets the protocol. Plug a board into the laptop, write five lines of C++, flash, and the device appears on the bus as a USB MIDI 2.0 endpoint with full Capability Inquiry, Property Exchange, and 32-bit resolution.
 
-Underneath, midi2 (the portable C99 core) handles parsing, dispatch, and reassembly. midi2_cpp adds the C++ ergonomics: callbacks, board glue, ready-made USB descriptors. The board does the talking; the sketch tells it what to say.
+Underneath, [midi2](https://github.com/sauloverissimo/midi2) (the portable C99 core) handles parsing, dispatch, and reassembly. midi2_cpp adds the C++ ergonomics: callbacks, board glue, ready-made USB descriptors. The board does the talking; the sketch tells it what to say.
 
 ## Contents
 
@@ -132,7 +132,7 @@ The four hooks (`setWriteFn`, `feedRx`, `setNowFn`, `setMounted` + `setAltSettin
 - USB MIDI 2.0 device, host, or both, depending on the board.
 - 49 typed UMP callbacks: notes, CCs, RPN/NRPN, per-note expression, Flex Data, Stream messages.
 - MIDI-CI out of the box: Discovery, Profile negotiation, Property Exchange (with Subscribe/Notify), Process Inquiry.
-- Static configuration. No `malloc`, no `new`. Sized at compile time, fits a Cortex-M0+.
+- Static-by-default. The hot path is allocation-free; init-time `new` only inside `m2bridge` for the per-slot tables. Fits a Cortex-M0+.
 - Pay-as-you-go: only the modules called by the sketch end up in the binary.
 
 ## Three shapes
@@ -198,10 +198,10 @@ Library Manager: search `midi2_cpp`, click Install. The dependency on `midi2` is
 
 ```ini
 lib_deps =
-  https://github.com/sauloverissimo/midi2_cpp.git#v0.1.0
+  https://github.com/sauloverissimo/midi2_cpp.git#main
 ```
 
-Pin by tag for reproducibility. Pin by commit hash when a specific point in `main` is needed.
+Pin by tag for reproducibility once releases ship; until then, pin by commit hash when a specific point in `main` is needed.
 
 ### ESP-IDF component
 
@@ -214,7 +214,7 @@ include(FetchContent)
 FetchContent_Declare(
     midi2_cpp
     GIT_REPOSITORY https://github.com/sauloverissimo/midi2_cpp.git
-    GIT_TAG        v0.1.0
+    GIT_TAG        main
 )
 FetchContent_MakeAvailable(midi2_cpp)
 ```
@@ -257,19 +257,9 @@ Async, callback-first, copy-paste-ready. Same shape as MIDI 1.0 Arduino librarie
 
 ## Architecture
 
-midi2_cpp is the platform layer of a 4-layer MIDI 2.0 stack:
+midi2_cpp: platform layer of a 4-layer MIDI 2.0 stack:
 
-```
-┌──────────────────────────────────────┐
-│ Sketch                               │  user code
-├──────────────────────────────────────┤
-│ midi2_cpp                            │  ***this library***
-├──────────────────────────────────────┤
-│ midi2                                │  portable C99 core (vendored)
-├──────────────────────────────────────┤
-│ TinyUSB / Native USB / PIO-USB / BLE │  transport (caller-wired)
-└──────────────────────────────────────┘
-```
+![midi2_cpp](architecture.png)
 
 The sketch touches the top. The rest is invisible until needed.
 
