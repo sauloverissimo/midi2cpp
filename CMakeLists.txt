@@ -13,12 +13,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # This is the same pattern the midi2 README documents for downstream
 # consumers, applied to midi2cpp itself.
 if(NOT TARGET midi2)
-    find_package(midi2 0.3.3 QUIET CONFIG)
+    find_package(midi2 0.3.4 QUIET CONFIG)
     if(NOT midi2_FOUND)
         include(FetchContent)
         FetchContent_Declare(midi2
             GIT_REPOSITORY https://github.com/sauloverissimo/midi2.git
-            GIT_TAG        v0.3.3
+            GIT_TAG        v0.3.4
         )
         FetchContent_MakeAvailable(midi2)
     endif()

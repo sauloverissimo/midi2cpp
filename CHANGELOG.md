@@ -24,14 +24,14 @@ patterns shipped under `examples/`.
 
 - **Vendored `src/midi2.{h,c}` removed.** midi2cpp now declares
   midi2 as an external dependency:
-  - `library.properties` carries `depends=midi2 (>=0.3.3)`. Arduino
+  - `library.properties` carries `depends=midi2 (>=0.3.4)`. Arduino
     Library Manager auto-installs midi2 when a sketch includes
     midi2cpp.
   - `library.json` carries `dependencies."sauloverissimo/midi2":
-    "^0.3.3"`. PlatformIO resolves midi2 from its registry.
+    "^0.3.4"`. PlatformIO resolves midi2 from its registry.
   - The root `CMakeLists.txt` exposes a three-layer fallback at the
-    top (`if(NOT TARGET midi2)` -> `find_package(midi2 0.3.3 CONFIG)`
-    -> `FetchContent_Declare(midi2 GIT_TAG v0.3.3)`), then links
+    top (`if(NOT TARGET midi2)` -> `find_package(midi2 0.3.4 CONFIG)`
+    -> `FetchContent_Declare(midi2 GIT_TAG v0.3.4)`), then links
     midi2cpp `PUBLIC midi2::midi2` so downstream targets see the
     C99 core transitively.
 
@@ -81,10 +81,10 @@ patterns shipped under `examples/`.
 
 | Build system | Mechanism | Recipes |
 |---|---|---|
-| Pico SDK | `FetchContent_Declare(midi2 GIT_TAG v0.3.3)` plus `target_link_libraries(midi2cpp PUBLIC midi2::midi2)` | `rp2040-midi2`, `waveshare-rp2040-midi2`, `sparkfun-promicro-rp2350-midi2`, `waveshare-rp2350-usb-a-midi2`, `waveshare-rp2350-usb-a-bridge-midi2`, `adafruit-feather-rp2040-host-midi2`, `adafruit-feather-rp2040-bridge-midi2`, `rp2040-promicro-ump-test-bench` |
+| Pico SDK | `FetchContent_Declare(midi2 GIT_TAG v0.3.4)` plus `target_link_libraries(midi2cpp PUBLIC midi2::midi2)` | `rp2040-midi2`, `waveshare-rp2040-midi2`, `sparkfun-promicro-rp2350-midi2`, `waveshare-rp2350-usb-a-midi2`, `waveshare-rp2350-usb-a-bridge-midi2`, `adafruit-feather-rp2040-host-midi2`, `adafruit-feather-rp2040-bridge-midi2`, `rp2040-promicro-ump-test-bench` |
 | TinyUSB native CMake | same FetchContent pattern as Pico SDK | `xiao-samd21-midi2`, `nrf52840-promicro-midi2` |
-| ESP-IDF | `idf_component.yml` declares `midi2: { git: ..., version: ">=0.3.3" }` and `idf_component_register` lists `midi2` in `REQUIRES` | `arduino-nano-esp32-midi2`, `esp32-s3-devkitc-usb-midi2`, `esp32-p4-devkit-usb-midi2`, `esp32-p4-devkit-host-midi2`, `esp32-p4-devkit-bridge-midi2`, `esp32-p4-devkit-bridge2-midi2`, `t-display-s3-midi2` |
-| PlatformIO + ESP32_Host_MIDI | `lib_deps += sauloverissimo/midi2 @ ^0.3.3` | `esp32-c6-devkitc-multi-midi2`, `esp32-s3-devkitc-host-midi2`, `t-display-s3-shield-host-midi2` |
+| ESP-IDF | `idf_component.yml` declares `midi2: { git: ..., version: ">=0.3.4" }` and `idf_component_register` lists `midi2` in `REQUIRES` | `arduino-nano-esp32-midi2`, `esp32-s3-devkitc-usb-midi2`, `esp32-p4-devkit-usb-midi2`, `esp32-p4-devkit-host-midi2`, `esp32-p4-devkit-bridge-midi2`, `esp32-p4-devkit-bridge2-midi2`, `t-display-s3-midi2` |
+| PlatformIO + ESP32_Host_MIDI | `lib_deps += sauloverissimo/midi2 @ ^0.3.4` | `esp32-c6-devkitc-multi-midi2`, `esp32-s3-devkitc-host-midi2`, `t-display-s3-shield-host-midi2` |
 
 Each recipe drops the `${MIDI2CPP_ROOT}/src/midi2.c` (or `midi2_c99`
 helper library) from its source list. Other midi2cpp sources

@@ -19,7 +19,7 @@
     "url": "https://github.com/sauloverissimo/midi2cpp.git"
   },
   "dependencies": {
-    "sauloverissimo/midi2": "^0.3.3"
+    "sauloverissimo/midi2": "^0.3.4"
   },
   "headers": "midi2cpp.h",
   "export": {

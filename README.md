@@ -9,7 +9,7 @@
 [![release](https://img.shields.io/github/v/release/sauloverissimo/midi2cpp.svg)](https://github.com/sauloverissimo/midi2cpp/releases/latest)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C.svg)](https://en.cppreference.com/cpp/compiler_support)
 [![MIDI 2.0](https://img.shields.io/badge/MIDI-2.0-blueviolet.svg)](https://midi.org/specifications/midi-2-0-specifications)
-[![depends: midi2](https://img.shields.io/badge/depends-midi2_%E2%89%A5_0.3.3-blueviolet.svg)](https://github.com/sauloverissimo/midi2)
+[![depends: midi2](https://img.shields.io/badge/depends-midi2_%E2%89%A5_0.3.4-blueviolet.svg)](https://github.com/sauloverissimo/midi2)
 [![Arduino](https://img.shields.io/badge/Arduino-IDE-00979D.svg)](https://www.arduino.cc/)
 [![PlatformIO](https://img.shields.io/badge/PlatformIO-Registry-FF7F00.svg)](https://registry.platformio.org/libraries/sauloverissimo/midi2cpp)
 [![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.4-E7352C.svg)](https://docs.espressif.com/projects/esp-idf/en/stable/)
@@ -57,10 +57,10 @@ Underneath, [midi2](https://github.com/sauloverissimo/midi2) (the portable C99 c
 midi2cpp draws a clear line between what the library declares and what stays the caller's job:
 
 - **Exactly one declared dependency: [midi2](https://github.com/sauloverissimo/midi2).** The C99 core lives in its own repo, is versioned independently, and is resolved by whichever package manager fits the host build:
-  - Arduino Library Manager: `depends=midi2 (>=0.3.3)` in `library.properties`.
-  - PlatformIO Registry: `dependencies."sauloverissimo/midi2": "^0.3.3"` in `library.json`.
+  - Arduino Library Manager: `depends=midi2 (>=0.3.4)` in `library.properties`.
+  - PlatformIO Registry: `dependencies."sauloverissimo/midi2": "^0.3.4"` in `library.json`.
   - ESP-IDF Component Manager: `idf_component.yml` declaration plus `midi2` in `REQUIRES`.
-  - CMake: `find_package(midi2 0.3.3 CONFIG)` first, falls back to `FetchContent_Declare(midi2 GIT_TAG v0.3.3)`.
+  - CMake: `find_package(midi2 0.3.4 CONFIG)` first, falls back to `FetchContent_Declare(midi2 GIT_TAG v0.3.4)`.
 - **No submodules.** `git clone` is the install. No `--recurse-submodules`, no half-initialised state.
 - **No transport library pulled in.** TinyUSB, Teensy native USB, PIO-USB, libDaisy USBMidi: all caller-supplied. The library does not include `<Arduino.h>`, `pico/time.h`, `esp_timer.h`, or any USB header.
 - **No clock or RNG dependency.** Caller injects `millis` / `time_us_64` / `esp_timer_get_time` and `random` / `get_rand_32` / `esp_random` through public hooks. Unset hooks degrade silently, no missing-symbol link errors.
@@ -242,7 +242,7 @@ dependencies:
   idf: ">=5.4"
   midi2:
     git: https://github.com/sauloverissimo/midi2.git
-    version: ">=0.3.3"
+    version: ">=0.3.4"
 ```
 
 `main/CMakeLists.txt` lists `midi2` (and any of `midi2cpp`'s wrapper sources you use) in its `idf_component_register(...)` block. The seven ESP-IDF recipes under [`examples/`](examples/) ship working templates for device, host and bridge roles.
@@ -259,7 +259,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(midi2cpp)
 ```
 
-`midi2cpp` cascades the dependency on `midi2` to the parent project: `find_package(midi2 0.3.3 CONFIG)` is tried first, falling back to `FetchContent_Declare(midi2 GIT_TAG v0.3.3)` if no install is found.
+`midi2cpp` cascades the dependency on `midi2` to the parent project: `find_package(midi2 0.3.4 CONFIG)` is tried first, falling back to `FetchContent_Declare(midi2 GIT_TAG v0.3.4)` if no install is found.
 
 ### Git submodule
 

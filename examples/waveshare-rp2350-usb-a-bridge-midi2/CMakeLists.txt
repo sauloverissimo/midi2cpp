@@ -79,7 +79,7 @@ if(NOT TARGET midi2)
     else()
         FetchContent_Declare(midi2
             GIT_REPOSITORY https://github.com/sauloverissimo/midi2.git
-            GIT_TAG        v0.3.3
+            GIT_TAG        v0.3.4
             GIT_SHALLOW    TRUE
         )
     endif()
