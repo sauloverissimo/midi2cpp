@@ -6,7 +6,32 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Library target
+# midi2 C99 core, resolved as an external dependency.
+#
+# Three-layer fallback: parent project's target -> system install
+# (vcpkg / conan / system package) -> FetchContent from GitHub.
+# This is the same pattern the midi2 README documents for downstream
+# consumers, applied to midi2_cpp itself.
+if(NOT TARGET midi2)
+    find_package(midi2 0.3.2 QUIET CONFIG)
+    if(NOT midi2_FOUND)
+        include(FetchContent)
+        FetchContent_Declare(midi2
+            GIT_REPOSITORY https://github.com/sauloverissimo/midi2.git
+            GIT_TAG        v0.3.2
+        )
+        FetchContent_MakeAvailable(midi2)
+    endif()
+endif()
+
+# Library target.
+#
+# src/midi2.c is still compiled here so the host test suite, the
+# arduino-cli compile job, and the standalone CMake build all see a
+# single coherent translation unit. The recipes under examples/ are
+# being migrated to depend on midi2::midi2 directly; once every recipe
+# has migrated, src/midi2.{h,c} will be removed and midi2_cpp will
+# link against the external midi2 target unconditionally.
 add_library(midi2_cpp
     src/midi2.c
     src/midi2_device.cpp
