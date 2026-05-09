@@ -12,7 +12,7 @@ CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
 CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
 
 # Compiler: C++17 to match the parent library and Pico SDK recipes.
-# midi2_cpp uses std::function callbacks; exceptions stay off.
+# midi2cpp uses std::function callbacks; exceptions stay off.
 CONFIG_COMPILER_CXX_EXCEPTIONS=n
 CONFIG_COMPILER_OPTIMIZATION_PERF=y
 

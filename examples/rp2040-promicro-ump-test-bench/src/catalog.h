@@ -29,7 +29,7 @@
 
 #include <cstdint>
 
-#include "midi2_cpp.h"
+#include "midi2cpp.h"
 
 namespace ump_test_bench {
 

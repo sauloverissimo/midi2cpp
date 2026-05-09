@@ -1,7 +1,7 @@
-# [midi2_cpp](../..) | Bridge MIDI 2.0
+# [midi2cpp](../..) | Bridge MIDI 2.0
 ## Waveshare ESP32-P4-WIFI6-DEV-KIT (m2bridge variant)
 
-Dual-stack USB MIDI 2.0 bridge on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**, identical wire role to the v1 sibling at [`esp32-p4-devkit-bridge-midi2`](../esp32-p4-devkit-bridge-midi2/) but built on top of the reusable `midi2::m2bridge` class. The slot table, multi-FB Stream Discovery responder, per-FB group rewrite, dynamic FB Names, and MIDI 1.0 alt 0 byte uplift all live inside `midi2_cpp/src/midi2_bridge.cpp`; the recipe carries only the platform layer (PHY init, TinyUSB tasks, write callbacks, mount-event forwarding into the bridge slot table). PC sees PID `0x4095` / `ESP32P4Bridge2`, distinct from the v1 sibling's `0x4092` / `ESP32P4Bridge`, so both firmwares can coexist on the same host for A/B comparison.
+Dual-stack USB MIDI 2.0 bridge on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**, identical wire role to the v1 sibling at [`esp32-p4-devkit-bridge-midi2`](../esp32-p4-devkit-bridge-midi2/) but built on top of the reusable `midi2::m2bridge` class. The slot table, multi-FB Stream Discovery responder, per-FB group rewrite, dynamic FB Names, and MIDI 1.0 alt 0 byte uplift all live inside `midi2cpp/src/midi2_bridge.cpp`; the recipe carries only the platform layer (PHY init, TinyUSB tasks, write callbacks, mount-event forwarding into the bridge slot table). PC sees PID `0x4095` / `ESP32P4Bridge2`, distinct from the v1 sibling's `0x4092` / `ESP32P4Bridge`, so both firmwares can coexist on the same host for A/B comparison.
 
 ![esp32-p4-devkit-bridge2-midi2 banner](board/banner.png)
 
@@ -135,7 +135,7 @@ MIDI-CI: Discovery + Process Inquiry are answered locally by the bridge's `m2ci`
 ## What lives where
 
 ```
-midi2_cpp/examples/esp32-p4-devkit-bridge2-midi2/
+midi2cpp/examples/esp32-p4-devkit-bridge2-midi2/
 ├── README.md
 ├── board/                              board photos / pinout (TBD)
 └── idf/
@@ -148,7 +148,7 @@ midi2_cpp/examples/esp32-p4-devkit-bridge2-midi2/
     │   ├── CMakeLists.txt              shim: registers the fork's selected sources (device + host)
     │   └── usb_descriptors.c           PID 0x4095, Product "ESP32P4Bridge2"
     └── main/
-        ├── CMakeLists.txt              idf_component_register, pulls midi2_cpp + midi2_bridge from ../../../../src
+        ├── CMakeLists.txt              idf_component_register, pulls midi2cpp + midi2_bridge from ../../../../src
         ├── idf_component.yml           managed deps (none beyond ESP-IDF >=5.4)
         ├── tusb_config.h               16 groups, 4 function blocks, FS device + HS host, USER_RESPONDER on
         ├── esp32_p4_devkit_bridge2.h     public API of the platform glue
@@ -158,4 +158,4 @@ midi2_cpp/examples/esp32-p4-devkit-bridge2-midi2/
 
 ## License
 
-MIT, inherits the parent [`midi2_cpp` LICENSE](../../LICENSE). The TinyUSB fork (cloned on demand into `idf/external/tinyusb`) is MIT (upstream by hathach, fork by sauloverissimo carrying the MIDI 2.0 class drivers from the still-open [PR #3571](https://github.com/hathach/tinyusb/pull/3571) plus the experiment/midi-coexistence follow-ups).
+MIT, inherits the parent [`midi2cpp` LICENSE](../../LICENSE). The TinyUSB fork (cloned on demand into `idf/external/tinyusb`) is MIT (upstream by hathach, fork by sauloverissimo carrying the MIDI 2.0 class drivers from the still-open [PR #3571](https://github.com/hathach/tinyusb/pull/3571) plus the experiment/midi-coexistence follow-ups).

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 # nrf52840-promicro-midi2, USB MIDI 2.0 device on Pro Micro nRF52840
 # class boards (Nice!Nano, BlueMicro840, FYSETC nRF52840 Pro Micro,
 # generic Pro Micro nRF52840 clones). Lives at
-# midi2_cpp/examples/nrf52840-promicro-midi2; consumes the parent
+# midi2cpp/examples/nrf52840-promicro-midi2; consumes the parent
 # library directly from ../../src.
 #
 # Build system: TinyUSB native CMake (family_support.cmake) + ARM GNU
@@ -70,9 +70,9 @@ project(nrf52840-promicro-midi2 C CXX ASM)
 family_initialize_project(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR})
 
 # ----------------------------------------------------------------------
-# midi2_cpp parent library (consumed via ../../src, not vendored)
+# midi2cpp parent library (consumed via ../../src, not vendored)
 # ----------------------------------------------------------------------
-set(MIDI2_CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(MIDI2CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 # midi2 C99 core, pulled externally so the recipe shares one source
 # of truth with the rest of the ecosystem. Override with
@@ -91,14 +91,14 @@ if(NOT TARGET midi2)
     FetchContent_MakeAvailable(midi2)
 endif()
 
-add_library(midi2_cpp STATIC
-    ${MIDI2_CPP_ROOT}/src/midi2_device.cpp
-    ${MIDI2_CPP_ROOT}/src/midi2_ci.cpp
+add_library(midi2cpp STATIC
+    ${MIDI2CPP_ROOT}/src/midi2_device.cpp
+    ${MIDI2CPP_ROOT}/src/midi2_ci.cpp
 )
-target_include_directories(midi2_cpp PUBLIC ${MIDI2_CPP_ROOT}/src)
-target_link_libraries(midi2_cpp PUBLIC midi2::midi2)
-target_compile_features(midi2_cpp PUBLIC cxx_std_17)
-target_compile_options(midi2_cpp PRIVATE -fno-rtti -fno-exceptions -fno-use-cxa-atexit)
+target_include_directories(midi2cpp PUBLIC ${MIDI2CPP_ROOT}/src)
+target_link_libraries(midi2cpp PUBLIC midi2::midi2)
+target_compile_features(midi2cpp PUBLIC cxx_std_17)
+target_compile_options(midi2cpp PRIVATE -fno-rtti -fno-exceptions -fno-use-cxa-atexit)
 
 # ----------------------------------------------------------------------
 # Showcase executable
@@ -113,11 +113,11 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE midi2_cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE midi2cpp)
 
 # C++17 + no exceptions/RTTI for the executable too. nRF52840 has plenty
 # of flash (1 MB) and SRAM (256 KB), so the constraint is for parity
-# with the rest of the midi2_cpp portfolio rather than for size.
+# with the rest of the midi2cpp portfolio rather than for size.
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti -fno-exceptions -fno-use-cxa-atexit>
@@ -138,6 +138,6 @@ family_configure_device_example(${PROJECT_NAME} noos)
 target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-Wno-error>
 )
-target_compile_options(midi2_cpp PRIVATE
+target_compile_options(midi2cpp PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-Wno-error>
 )

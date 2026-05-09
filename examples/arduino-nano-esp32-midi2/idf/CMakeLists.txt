@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 # arduino-nano-esp32-midi2, full-spec USB MIDI 2.0 device showcase on
 # the Arduino Nano ESP32 (ESP32-S3, native USB-OTG). Mirrors the Pico
 # SDK rp2040-midi2 22 s scene cycle. Lives at
-# midi2_cpp/examples/arduino-nano-esp32-midi2; consumes the parent
+# midi2cpp/examples/arduino-nano-esp32-midi2; consumes the parent
 # library directly from ../../../src.
 #
 # Build:

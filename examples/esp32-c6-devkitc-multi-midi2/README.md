@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Device MIDI 2.0
+# [midi2cpp](../..) | Device MIDI 2.0
 ## ESP32-C6-DevKitC-1 (BLE + ESP-NOW)
 
 Wireless MIDI 2.0 device on the **ESP32-C6-DevKitC-1**, exposing two transports in parallel: **BLE-MIDI 1.0** (standard Apple / MIDI Association service UUID) and **ESP-NOW** (peer-to-peer, broadcast on WiFi channel 1). The C6 has no USB-OTG hardware (only USB-Serial-JTAG), so the canonical USB MIDI 2.0 device interface is unavailable on this chip; this recipe demonstrates the wireless path instead. Built on [`ESP32_Host_MIDI`](https://github.com/sauloverissimo/ESP32_Host_MIDI) v6.0.0 + arduino-esp32 v3.x. PlatformIO build.
@@ -131,4 +131,4 @@ Velocity / value widths reflect the 7-bit to 16-bit / 32-bit upscale done by the
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE). [`ESP32_Host_MIDI`](https://github.com/sauloverissimo/ESP32_Host_MIDI) is also MIT. Board reference images and PDFs under `board/` are © Espressif Systems, redistributed for documentation purposes.
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE). [`ESP32_Host_MIDI`](https://github.com/sauloverissimo/ESP32_Host_MIDI) is also MIT. Board reference images and PDFs under `board/` are © Espressif Systems, redistributed for documentation purposes.

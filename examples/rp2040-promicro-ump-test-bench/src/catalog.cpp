@@ -3,7 +3,7 @@
  *
  * Each entry follows the same shape:
  *   1. issue the midi.sendXxx() call (or rp2040_midi2::pumpRaw for the
- *      five entries that have no midi2_cpp sender: Endpoint Discovery,
+ *      five entries that have no midi2cpp sender: Endpoint Discovery,
  *      Stream Config Request, FB Discovery, plus the two intentional
  *      edge cases),
  *   2. capture the same wire bytes via the corresponding midi2 C99
@@ -700,7 +700,7 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
             emit_product_id_text(86, kBenchProductInst, "stream product_instance_id");
         } break;
         case 87: {
-            // Stream Configuration Request, no midi2_cpp sender (host-side message).
+            // Stream Configuration Request, no midi2cpp sender (host-side message).
             uint32_t w[4]; midi2_msg_stream_config_request(w, /*protocol*/ 0x02);
             rp2040_midi2::pumpRaw(w, 4);
             log_words(87, "stream config_request protocol=2", w, 4);
@@ -711,7 +711,7 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
             log_words(88, "stream config_notify protocol=2", w, 4);
         } break;
         case 89: {
-            // FB Discovery, no midi2_cpp sender (host-side message).
+            // FB Discovery, no midi2cpp sender (host-side message).
             uint32_t w[4]; midi2_msg_stream_fb_discovery(w, /*fb_num*/ 0xFF, /*filter*/ 0xFF);
             rp2040_midi2::pumpRaw(w, 4);
             log_words(89, "stream fb_discovery fb=0xFF filter=0xFF", w, 4);

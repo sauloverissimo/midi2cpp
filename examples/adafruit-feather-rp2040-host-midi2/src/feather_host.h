@@ -12,7 +12,7 @@
  */
 #pragma once
 
-#include "midi2_cpp.h"
+#include "midi2cpp.h"
 
 namespace feather_host {
 

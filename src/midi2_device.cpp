@@ -965,12 +965,12 @@ bool Device::sendEndOfClip() {
 // (tramp_*) read those slots when dispatch fires; setting a callback after
 // begin() takes effect on the next inbound message.
 
-#define MIDI2_CPP_SETTER(method, field, type) \
+#define MIDI2CPP_SETTER(method, field, type) \
     void Device::method(type cb) { st(_state)->field = std::move(cb); }
 
-MIDI2_CPP_SETTER(onNoop,                 cb_noop,                 NoArgCb)
-MIDI2_CPP_SETTER(onJRClock,              cb_jr_clock,             UtilityCb)
-MIDI2_CPP_SETTER(onJRTimestamp,          cb_jr_timestamp,         UtilityCb)
+MIDI2CPP_SETTER(onNoop,                 cb_noop,                 NoArgCb)
+MIDI2CPP_SETTER(onJRClock,              cb_jr_clock,             UtilityCb)
+MIDI2CPP_SETTER(onJRTimestamp,          cb_jr_timestamp,         UtilityCb)
 void Device::onDctpq(std::function<void(uint16_t)> cb) {
     st(_state)->cb_dctpq = std::move(cb);
 }
@@ -978,36 +978,36 @@ void Device::onDeltaClockstamp(std::function<void(uint32_t)> cb) {
     st(_state)->cb_delta_clockstamp = std::move(cb);
 }
 
-MIDI2_CPP_SETTER(onSystem,               cb_system,               SystemCb)
+MIDI2CPP_SETTER(onSystem,               cb_system,               SystemCb)
 
-MIDI2_CPP_SETTER(onNoteOn1,              cb_note_on1,             Note1Cb)
-MIDI2_CPP_SETTER(onNoteOff1,             cb_note_off1,            Note1Cb)
-MIDI2_CPP_SETTER(onCC1,                  cb_cc1,                  Controller1Cb)
-MIDI2_CPP_SETTER(onProgram1,             cb_program1,             Program1Cb)
-MIDI2_CPP_SETTER(onPitchBend1,           cb_pitch_bend1,          PitchBend1Cb)
-MIDI2_CPP_SETTER(onChannelPressure1,     cb_chan_pressure1,       Pressure1Cb)
-MIDI2_CPP_SETTER(onPolyPressure1,        cb_poly_pressure1,       PolyPressure1Cb)
+MIDI2CPP_SETTER(onNoteOn1,              cb_note_on1,             Note1Cb)
+MIDI2CPP_SETTER(onNoteOff1,             cb_note_off1,            Note1Cb)
+MIDI2CPP_SETTER(onCC1,                  cb_cc1,                  Controller1Cb)
+MIDI2CPP_SETTER(onProgram1,             cb_program1,             Program1Cb)
+MIDI2CPP_SETTER(onPitchBend1,           cb_pitch_bend1,          PitchBend1Cb)
+MIDI2CPP_SETTER(onChannelPressure1,     cb_chan_pressure1,       Pressure1Cb)
+MIDI2CPP_SETTER(onPolyPressure1,        cb_poly_pressure1,       PolyPressure1Cb)
 
 void Device::setUpscaleMt2(bool enabled) {
     st(_state)->dispatch.upscale_mt2 = enabled;
 }
 
-MIDI2_CPP_SETTER(onSysEx7,               cb_sysex7,               SysEx7Cb)
+MIDI2CPP_SETTER(onSysEx7,               cb_sysex7,               SysEx7Cb)
 
-MIDI2_CPP_SETTER(onNoteOn,               cb_note_on,              NoteCb)
-MIDI2_CPP_SETTER(onNoteOff,              cb_note_off,             NoteCb)
-MIDI2_CPP_SETTER(onPolyPressure,         cb_poly_pressure,        PolyPressureCb32)
-MIDI2_CPP_SETTER(onCC,                   cb_cc,                   ControllerCb32)
-MIDI2_CPP_SETTER(onProgram,              cb_program,              ProgramCb)
-MIDI2_CPP_SETTER(onChannelPressure,      cb_chan_pressure,        PressureCb32)
-MIDI2_CPP_SETTER(onPitchBend,            cb_pitch_bend,           Pb32Cb)
-MIDI2_CPP_SETTER(onRpn,                  cb_rpn,                  RpnNrpnCb)
-MIDI2_CPP_SETTER(onNrpn,                 cb_nrpn,                 RpnNrpnCb)
-MIDI2_CPP_SETTER(onRelRpn,               cb_rel_rpn,              RelRpnNrpnCb)
-MIDI2_CPP_SETTER(onRelNrpn,              cb_rel_nrpn,             RelRpnNrpnCb)
-MIDI2_CPP_SETTER(onPerNotePitchBend,     cb_per_note_pb,          PerNotePbCb)
-MIDI2_CPP_SETTER(onRegPerNoteController, cb_reg_per_note,         PerNoteCtrlCb)
-MIDI2_CPP_SETTER(onAsnPerNoteController, cb_asn_per_note,         PerNoteCtrlCb)
+MIDI2CPP_SETTER(onNoteOn,               cb_note_on,              NoteCb)
+MIDI2CPP_SETTER(onNoteOff,              cb_note_off,             NoteCb)
+MIDI2CPP_SETTER(onPolyPressure,         cb_poly_pressure,        PolyPressureCb32)
+MIDI2CPP_SETTER(onCC,                   cb_cc,                   ControllerCb32)
+MIDI2CPP_SETTER(onProgram,              cb_program,              ProgramCb)
+MIDI2CPP_SETTER(onChannelPressure,      cb_chan_pressure,        PressureCb32)
+MIDI2CPP_SETTER(onPitchBend,            cb_pitch_bend,           Pb32Cb)
+MIDI2CPP_SETTER(onRpn,                  cb_rpn,                  RpnNrpnCb)
+MIDI2CPP_SETTER(onNrpn,                 cb_nrpn,                 RpnNrpnCb)
+MIDI2CPP_SETTER(onRelRpn,               cb_rel_rpn,              RelRpnNrpnCb)
+MIDI2CPP_SETTER(onRelNrpn,              cb_rel_nrpn,             RelRpnNrpnCb)
+MIDI2CPP_SETTER(onPerNotePitchBend,     cb_per_note_pb,          PerNotePbCb)
+MIDI2CPP_SETTER(onRegPerNoteController, cb_reg_per_note,         PerNoteCtrlCb)
+MIDI2CPP_SETTER(onAsnPerNoteController, cb_asn_per_note,         PerNoteCtrlCb)
 
 // Arduino-style callback overloads. Each one wraps the simple lambda into
 // a verbose-shaped one that fits the existing storage slot, so the
@@ -1040,29 +1040,29 @@ void Device::onPitchBend(PbSimpleCb cb) {
             if (cb) cb(ch, val);
         };
 }
-MIDI2_CPP_SETTER(onPerNoteManagement,    cb_per_note_mgmt,        PerNoteMgmtCb)
+MIDI2CPP_SETTER(onPerNoteManagement,    cb_per_note_mgmt,        PerNoteMgmtCb)
 
-MIDI2_CPP_SETTER(onSysEx8,               cb_sysex8,               SysEx8Cb)
+MIDI2CPP_SETTER(onSysEx8,               cb_sysex8,               SysEx8Cb)
 
-MIDI2_CPP_SETTER(onTempo,                cb_tempo,                TempoCb)
-MIDI2_CPP_SETTER(onTimeSignature,        cb_time_sig,             TimeSigCb)
-MIDI2_CPP_SETTER(onMetronome,            cb_metronome,            MetronomeCb)
-MIDI2_CPP_SETTER(onKeySignature,         cb_key_sig,              KeySigCb)
-MIDI2_CPP_SETTER(onChord,                cb_chord,                ChordCb)
-MIDI2_CPP_SETTER(onFlexText,             cb_flex_text,            FlexTextCb)
+MIDI2CPP_SETTER(onTempo,                cb_tempo,                TempoCb)
+MIDI2CPP_SETTER(onTimeSignature,        cb_time_sig,             TimeSigCb)
+MIDI2CPP_SETTER(onMetronome,            cb_metronome,            MetronomeCb)
+MIDI2CPP_SETTER(onKeySignature,         cb_key_sig,              KeySigCb)
+MIDI2CPP_SETTER(onChord,                cb_chord,                ChordCb)
+MIDI2CPP_SETTER(onFlexText,             cb_flex_text,            FlexTextCb)
 
-MIDI2_CPP_SETTER(onEndpointDiscovery,    cb_endpoint_discovery,   EndpointDiscoveryCb)
-MIDI2_CPP_SETTER(onEndpointInfo,         cb_endpoint_info,        EndpointInfoCb)
-MIDI2_CPP_SETTER(onDeviceIdentity,       cb_device_identity,      DeviceIdentityCb)
-MIDI2_CPP_SETTER(onStreamText,           cb_stream_text,          StreamTextCb)
-MIDI2_CPP_SETTER(onFbName,               cb_fb_name,              FbNameCb)
-MIDI2_CPP_SETTER(onStreamConfigRequest,  cb_stream_config_request, StreamConfigCb)
-MIDI2_CPP_SETTER(onStreamConfigNotify,   cb_stream_config_notify, StreamConfigCb)
-MIDI2_CPP_SETTER(onFbDiscovery,          cb_fb_discovery,         FbDiscoveryCb)
-MIDI2_CPP_SETTER(onFbInfo,               cb_fb_info,              FbInfoCb)
-MIDI2_CPP_SETTER(onClip,                 cb_clip,                 ClipCb)
+MIDI2CPP_SETTER(onEndpointDiscovery,    cb_endpoint_discovery,   EndpointDiscoveryCb)
+MIDI2CPP_SETTER(onEndpointInfo,         cb_endpoint_info,        EndpointInfoCb)
+MIDI2CPP_SETTER(onDeviceIdentity,       cb_device_identity,      DeviceIdentityCb)
+MIDI2CPP_SETTER(onStreamText,           cb_stream_text,          StreamTextCb)
+MIDI2CPP_SETTER(onFbName,               cb_fb_name,              FbNameCb)
+MIDI2CPP_SETTER(onStreamConfigRequest,  cb_stream_config_request, StreamConfigCb)
+MIDI2CPP_SETTER(onStreamConfigNotify,   cb_stream_config_notify, StreamConfigCb)
+MIDI2CPP_SETTER(onFbDiscovery,          cb_fb_discovery,         FbDiscoveryCb)
+MIDI2CPP_SETTER(onFbInfo,               cb_fb_info,              FbInfoCb)
+MIDI2CPP_SETTER(onClip,                 cb_clip,                 ClipCb)
 
-#undef MIDI2_CPP_SETTER
+#undef MIDI2CPP_SETTER
 
 void Device::setGroupRemap(const uint8_t map[16]) {
     if (!map) return;

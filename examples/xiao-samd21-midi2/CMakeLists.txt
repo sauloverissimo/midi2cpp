@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 # xiao-samd21-midi2, USB MIDI 2.0 device on the Seeed Studio XIAO SAMD21.
-# Lives at midi2_cpp/examples/xiao-samd21-midi2; consumes the parent
+# Lives at midi2cpp/examples/xiao-samd21-midi2; consumes the parent
 # library directly from ../../src.
 #
 # Build system: TinyUSB native CMake (family_support.cmake) + ARM GNU
@@ -60,9 +60,9 @@ project(xiao-samd21-midi2 C CXX ASM)
 family_initialize_project(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR})
 
 # ----------------------------------------------------------------------
-# midi2_cpp parent library (consumed via ../../src, not vendored)
+# midi2cpp parent library (consumed via ../../src, not vendored)
 # ----------------------------------------------------------------------
-set(MIDI2_CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(MIDI2CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 # midi2 C99 core, pulled externally so the recipe shares one source
 # of truth with the rest of the ecosystem. Override with
@@ -81,16 +81,16 @@ if(NOT TARGET midi2)
     FetchContent_MakeAvailable(midi2)
 endif()
 
-add_library(midi2_cpp STATIC
-    ${MIDI2_CPP_ROOT}/src/midi2_device.cpp
-    ${MIDI2_CPP_ROOT}/src/midi2_ci.cpp
+add_library(midi2cpp STATIC
+    ${MIDI2CPP_ROOT}/src/midi2_device.cpp
+    ${MIDI2CPP_ROOT}/src/midi2_ci.cpp
 )
-target_include_directories(midi2_cpp PUBLIC ${MIDI2_CPP_ROOT}/src)
-target_link_libraries(midi2_cpp PUBLIC midi2::midi2)
-target_compile_features(midi2_cpp PUBLIC cxx_std_17)
-# midi2_cpp uses std::function / std::array; exceptions stay off (default
+target_include_directories(midi2cpp PUBLIC ${MIDI2CPP_ROOT}/src)
+target_link_libraries(midi2cpp PUBLIC midi2::midi2)
+target_compile_features(midi2cpp PUBLIC cxx_std_17)
+# midi2cpp uses std::function / std::array; exceptions stay off (default
 # in arm-none-eabi-gcc with -fno-exceptions which TinyUSB build sets).
-target_compile_options(midi2_cpp PRIVATE -fno-rtti -fno-exceptions -fno-use-cxa-atexit)
+target_compile_options(midi2cpp PRIVATE -fno-rtti -fno-exceptions -fno-use-cxa-atexit)
 
 # ----------------------------------------------------------------------
 # Showcase executable
@@ -105,9 +105,9 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE midi2_cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE midi2cpp)
 
-# C++17 + no exceptions/RTTI for the executable too (matches midi2_cpp
+# C++17 + no exceptions/RTTI for the executable too (matches midi2cpp
 # constraint and saves flash on the 256 KB SAMD21).
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 target_compile_options(${PROJECT_NAME} PRIVATE
@@ -123,11 +123,11 @@ family_configure_device_example(${PROJECT_NAME} noos)
 # -Wmissing-prototypes, -Werror-implicit-function-declaration, and
 # -Werror, all C-only flags that gcc rejects when compiling C++
 # under -Werror. Disable -Werror on C++ files so the "flag not
-# applicable" warnings stay non-fatal. midi2_cpp library applies the
+# applicable" warnings stay non-fatal. midi2cpp library applies the
 # same workaround.
 target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-Wno-error>
 )
-target_compile_options(midi2_cpp PRIVATE
+target_compile_options(midi2cpp PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-Wno-error>
 )

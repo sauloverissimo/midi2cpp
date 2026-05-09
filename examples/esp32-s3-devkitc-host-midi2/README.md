@@ -1,7 +1,7 @@
-# [midi2_cpp](../..) | Host MIDI 2.0
+# [midi2cpp](../..) | Host MIDI 2.0
 ## ESP32-S3-DevKitC-1
 
-USB MIDI 2.0 host on the **ESP32-S3-DevKitC-1**, built on two released libraries with **no TinyUSB fork and no upstream override**: [`ESP32_Host_MIDI`](https://github.com/sauloverissimo/ESP32_Host_MIDI) v6.0.0 owns the wire (alt walk, Endpoint Discovery, UMP RX/TX) on top of ESP-IDF's native USB host stack; `m2host` from `midi2_cpp` owns the high level (typed dispatch, identity tracking, MIDI-CI Initiator). PlatformIO build.
+USB MIDI 2.0 host on the **ESP32-S3-DevKitC-1**, built on two released libraries with **no TinyUSB fork and no upstream override**: [`ESP32_Host_MIDI`](https://github.com/sauloverissimo/ESP32_Host_MIDI) v6.0.0 owns the wire (alt walk, Endpoint Discovery, UMP RX/TX) on top of ESP-IDF's native USB host stack; `m2host` from `midi2cpp` owns the high level (typed dispatch, identity tracking, MIDI-CI Initiator). PlatformIO build.
 
 ![esp32-s3-devkitc-host-midi2 banner, ESP32-S3-DevKitC-1 board photo](board/banner.png)
 
@@ -28,7 +28,7 @@ pio run
 pio run -t upload -t monitor
 ```
 
-Consumes the parent `midi2_cpp` library via `lib_extra_dirs = ../../..`. `ESP32_Host_MIDI` v6.0.0 is pulled by PlatformIO from the GitHub URL pinned in `platformio.ini`.
+Consumes the parent `midi2cpp` library via `lib_extra_dirs = ../../..`. `ESP32_Host_MIDI` v6.0.0 is pulled by PlatformIO from the GitHub URL pinned in `platformio.ini`.
 
 ### Flash via the left jack (CP2102)
 
@@ -121,4 +121,4 @@ Per device unmount: `[Disconnected]` line, host ready for the next plug-in. Re-p
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE). [`ESP32_Host_MIDI`](https://github.com/sauloverissimo/ESP32_Host_MIDI) is also MIT.
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE). [`ESP32_Host_MIDI`](https://github.com/sauloverissimo/ESP32_Host_MIDI) is also MIT.

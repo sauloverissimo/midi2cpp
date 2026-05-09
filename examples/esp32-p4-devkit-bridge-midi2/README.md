@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Bridge MIDI 2.0
+# [midi2cpp](../..) | Bridge MIDI 2.0
 ## Waveshare ESP32-P4-WIFI6-DEV-KIT
 
 Dual-stack USB MIDI 2.0 bridge on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**. Runs TinyUSB host on the USB-A jacks (UTMI PHY, OTG_HS controller at 480 Mbps, rhport 1) and TinyUSB device on the **USB-Device** USB-C jack (INT PHY, OTG_FS controller, rhport 0) in the same firmware, forwarding MIDI 2.0 channel-voice traffic from any upstream device into the host PC's view of `ESP32P4Bridge`. Mixed-protocol bus: MIDI 1.0 controllers (Arturia, M-Audio, generic synths) coexist with MIDI 2.0 devices on the same USB-A hub, each routed through its own class driver. ESP-IDF v5.4 build, no Arduino IDE.
@@ -132,4 +132,4 @@ Channel Pressure, Poly Pressure, Per-Note Pitch Bend, and Program Change with ba
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE).
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE).

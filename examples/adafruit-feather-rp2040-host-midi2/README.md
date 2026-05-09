@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Host MIDI 2.0
+# [midi2cpp](../..) | Host MIDI 2.0
 ## Adafruit Feather RP2040 USB Host
 
 USB MIDI 2.0 host on the **Adafruit Feather RP2040 USB Host**. Plug an upstream MIDI 2.0 device into the USB-A port (PIO-USB on GP16 / GP17), routes UMP through `m2host`, renders device topology + live UMP stream on a 128x64 SSD1306 OLED over I2C1 (STEMMA QT). Pico SDK build, no Arduino IDE.
@@ -56,7 +56,7 @@ Plug any USB MIDI 2.0 device (full-spec showcase, Daisy Seed with MIDI 2.0 firmw
 
 ## Spec coverage
 
-**Tier A** host. The RP2040's 264 KB SRAM affords up to `MIDI2_CPP_HOST_MAX_DEVICES` (default 4) connected MIDI 2.0 devices simultaneously, addressed by `idx`.
+**Tier A** host. The RP2040's 264 KB SRAM affords up to `MIDI2CPP_HOST_MAX_DEVICES` (default 4) connected MIDI 2.0 devices simultaneously, addressed by `idx`.
 
 | UMP MT | Direction | Spec | Notes |
 |---|---|---|---|
@@ -91,10 +91,10 @@ UART debug on GP0 mirrors most events for headless monitoring.
 A 3 s watchdog in `feather_host::task` resets the TinyUSB host stack (`tuh_deinit` + `tusb_init`) when `deviceCount()` drops to zero and stays there for 3 s. Tune at compile time:
 
 ```bash
-cmake -B build -DMIDI2_CPP_HOST_WATCHDOG_MS=5000   # 5 s
-cmake -B build -DMIDI2_CPP_HOST_WATCHDOG_MS=0      # disable
+cmake -B build -DMIDI2CPP_HOST_WATCHDOG_MS=5000   # 5 s
+cmake -B build -DMIDI2CPP_HOST_WATCHDOG_MS=0      # disable
 ```
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE). Pico-PIO-USB is MIT.
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE). Pico-PIO-USB is MIT.

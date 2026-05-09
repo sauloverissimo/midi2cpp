@@ -11,7 +11,7 @@
  * becomes a UMP MT 0x2 carrying the same group/status/data.
  *
  * Hot-swap watchdog mirrors feather_host.cpp: tuh_deinit + tusb_init
- * after the upstream device has been gone for MIDI2_CPP_BRIDGE_WATCHDOG_MS.
+ * after the upstream device has been gone for MIDI2CPP_BRIDGE_WATCHDOG_MS.
  */
 #include "feather_bridge.h"
 
@@ -26,8 +26,8 @@ extern "C" {
 #include "midi2.h"  /* midi2_msg_word_count */
 }
 
-#ifndef MIDI2_CPP_BRIDGE_WATCHDOG_MS
-#define MIDI2_CPP_BRIDGE_WATCHDOG_MS 3000
+#ifndef MIDI2CPP_BRIDGE_WATCHDOG_MS
+#define MIDI2CPP_BRIDGE_WATCHDOG_MS 3000
 #endif
 
 namespace feather_bridge {
@@ -52,7 +52,7 @@ DropFn            g_on_drop;
 uint32_t g_last_drops_host   = 0;
 uint32_t g_last_drops_device = 0;
 
-#if MIDI2_CPP_BRIDGE_WATCHDOG_MS > 0
+#if MIDI2CPP_BRIDGE_WATCHDOG_MS > 0
 bool     g_had_device      = false;
 uint32_t g_devices_lost_ms = 0;
 #endif
@@ -192,7 +192,7 @@ void surface_drops() {
     }
 }
 
-#if MIDI2_CPP_BRIDGE_WATCHDOG_MS > 0
+#if MIDI2CPP_BRIDGE_WATCHDOG_MS > 0
 void watchdog_tick(uint32_t t_ms) {
     bool any = false;
     for (uint8_t i = 0; i < MAX_HOST_DEVICES; ++i) {
@@ -208,7 +208,7 @@ void watchdog_tick(uint32_t t_ms) {
         g_devices_lost_ms = t_ms;
         return;
     }
-    if (t_ms - g_devices_lost_ms < MIDI2_CPP_BRIDGE_WATCHDOG_MS) return;
+    if (t_ms - g_devices_lost_ms < MIDI2CPP_BRIDGE_WATCHDOG_MS) return;
 
     tuh_deinit(BOARD_TUH_RHPORT);
     tusb_rhport_init_t host_init = {
@@ -272,7 +272,7 @@ void task() {
 
     surface_drops();
 
-#if MIDI2_CPP_BRIDGE_WATCHDOG_MS > 0
+#if MIDI2CPP_BRIDGE_WATCHDOG_MS > 0
     watchdog_tick(now_ms());
 #endif
 }

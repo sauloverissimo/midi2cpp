@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Device MIDI 2.0
+# [midi2cpp](../..) | Device MIDI 2.0
 ## Pro Micro nRF52840 (Nice!Nano class)
 
 Tier B USB MIDI 2.0 device on **Pro Micro nRF52840** class boards (Nice!Nano, BlueMicro840, FYSETC nRF52840 Pro Micro, generic clones). Cortex-M4F at 64 MHz, 256 KB SRAM. Native CMake build via TinyUSB's `family_support.cmake`, ARM GNU toolchain, no Arduino IDE.
@@ -99,4 +99,4 @@ Per cycle (~13 s):
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE). Nordic nrfx SDK is BSD-3-Clause. The Adafruit nRF52 UF2 bootloader (referenced, not vendored) is GPL-3.0.
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE). Nordic nrfx SDK is BSD-3-Clause. The Adafruit nRF52 UF2 bootloader (referenced, not vendored) is GPL-3.0.

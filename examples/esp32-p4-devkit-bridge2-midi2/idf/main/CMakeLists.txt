@@ -2,7 +2,7 @@
 #
 # Dual-stack: USB MIDI 2.0 device on rhport 0 (INT PHY, USB-Device USB-C
 # jack) AND USB MIDI 2.0 host on rhport 1 (UTMI PHY, USB-A jacks).
-# Pulls midi2_cpp directly from ../../../../src (parent library, not
+# Pulls midi2cpp directly from ../../../../src (parent library, not
 # vendored). Includes midi2_bridge so the recipe consumes the reusable
 # m2bridge class instead of carrying the slot table + Stream Discovery
 # responder + UMP forward path inline. The TinyUSB PR #3571 fork is
@@ -10,19 +10,19 @@
 # ./scripts/fetch_tinyusb.sh; the shim at ../components/tinyusb wires
 # its device + host sources into the build.
 
-set(MIDI2_CPP_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../src")
+set(MIDI2CPP_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../src")
 
 idf_component_register(
     SRCS
         "main.cpp"
         "esp32_p4_devkit_bridge2.cpp"
-        "${MIDI2_CPP_ROOT}/midi2_device.cpp"
-        "${MIDI2_CPP_ROOT}/midi2_ci.cpp"
-        "${MIDI2_CPP_ROOT}/midi2_host.cpp"
-        "${MIDI2_CPP_ROOT}/midi2_bridge.cpp"
+        "${MIDI2CPP_ROOT}/midi2_device.cpp"
+        "${MIDI2CPP_ROOT}/midi2_ci.cpp"
+        "${MIDI2CPP_ROOT}/midi2_host.cpp"
+        "${MIDI2CPP_ROOT}/midi2_bridge.cpp"
     INCLUDE_DIRS
         "."
-        "${MIDI2_CPP_ROOT}"
+        "${MIDI2CPP_ROOT}"
     REQUIRES
         midi2
         tinyusb

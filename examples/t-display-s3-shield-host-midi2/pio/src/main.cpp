@@ -1,4 +1,4 @@
-// midi2_cpp | t-display-s3-shield-host-midi2
+// midi2cpp | t-display-s3-shield-host-midi2
 //
 // USB MIDI 2.0 Host on the LilyGo T-Display S3 + LilyGo MIDI Shield V1.1,
 // with a didactic on-board ST7789 piano roll + MIDI 2.0 event log.
@@ -15,7 +15,7 @@
 //      v   FreeRTOS queue (cross-core handover, USB task -> main loop)
 //      |
 //      v
-//   midi2_cpp m2host (typed dispatch + MIDI-CI Initiator)
+//   midi2cpp m2host (typed dispatch + MIDI-CI Initiator)
 //      |
 //      v
 //   piano_display (this recipe, src/piano_display.cpp)
@@ -157,7 +157,7 @@ void setup() {
     delay(400);
     Serial.println();
     Serial.println("=====================================================");
-    Serial.println("  midi2_cpp  |  T-Display S3 + MIDI Shield  |  USB MIDI 2.0 Host");
+    Serial.println("  midi2cpp  |  T-Display S3 + MIDI Shield  |  USB MIDI 2.0 Host");
     Serial.println("=====================================================");
 
     piano_display::init();
@@ -172,7 +172,7 @@ void setup() {
 
     s_umpQueue = xQueueCreate(32, sizeof(UMPBatch));
 
-    // ---- midi2_cpp host wiring ----
+    // ---- midi2cpp host wiring ----
     host.setWriteFn(onUMPToUsb);
     host.setNowFn([]() -> uint32_t { return (uint32_t)millis(); });
     host.setRngFn([]() -> uint32_t { return esp_random(); });

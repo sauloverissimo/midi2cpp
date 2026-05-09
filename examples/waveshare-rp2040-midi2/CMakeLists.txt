@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.14)  # FetchContent_MakeAvailable
 # waveshare-rp2040-midi2, USB MIDI 2.0 device example for the Waveshare
 # RP2040 Zero (RP2040, USB-C, no display). Mirrors rp2040-midi2 with the
 # board target swapped to waveshare_rp2040_zero and identification
-# strings adjusted. Lives at midi2_cpp/examples/waveshare-rp2040-midi2;
+# strings adjusted. Lives at midi2cpp/examples/waveshare-rp2040-midi2;
 # consumes the parent library directly from ../../src.
 #
-# Owns Pico SDK + TinyUSB + midi2_cpp wiring; consumer applications sit
+# Owns Pico SDK + TinyUSB + midi2cpp wiring; consumer applications sit
 # on top via the small public API in src/rp2040_midi2.h and never touch
 # tud_*, pico_*, or any USB symbol. The bundled
 # waveshare-rp2040-midi2-showcase executable is one such application: a
@@ -45,9 +45,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 pico_sdk_init()
 
 # ---------------------------------------------------------------------------
-# midi2_cpp, built from the parent library tree.
+# midi2cpp, built from the parent library tree.
 # ---------------------------------------------------------------------------
-set(MIDI2_CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(MIDI2CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 # midi2 C99 core, pulled externally so the recipe shares one source
 # of truth with the rest of the ecosystem. Override with
@@ -66,12 +66,12 @@ if(NOT TARGET midi2)
     FetchContent_MakeAvailable(midi2)
 endif()
 
-add_library(midi2_cpp STATIC
-    ${MIDI2_CPP_ROOT}/src/midi2_device.cpp
-    ${MIDI2_CPP_ROOT}/src/midi2_ci.cpp
+add_library(midi2cpp STATIC
+    ${MIDI2CPP_ROOT}/src/midi2_device.cpp
+    ${MIDI2CPP_ROOT}/src/midi2_ci.cpp
 )
-target_include_directories(midi2_cpp PUBLIC ${MIDI2_CPP_ROOT}/src)
-target_link_libraries(midi2_cpp PUBLIC midi2::midi2)
+target_include_directories(midi2cpp PUBLIC ${MIDI2CPP_ROOT}/src)
+target_link_libraries(midi2cpp PUBLIC midi2::midi2)
 
 # ---------------------------------------------------------------------------
 # waveshare-rp2040-midi2, board core (Pico SDK + TinyUSB glue +
@@ -84,7 +84,7 @@ add_library(waveshare-rp2040-midi2 STATIC
 target_include_directories(waveshare-rp2040-midi2 PUBLIC src)
 target_link_libraries(waveshare-rp2040-midi2
     PUBLIC
-        midi2_cpp
+        midi2cpp
         pico_stdlib
         pico_rand              # get_rand_32, used by the RNG hook for MUID
         tinyusb_device

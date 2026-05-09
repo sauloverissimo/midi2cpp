@@ -7,7 +7,7 @@
  * callbacks, and prints the device topology + live UMP stream on the
  * UART console (CH343 USB-to-UART bridge on the "ToUART" USB-C jack).
  *
- * Pair this host with any midi2_cpp device recipe (rp2040-midi2,
+ * Pair this host with any midi2cpp device recipe (rp2040-midi2,
  * waveshare-rp2040-midi2, esp32-s3-devkitc-usb-midi2,
  * esp32-p4-devkit-usb-midi2, etc.) plugged into a USB-A jack to see
  * the full Showcase A-J cycle decoded live on the UART console.

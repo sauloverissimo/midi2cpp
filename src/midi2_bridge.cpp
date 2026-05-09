@@ -63,8 +63,8 @@ struct BridgeState {
     uint16_t family                 = 0x0001;
     uint16_t model                  = 0x0001;
     uint32_t version                = 0x00010000;
-    char     endpointName[64]       = "midi2_cpp Bridge";
-    char     productInstanceId[64]  = "midi2_cpp-bridge-0001";
+    char     endpointName[64]       = "midi2cpp Bridge";
+    char     productInstanceId[64]  = "midi2cpp-bridge-0001";
 
     // Platform write hooks. The Bridge wraps these into Device::WriteFn
     // and Host::WriteFn during begin() so the inner classes do not need

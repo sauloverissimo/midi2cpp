@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.16)
 # ../esp32-p4-devkit-bridge-midi2/ (USB device on rhport 0 + USB host on
 # rhport 1, multi-FB topology, per-slot group window, MIDI 1.0 alt 0
 # uplift), but the slot table + Stream Discovery responder + UMP forward
-# path live inside midi2_cpp/src/midi2_bridge.cpp instead of being
+# path live inside midi2cpp/src/midi2_bridge.cpp instead of being
 # carried inline by the recipe.
 #
 # PC sees PID 0x4095 / "ESP32P4Bridge2", distinct from the v1 sibling's

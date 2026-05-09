@@ -7,7 +7,7 @@
  *   - The LP_SYS.usb_ctrl PHY swap on the device side (mandatory on
  *     the Waveshare WIFI6 dev kit, see esp32-p4-devkit-usb-midi2 D-024)
  *   - TinyUSB device + host driver install
- *   - Wiring between TinyUSB and midi2_cpp via m2device, m2ci, m2host
+ *   - Wiring between TinyUSB and midi2cpp via m2device, m2ci, m2host
  *     hooks
  *
  * The application layer only sees the three m2 objects after init().

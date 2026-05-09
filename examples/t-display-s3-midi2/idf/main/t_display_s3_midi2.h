@@ -3,7 +3,7 @@
  *
  * The application layer consumes this header and never touches tud_*,
  * esp_*, or any USB symbol directly. After init, the m2device + m2ci
- * instances are wired to the platform USB stack through midi2_cpp's
+ * instances are wired to the platform USB stack through midi2cpp's
  * five public hooks (setWriteFn, feedRx, setNowFn, setMounted,
  * CI::setRngFn). The app then registers callbacks (onNoteOn/Off, onCC,
  * onPitchBend, onPerNotePitchBend), runs the receiver loop, and calls
@@ -15,13 +15,13 @@
  */
 #pragma once
 
-#include "midi2_cpp.h"
+#include "midi2cpp.h"
 
 namespace t_display_s3_midi2 {
 
 // Boots USB-OTG PHY, installs TinyUSB device task with the MIDI 2.0
 // class driver from PR #3571, brings up the ST7789 display + piano UI,
-// and wires the five midi2_cpp platform hooks into the supplied
+// and wires the five midi2cpp platform hooks into the supplied
 // m2device / m2ci. After this returns, the app can register callbacks
 // and call task() in its main loop.
 //

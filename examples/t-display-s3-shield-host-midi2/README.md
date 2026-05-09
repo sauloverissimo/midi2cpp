@@ -1,7 +1,7 @@
-# [midi2_cpp](../..) | Host MIDI 2.0
+# [midi2cpp](../..) | Host MIDI 2.0
 ## LilyGo T-Display S3 + LilyGo MIDI Shield V1.1
 
-USB MIDI 2.0 host on the **LilyGo T-Display S3** docked into the **LilyGo MIDI Shield V1.1**, with on-board ST7789 piano roll visualisation. Plug a USB MIDI 2.0 device into the Shield's USB-A jack; the T-Display lights piano keys in real time. Built on two **released** libraries: [`ESP32_Host_MIDI`](https://github.com/sauloverissimo/ESP32_Host_MIDI) v6.0.0 owns the wire on top of ESP-IDF's native USB host stack; `m2host` from `midi2_cpp` owns the high level. PlatformIO build.
+USB MIDI 2.0 host on the **LilyGo T-Display S3** docked into the **LilyGo MIDI Shield V1.1**, with on-board ST7789 piano roll visualisation. Plug a USB MIDI 2.0 device into the Shield's USB-A jack; the T-Display lights piano keys in real time. Built on two **released** libraries: [`ESP32_Host_MIDI`](https://github.com/sauloverissimo/ESP32_Host_MIDI) v6.0.0 owns the wire on top of ESP-IDF's native USB host stack; `m2host` from `midi2cpp` owns the high level. PlatformIO build.
 
 ![t-display-s3-shield-host-midi2 banner](board/banner.png)
 
@@ -22,7 +22,7 @@ USB MIDI 2.0 host on the **LilyGo T-Display S3** docked into the **LilyGo MIDI S
                                                           ESP32_Host_MIDI v6.0.0
                                                               |
                                                               v
-                                                          midi2_cpp m2host
+                                                          midi2cpp m2host
                                                               |
                                                 +-------------+-------------+
                                                 |                           |
@@ -54,7 +54,7 @@ pio run
 pio run -t upload
 ```
 
-Consumes the parent `midi2_cpp` library via `lib_extra_dirs = ../../..`. PSRAM Octal at 80 MHz is mandatory in `platformio.ini` (`board_build.psram_type = opi` + `-DBOARD_HAS_PSRAM`); the full-screen 320x170 16-bpp sprite is ~108 KB and lives in PSRAM.
+Consumes the parent `midi2cpp` library via `lib_extra_dirs = ../../..`. PSRAM Octal at 80 MHz is mandatory in `platformio.ini` (`board_build.psram_type = opi` + `-DBOARD_HAS_PSRAM`); the full-screen 320x170 16-bpp sprite is ~108 KB and lives in PSRAM.
 
 ### Flash, USB-Serial-JTAG quirk
 
@@ -146,4 +146,4 @@ Per device unmount: `[Disconnected]` line, info bar resets to `waiting for devic
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE). [`ESP32_Host_MIDI`](https://github.com/sauloverissimo/ESP32_Host_MIDI) is MIT. [`LovyanGFX`](https://github.com/lovyan03/LovyanGFX) is FreeBSD-style permissive. The LilyGo T-Display-S3 + MIDI Shield V1.1 schematic is published by LilyGO under GPL 3.0.
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE). [`ESP32_Host_MIDI`](https://github.com/sauloverissimo/ESP32_Host_MIDI) is MIT. [`LovyanGFX`](https://github.com/lovyan03/LovyanGFX) is FreeBSD-style permissive. The LilyGo T-Display-S3 + MIDI Shield V1.1 schematic is published by LilyGO under GPL 3.0.

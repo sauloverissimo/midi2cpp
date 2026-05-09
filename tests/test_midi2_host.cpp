@@ -6,7 +6,7 @@
 // later commits; this smoke locks the surface shape so subsequent
 // implementations cannot regress it.
 #include "test_common.h"
-#include "midi2_cpp.h"
+#include "midi2cpp.h"
 
 #include <cstdlib>
 #include <cstring>

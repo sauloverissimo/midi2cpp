@@ -4,13 +4,13 @@
  * The application layer (main.cpp showcase) consumes this header and
  * never touches tud_*, board_*, or any USB symbol directly. After
  * init, the m2device + m2ci instances are wired to TinyUSB through
- * midi2_cpp's public hooks (setWriteFn, feedRx, setNowFn, setMounted,
+ * midi2cpp's public hooks (setWriteFn, feedRx, setNowFn, setMounted,
  * setAltSetting, CI::setRngFn). The app then registers callbacks,
  * sends UMPs, and calls task() in the main loop.
  */
 #pragma once
 
-#include "midi2_cpp.h"
+#include "midi2cpp.h"
 
 namespace xiao_samd21_midi2 {
 

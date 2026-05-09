@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Device MIDI 2.0
+# [midi2cpp](../..) | Device MIDI 2.0
 ## ESP32-S3-DevKitC-1
 
 Full-spec USB MIDI 2.0 device on the **ESP32-S3-DevKitC-1** (Xtensa LX7, USB-OTG internal PHY at full-speed 12 Mbps). Headless single-file showcase of every MIDI 2.0 message category beyond MIDI 1.0. ESP-IDF v5.4 build, no Arduino IDE.
@@ -110,4 +110,4 @@ Every scene logs to UART (left jack) at 115200 8N1.
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE).
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE).

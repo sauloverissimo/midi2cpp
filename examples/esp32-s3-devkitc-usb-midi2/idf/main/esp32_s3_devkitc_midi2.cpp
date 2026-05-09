@@ -3,7 +3,7 @@
  *
  * Owns: ESP32-S3 USB-OTG PHY init (USB_PHY_TARGET_INT), TinyUSB device
  * driver install (with MIDI 2.0 class driver from PR #3571), the wiring
- * between TinyUSB and midi2_cpp via the five public hooks, and the
+ * between TinyUSB and midi2cpp via the five public hooks, and the
  * on-board RGB LED indicator on GPIO48. The application layer only sees
  * `midi2::m2device` + `midi2::m2ci` objects that are already alive.
  */
@@ -121,7 +121,7 @@ void init(midi2::m2device& midi, midi2::m2ci& ci) {
                             /*core*/ 0);
     ESP_LOGI(TAG, "TinyUSB device task started");
 
-    // Wire the five midi2_cpp platform hooks. From now on, the app
+    // Wire the five midi2cpp platform hooks. From now on, the app
     // operates entirely through midi/ci; the platform layer below is
     // invisible. Mounted/alt state are kept in sync with TinyUSB by the
     // polling loop in task(), so the initial values here are just

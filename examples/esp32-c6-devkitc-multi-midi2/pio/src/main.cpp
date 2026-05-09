@@ -1,4 +1,4 @@
-// midi2_cpp | esp32-c6-devkitc-multi-midi2
+// midi2cpp | esp32-c6-devkitc-multi-midi2
 //
 // ESP32-C6-DevKitC-1 wireless MIDI 2.0 endpoint over BLE + ESP-NOW.
 //
@@ -230,10 +230,10 @@ void setup() {
     delay(400);
     Serial.println();
     Serial.println("=====================================================");
-    Serial.println("  midi2_cpp  |  ESP32-C6-DevKitC-1  |  BLE + ESP-NOW");
+    Serial.println("  midi2cpp  |  ESP32-C6-DevKitC-1  |  BLE + ESP-NOW");
     Serial.println("=====================================================");
     Serial.println("  ESP32_Host_MIDI v6.0.0 (BLE + ESP-NOW transports)");
-    Serial.println("  midi2_cpp Device (typed UMP dispatch, MT 0x2 path)");
+    Serial.println("  midi2cpp Device (typed UMP dispatch, MT 0x2 path)");
     Serial.println();
 
     g_device.setWriteFn(onUmpFromDevice);

@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Host MIDI 2.0
+# [midi2cpp](../..) | Host MIDI 2.0
 ## Waveshare ESP32-P4-WIFI6-DEV-KIT
 
 USB MIDI 2.0 host on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**. Plug an upstream MIDI 2.0 device into either of the two USB-A jacks (UTMI PHY, OTG_HS controller at 480 Mbps, routed through the onboard CH334F USB hub), routes UMP through `m2host`, prints decoded device topology + live UMP stream on the UART console (CH343 USB-Serial-JTAG bridge on the **ToUART** USB-C jack). ESP-IDF v5.4 build, no Arduino IDE.
@@ -44,7 +44,7 @@ To override TinyUSB with a local working copy: `ln -sfn /path/to/your/tinyusb id
 | BOOT button | Hold during reset to enter download mode (rarely needed; CH343 auto-reset handles it) |
 | RESET button | Reboot |
 
-The CH334F hub allows up to `MIDI2_CPP_HOST_MAX_DEVICES` (default 4) MIDI 2.0 devices simultaneously, addressed by `idx`.
+The CH334F hub allows up to `MIDI2CPP_HOST_MAX_DEVICES` (default 4) MIDI 2.0 devices simultaneously, addressed by `idx`.
 
 ## Validation
 
@@ -88,4 +88,4 @@ Per device mount, console prints one line per event:
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE).
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE).

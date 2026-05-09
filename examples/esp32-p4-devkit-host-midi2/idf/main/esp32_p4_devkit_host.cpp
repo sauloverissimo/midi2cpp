@@ -3,7 +3,7 @@
  *
  * Owns: ESP32-P4 USB-OTG UTMI PHY init (host role, high speed),
  * TinyUSB host driver install (with MIDI 2.0 host class from PR #3571),
- * and the wiring between TinyUSB host and midi2_cpp via the m2host
+ * and the wiring between TinyUSB host and midi2cpp via the m2host
  * hooks. The application layer only sees `midi2::m2host` after init().
  *
  * The Waveshare ESP32-P4-WIFI6-DEV-KIT routes the UTMI PHY to the two

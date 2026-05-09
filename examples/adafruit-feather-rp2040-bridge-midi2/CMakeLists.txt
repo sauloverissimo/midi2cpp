@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.14)  # FetchContent_MakeAvailable
 # GP16/GP17) and TinyUSB device (native USB-C) in the same firmware,
 # forwards UMP between them, and shows live traffic on a 128x64 SSD1306
 # OLED over I2C1 (STEMMA QT). Lives at
-# midi2_cpp/examples/adafruit-feather-rp2040-bridge-midi2; consumes the
+# midi2cpp/examples/adafruit-feather-rp2040-bridge-midi2; consumes the
 # parent library directly from ../../src.
 
 set(PICO_BOARD adafruit_feather_rp2040_usb_host CACHE STRING "Board type")
@@ -70,7 +70,7 @@ pico_sdk_init()
 # midi2 (C99), only midi2_msg_word_count is used by the router. Pull
 # the single .c from the parent library tree to keep the binary lean.
 # ---------------------------------------------------------------------------
-set(MIDI2_CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(MIDI2CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 # midi2 C99 core, pulled externally so the recipe shares one source
 # of truth with the rest of the ecosystem. Override with
@@ -122,10 +122,10 @@ target_compile_definitions(adafruit-feather-rp2040-bridge-midi2-showcase PRIVATE
 )
 
 # Hot-swap watchdog window (ms). 0 disables. Default 3000 matches the
-# README; override with -DMIDI2_CPP_BRIDGE_WATCHDOG_MS=N.
-if(DEFINED MIDI2_CPP_BRIDGE_WATCHDOG_MS)
+# README; override with -DMIDI2CPP_BRIDGE_WATCHDOG_MS=N.
+if(DEFINED MIDI2CPP_BRIDGE_WATCHDOG_MS)
     target_compile_definitions(adafruit-feather-rp2040-bridge-midi2-showcase
-        PRIVATE MIDI2_CPP_BRIDGE_WATCHDOG_MS=${MIDI2_CPP_BRIDGE_WATCHDOG_MS})
+        PRIVATE MIDI2CPP_BRIDGE_WATCHDOG_MS=${MIDI2CPP_BRIDGE_WATCHDOG_MS})
 endif()
 
 # Disable USB CDC stdio (the USB-C interface is dedicated to MIDI 2.0).

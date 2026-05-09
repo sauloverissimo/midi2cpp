@@ -5,7 +5,7 @@
  * The application layer (host monitor) consumes this header and never
  * touches tuh_*, esp_*, or any USB symbol directly. After init, the
  * m2host instance is wired to the platform USB stack through
- * midi2_cpp's host hooks (setWriteFn, feedRx, setNowFn, setRngFn,
+ * midi2cpp's host hooks (setWriteFn, feedRx, setNowFn, setRngFn,
  * setMounted). The app then registers callbacks and calls task() in
  * the FreeRTOS loop.
  *
@@ -15,12 +15,12 @@
  */
 #pragma once
 
-#include "midi2_cpp.h"
+#include "midi2cpp.h"
 
 namespace esp32_p4_devkit_host {
 
 // Boots the UTMI USB-OTG PHY (host role, high speed), installs the
-// TinyUSB host task on rhport 1, and wires the four midi2_cpp host
+// TinyUSB host task on rhport 1, and wires the four midi2cpp host
 // hooks into the supplied m2host instance. After this returns, the
 // app can register callbacks and call task() in its main loop.
 //

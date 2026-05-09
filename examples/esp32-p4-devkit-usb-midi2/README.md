@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Device MIDI 2.0
+# [midi2cpp](../..) | Device MIDI 2.0
 ## Waveshare ESP32-P4-WIFI6-DEV-KIT
 
 Full-spec USB MIDI 2.0 device on the **Waveshare ESP32-P4-WIFI6-DEV-KIT** (RISC-V Cortex-M-class core, USB-OTG internal PHY). Headless single-file showcase of every MIDI 2.0 message category beyond MIDI 1.0. ESP-IDF v5.4 build, no Arduino IDE.
@@ -92,4 +92,4 @@ Every scene logs to UART via the CH343 bridge on the **ToUART** jack at 115200 8
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE).
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE).

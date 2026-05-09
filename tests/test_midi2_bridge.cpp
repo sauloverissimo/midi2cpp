@@ -1,11 +1,11 @@
 // tests/test_midi2_bridge.cpp -- m2bridge smoke + group rewrite + heap balance.
 //
-// Bridge is the only midi2_cpp class that allocates state on the heap
+// Bridge is the only midi2cpp class that allocates state on the heap
 // (BridgeState in begin's predecessor; ByteStreamConverter slots inside
 // begin). Running this suite under ASan + UBSan is what catches the
 // allocate-without-free regressions m2bridge could otherwise hide.
 #include "test_common.h"
-#include "midi2_cpp.h"
+#include "midi2cpp.h"
 
 #include <cstdlib>
 #include <cstring>

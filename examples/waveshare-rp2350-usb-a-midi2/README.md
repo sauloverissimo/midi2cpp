@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Device MIDI 2.0
+# [midi2cpp](../..) | Device MIDI 2.0
 ## Waveshare RP2350-USB-A
 
 Full-spec USB MIDI 2.0 device on the **Waveshare RP2350-USB-A** (21 x 51 mm, USB-C + USB-A receptacle wired to GP12 / GP13 via PIO-USB). Headless single-file showcase of every MIDI 2.0 message category beyond MIDI 1.0. Pico SDK build, no Arduino IDE.
@@ -93,4 +93,4 @@ Every scene logs to UART (GP0).
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE). Waveshare hardware reference assets under `board/` (board photo, pinout, schematic) are © Waveshare Electronics, redistributed for documentation purposes.
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE). Waveshare hardware reference assets under `board/` (board photo, pinout, schematic) are © Waveshare Electronics, redistributed for documentation purposes.

@@ -1,13 +1,13 @@
 # Changelog
 
-All notable changes to `midi2_cpp` are recorded here. Format follows
+All notable changes to `midi2cpp` are recorded here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
 ## [0.2.0]
 
-Single source of truth for the MIDI 2.0 stack: midi2_cpp no longer
+Single source of truth for the MIDI 2.0 stack: midi2cpp no longer
 vendors the C99 core and is published as a regular Arduino /
 PlatformIO library that depends on midi2 explicitly. Every recipe
 under `examples/` was migrated to pull midi2 externally through the
@@ -16,23 +16,23 @@ native CMake, IDF Component Manager for ESP-IDF, lib_deps for
 PlatformIO).
 
 This is a breaking release. Consumers that previously vendored
-`midi2_cpp/src/midi2.{h,c}` directly will break; the migration path
+`midi2cpp/src/midi2.{h,c}` directly will break; the migration path
 is documented in the manifest below and in the per-build-system
 patterns shipped under `examples/`.
 
 ### Breaking
 
-- **Vendored `src/midi2.{h,c}` removed.** midi2_cpp now declares
+- **Vendored `src/midi2.{h,c}` removed.** midi2cpp now declares
   midi2 as an external dependency:
   - `library.properties` carries `depends=midi2 (>=0.3.3)`. Arduino
     Library Manager auto-installs midi2 when a sketch includes
-    midi2_cpp.
+    midi2cpp.
   - `library.json` carries `dependencies."sauloverissimo/midi2":
     "^0.3.3"`. PlatformIO resolves midi2 from its registry.
   - The root `CMakeLists.txt` exposes a three-layer fallback at the
     top (`if(NOT TARGET midi2)` -> `find_package(midi2 0.3.3 CONFIG)`
     -> `FetchContent_Declare(midi2 GIT_TAG v0.3.3)`), then links
-    midi2_cpp `PUBLIC midi2::midi2` so downstream targets see the
+    midi2cpp `PUBLIC midi2::midi2` so downstream targets see the
     C99 core transitively.
 
 ### Added
@@ -56,23 +56,23 @@ patterns shipped under `examples/`.
 - **CMake entry surface for downstream consumers**: the root
   `CMakeLists.txt` follows the same `find_package` -> `FetchContent`
   fallback pattern that midi2 itself ships. Subprojects pulling
-  midi2_cpp via `add_subdirectory` or `FetchContent` skip the
+  midi2cpp via `add_subdirectory` or `FetchContent` skip the
   `find_package` step (`if(NOT TARGET midi2)` guard).
 
 ### Changed
 
-- **README tagline** drops the `zero-allocation` claim. midi2_cpp
+- **README tagline** drops the `zero-allocation` claim. midi2cpp
   allocates in two narrow places (`m2bridge::begin()` slot tables and
   `std::function` callback storage), so the wrapper is now described
   as `static-by-default`. The C99 core (midi2) remains strictly
   zero-allocation. Same shift applied to the logo and to the
   `.intern/decisoes.md` design heritage notes.
 - **README "Manual vendor" path** rewritten: pre-v0.2 builds vendored
-  a single `midi2_cpp/src/midi2.{h,c}` copy; today the consumer
+  a single `midi2cpp/src/midi2.{h,c}` copy; today the consumer
   downloads both repositories side by side and adds `midi2/dist/`
-  plus `midi2_cpp/src/` to its include path.
+  plus `midi2cpp/src/` to its include path.
 - **`paragraph` in `library.properties`** rewritten: drops
-  comparisons with other libraries, focuses on what midi2_cpp itself
+  comparisons with other libraries, focuses on what midi2cpp itself
   ships and the embedded targets validated.
 
 ### Examples / Recipes
@@ -81,16 +81,16 @@ patterns shipped under `examples/`.
 
 | Build system | Mechanism | Recipes |
 |---|---|---|
-| Pico SDK | `FetchContent_Declare(midi2 GIT_TAG v0.3.3)` plus `target_link_libraries(midi2_cpp PUBLIC midi2::midi2)` | `rp2040-midi2`, `waveshare-rp2040-midi2`, `sparkfun-promicro-rp2350-midi2`, `waveshare-rp2350-usb-a-midi2`, `waveshare-rp2350-usb-a-bridge-midi2`, `adafruit-feather-rp2040-host-midi2`, `adafruit-feather-rp2040-bridge-midi2`, `rp2040-promicro-ump-test-bench` |
+| Pico SDK | `FetchContent_Declare(midi2 GIT_TAG v0.3.3)` plus `target_link_libraries(midi2cpp PUBLIC midi2::midi2)` | `rp2040-midi2`, `waveshare-rp2040-midi2`, `sparkfun-promicro-rp2350-midi2`, `waveshare-rp2350-usb-a-midi2`, `waveshare-rp2350-usb-a-bridge-midi2`, `adafruit-feather-rp2040-host-midi2`, `adafruit-feather-rp2040-bridge-midi2`, `rp2040-promicro-ump-test-bench` |
 | TinyUSB native CMake | same FetchContent pattern as Pico SDK | `xiao-samd21-midi2`, `nrf52840-promicro-midi2` |
 | ESP-IDF | `idf_component.yml` declares `midi2: { git: ..., version: ">=0.3.3" }` and `idf_component_register` lists `midi2` in `REQUIRES` | `arduino-nano-esp32-midi2`, `esp32-s3-devkitc-usb-midi2`, `esp32-p4-devkit-usb-midi2`, `esp32-p4-devkit-host-midi2`, `esp32-p4-devkit-bridge-midi2`, `esp32-p4-devkit-bridge2-midi2`, `t-display-s3-midi2` |
 | PlatformIO + ESP32_Host_MIDI | `lib_deps += sauloverissimo/midi2 @ ^0.3.3` | `esp32-c6-devkitc-multi-midi2`, `esp32-s3-devkitc-host-midi2`, `t-display-s3-shield-host-midi2` |
 
-Each recipe drops the `${MIDI2_CPP_ROOT}/src/midi2.c` (or `midi2_c99`
-helper library) from its source list. Other midi2_cpp sources
+Each recipe drops the `${MIDI2CPP_ROOT}/src/midi2.c` (or `midi2_c99`
+helper library) from its source list. Other midi2cpp sources
 (`midi2_device.cpp`, `midi2_ci.cpp`, `midi2_host.cpp`,
 `midi2_bridge.cpp`) keep being compiled inline from the parent tree
-via `${MIDI2_CPP_ROOT}/src` until the host helper-library shape is
+via `${MIDI2CPP_ROOT}/src` until the host helper-library shape is
 finalised in a future cycle.
 
 #### New recipes since v0.1.0
@@ -178,16 +178,16 @@ library (vendored stb-style at `src/midi2.{h,c}` from v0.3.0+).
 - Profile (M2-101 §7): `addProfile`, `removeProfile`, callbacks for
   `onProfileInquiry`, `onProfileEnable`, `onProfileDisable`,
   `onProfileAdded`, `onProfileRemoved`, `onProfileDetailsInquiry`,
-  `onProfileSpecificData`. Storage tunable via `MIDI2_CPP_MAX_PROFILES`
+  `onProfileSpecificData`. Storage tunable via `MIDI2CPP_MAX_PROFILES`
   (default 8).
 - Property Exchange (M2-101 §8, M2-103, M2-105):
   - Registry: `addProperty(name, getter, setter=nullptr)` (read-only by
     default), `addPropertyStatic(name, value)`, `removeProperty`.
-    Storage tunable via `MIDI2_CPP_MAX_PROPERTIES` (default 8).
+    Storage tunable via `MIDI2CPP_MAX_PROPERTIES` (default 8).
   - Subscribe / Notify state machine:
     `setPropertySubscribable(name, true)`, `notifyPropertyChanged(name)`
     for fan-out, `subscriberCount()`. Subscriber registry tunable via
-    `MIDI2_CPP_MAX_SUBSCRIBERS` (default 4).
+    `MIDI2CPP_MAX_SUBSCRIBERS` (default 4).
   - PE callbacks deliver raw bytes (header + body) instead of
     NUL-terminated strings, to avoid silent truncation of large JSON
     payloads.
@@ -196,7 +196,7 @@ library (vendored stb-style at `src/midi2.{h,c}` from v0.3.0+).
 
 ### `midi2::Host` — USB MIDI 2.0 host shape
 
-- Reactive multi-device host (`MIDI2_CPP_HOST_MAX_DEVICES`, default 4).
+- Reactive multi-device host (`MIDI2CPP_HOST_MAX_DEVICES`, default 4).
   Caller wires `tuh_midi2_*` (or platform-equivalent) into
   `notifyDeviceMounted/Unmounted`, `feedRx(idx, words, count)` and
   `setWriteFn(idx, words, count)`.
@@ -261,14 +261,14 @@ library (vendored stb-style at `src/midi2.{h,c}` from v0.3.0+).
   platform-conditional RNG `#if` chain from `midi2_ci.cpp`. The library
   no longer pulls `<Arduino.h>`, `pico/time.h`, `esp_timer.h`, or any
   USB stack header.
-- Removed the `MIDI2_CPP_TEST_MODE` build option. Tests now consume the
+- Removed the `MIDI2CPP_TEST_MODE` build option. Tests now consume the
   same public hooks platforms wire. One contract, one code path.
 - `Device::begin()` no longer claims to call `tusb_init` internally. It
   initialises the library's own dispatcher and returns; the caller owns
   the platform USB stack lifecycle.
 - `Device::task()` drops the commented `tud_task` stubs.
 - C++17 floor enforced via `static_assert(__cplusplus >= 201703L)` in
-  `midi2_cpp.h`.
+  `midi2cpp.h`.
 - `lib/tinyusb` git submodule and the `.gitmodules` entry removed. The
   library has zero external dependencies: midi2 C99 stays vendored,
   every USB stack and clock and RNG source is caller-wired. `git clone`

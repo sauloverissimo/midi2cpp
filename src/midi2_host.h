@@ -5,8 +5,8 @@
 #include <cstdint>
 #include <functional>
 
-#ifndef MIDI2_CPP_HOST_MAX_DEVICES
-#define MIDI2_CPP_HOST_MAX_DEVICES 4
+#ifndef MIDI2CPP_HOST_MAX_DEVICES
+#define MIDI2CPP_HOST_MAX_DEVICES 4
 #endif
 
 namespace midi2 {
@@ -18,7 +18,7 @@ namespace midi2 {
 // USB host port enumerates one or more attached MIDI 2.0 devices, queries
 // their identity via UMP Stream Discovery + MIDI-CI, and routes UMPs to and
 // from each. Multi-device by design: every API that touches a connected
-// device takes an `idx` (0..MIDI2_CPP_HOST_MAX_DEVICES-1) as its first
+// device takes an `idx` (0..MIDI2CPP_HOST_MAX_DEVICES-1) as its first
 // argument.
 //
 // Platform contract is the same shape as Device, with idx-prefixed hooks:
@@ -66,7 +66,7 @@ namespace midi2 {
 
 class Host {
 public:
-    static constexpr uint8_t MAX_DEVICES = MIDI2_CPP_HOST_MAX_DEVICES;
+    static constexpr uint8_t MAX_DEVICES = MIDI2CPP_HOST_MAX_DEVICES;
 
     Host();
     ~Host();

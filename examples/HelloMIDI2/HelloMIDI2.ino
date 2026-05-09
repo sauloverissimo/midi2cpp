@@ -1,5 +1,5 @@
 /*
- * midi2_cpp HelloMIDI2 example, Arduino sketch.
+ * midi2cpp HelloMIDI2 example, Arduino sketch.
  *
  * Minimal demo that builds the m2device + m2ci pair, wires the four
  * platform hooks (write, now, mount/alt, RNG), and prints to Serial
@@ -15,11 +15,11 @@
  *   - ESP32_Host_MIDI USBMIDI2Connection: connection.write(...)
  *
  * Reference platform recipes (Pico SDK, ESP-IDF, TinyUSB CMake,
- * PlatformIO) live under midi2_cpp/examples/ — see the README's
+ * PlatformIO) live under midi2cpp/examples/ — see the README's
  * Boards table.
  */
 
-#include <midi2_cpp.h>
+#include <midi2cpp.h>
 
 using namespace midi2;
 
@@ -42,7 +42,7 @@ void setup() {
     Serial.begin(115200);
     while (!Serial && millis() < 3000) {}
 
-    Serial.println("=== midi2_cpp HelloMIDI2 ===");
+    Serial.println("=== midi2cpp HelloMIDI2 ===");
 
     midi.setWriteFn(plat_write);
     midi.setNowFn(plat_now);

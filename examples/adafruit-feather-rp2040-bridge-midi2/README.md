@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Bridge MIDI 2.0
+# [midi2cpp](../..) | Bridge MIDI 2.0
 ## Adafruit Feather RP2040 USB Bridge
 
 Transparent USB MIDI 2.0 bridge on the **Adafruit Feather RP2040 USB Host**. Runs TinyUSB host on USB-A (PIO-USB GP16 / GP17) and TinyUSB device on USB-C (native USB) in the same firmware, forwarding UMP between them so any MIDI 2.0 device plugged into USB-A appears on the PC as a 16-group MIDI 2.0 endpoint named `rp2040-midi2 bridge`. Pico SDK build, no Arduino IDE.
@@ -120,13 +120,13 @@ UART debug on GP0 mirrors mount events.
 
 ## Hot-swap caveat
 
-A 3 s watchdog in `feather_bridge::task` resets the host side (`tuh_deinit` + `tusb_init`) after the upstream device has been gone for `MIDI2_CPP_BRIDGE_WATCHDOG_MS`. Tune at compile time:
+A 3 s watchdog in `feather_bridge::task` resets the host side (`tuh_deinit` + `tusb_init`) after the upstream device has been gone for `MIDI2CPP_BRIDGE_WATCHDOG_MS`. Tune at compile time:
 
 ```bash
-cmake -B build -DMIDI2_CPP_BRIDGE_WATCHDOG_MS=5000   # 5 s
-cmake -B build -DMIDI2_CPP_BRIDGE_WATCHDOG_MS=0      # disable
+cmake -B build -DMIDI2CPP_BRIDGE_WATCHDOG_MS=5000   # 5 s
+cmake -B build -DMIDI2CPP_BRIDGE_WATCHDOG_MS=0      # disable
 ```
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE). Pico-PIO-USB is MIT.
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE). Pico-PIO-USB is MIT.

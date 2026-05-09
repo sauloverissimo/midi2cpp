@@ -22,7 +22,7 @@ CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
 # does not depend on an option that may rename across IDF versions.
 
 # Compiler: C++17 to match the parent library and Pico SDK recipes.
-# midi2_cpp uses std::function callbacks; exceptions stay off.
+# midi2cpp uses std::function callbacks; exceptions stay off.
 CONFIG_COMPILER_CXX_EXCEPTIONS=n
 CONFIG_COMPILER_OPTIMIZATION_PERF=y
 

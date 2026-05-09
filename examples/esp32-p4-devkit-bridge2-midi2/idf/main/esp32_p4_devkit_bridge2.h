@@ -9,7 +9,7 @@
  */
 #pragma once
 
-#include "midi2_cpp.h"
+#include "midi2cpp.h"
 
 namespace esp32_p4_devkit_bridge2 {
 

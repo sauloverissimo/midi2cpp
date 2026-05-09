@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Device MIDI 2.0
+# [midi2cpp](../..) | Device MIDI 2.0
 ## Arduino Nano ESP32
 
 ![arduino-esp32](board/banner.png)
@@ -95,4 +95,4 @@ Every scene logs via the ESP-IDF console (default UART monitor).
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE).
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE).

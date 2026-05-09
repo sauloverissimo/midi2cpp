@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Device MIDI 2.0
+# [midi2cpp](../..) | Device MIDI 2.0
 ## Tenstar Robot RP2040 Pro Micro (UMP test bench)
 
 USB MIDI 2.0 device on the **Tenstar Robot RP2040 Pro Micro**, configured as a **deterministic UMP catalog emitter**: 101 entries covering every MT category in M2-104-UM v1.1.2 (Flex Data 0x00 / 0x01 / 0x02, MIDI 2.0 + MIDI 1.0 Channel Voice, System Common / Real-Time, SysEx7, SysEx8, UMP Stream, Utility). Pico SDK build, no Arduino IDE.
@@ -81,4 +81,4 @@ MIDI-CI: minimum surface (Endpoint Discovery + Device Identity). Profile, PE, an
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE).
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE).

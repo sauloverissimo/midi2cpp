@@ -1,20 +1,20 @@
 # main component for esp32-p4-devkit-host-midi2.
 #
-# Pulls midi2_cpp directly from ../../../../src (parent library, not
+# Pulls midi2cpp directly from ../../../../src (parent library, not
 # vendored). The TinyUSB PR #3571 fork is expected to live at
 # ../external/tinyusb after running ./scripts/fetch_tinyusb.sh; the
 # shim at ../components/tinyusb wires its host sources into the build.
 
-set(MIDI2_CPP_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../src")
+set(MIDI2CPP_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../src")
 
 idf_component_register(
     SRCS
         "main.cpp"
         "esp32_p4_devkit_host.cpp"
-        "${MIDI2_CPP_ROOT}/midi2_host.cpp"
+        "${MIDI2CPP_ROOT}/midi2_host.cpp"
     INCLUDE_DIRS
         "."
-        "${MIDI2_CPP_ROOT}"
+        "${MIDI2CPP_ROOT}"
     REQUIRES
         midi2
         tinyusb

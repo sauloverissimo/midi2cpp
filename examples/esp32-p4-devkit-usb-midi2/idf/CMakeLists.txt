@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 # esp32-p4-devkit-usb-midi2, full-spec USB MIDI 2.0 device showcase on
 # the ESP32-P4-WIFI6-DEV-KIT. Headless, identity-only USB MIDI 2.0 endpoint
 # with the same 22 s scene cycle as the Pico SDK rp2040-midi2 example.
-# Lives at midi2_cpp/examples/esp32-p4-devkit-usb-midi2; consumes the
+# Lives at midi2cpp/examples/esp32-p4-devkit-usb-midi2; consumes the
 # parent library directly from ../../../src.
 #
 # Build:

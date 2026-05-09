@@ -1,5 +1,5 @@
 #include "test_common.h"
-#include "midi2_cpp.h"
+#include "midi2cpp.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -53,11 +53,11 @@ static void test_ci_addProfile_returns_ok(void) {
 }
 
 static void test_ci_addProfile_full_after_max(void) {
-    TEST("CI::addProfile returns ERR_FULL after MIDI2_CPP_MAX_PROFILES");
+    TEST("CI::addProfile returns ERR_FULL after MIDI2CPP_MAX_PROFILES");
     Device d; CI ci(d);
     ci_begin(d, ci);
     uint8_t pid[5] = {0x7D, 0x00, 0x00, 0x00, 0x00};
-    for (int i = 0; i < MIDI2_CPP_MAX_PROFILES; ++i) {
+    for (int i = 0; i < MIDI2CPP_MAX_PROFILES; ++i) {
         pid[3] = (uint8_t)i;
         CHECK_EQ(ci.addProfile(pid), MIDI2_CI_OK, "fill capacity");
     }
@@ -83,7 +83,7 @@ static void test_ci_addPropertyStatic(void) {
     TEST("CI::addPropertyStatic returns OK");
     Device d; CI ci(d);
     ci_begin(d, ci);
-    CHECK_EQ(ci.addPropertyStatic("DeviceInfo", "{\"manufacturer\":\"midi2_cpp\"}"),
+    CHECK_EQ(ci.addPropertyStatic("DeviceInfo", "{\"manufacturer\":\"midi2cpp\"}"),
              MIDI2_CI_OK, "addPropertyStatic OK");
     PASS();
 }

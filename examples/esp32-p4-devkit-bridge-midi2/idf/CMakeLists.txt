@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.16)
 # rhport 1 (UTMI PHY, USB-A jacks). Forwards UMP between any device
 # plugged into a USB-A jack and the host PC connected to the USB-Device
 # USB-C jack, so the PC sees the upstream device(s) through this
-# bridge. Lives at midi2_cpp/examples/esp32-p4-devkit-bridge-midi2;
+# bridge. Lives at midi2cpp/examples/esp32-p4-devkit-bridge-midi2;
 # consumes the parent library directly from ../../../src.
 #
 # Build:

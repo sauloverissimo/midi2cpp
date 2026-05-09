@@ -4,16 +4,16 @@
 #include <cstdint>
 #include <functional>
 
-#ifndef MIDI2_CPP_MAX_PROFILES
-#define MIDI2_CPP_MAX_PROFILES 8
+#ifndef MIDI2CPP_MAX_PROFILES
+#define MIDI2CPP_MAX_PROFILES 8
 #endif
 
-#ifndef MIDI2_CPP_MAX_PROPERTIES
-#define MIDI2_CPP_MAX_PROPERTIES 8
+#ifndef MIDI2CPP_MAX_PROPERTIES
+#define MIDI2CPP_MAX_PROPERTIES 8
 #endif
 
-#ifndef MIDI2_CPP_MAX_SUBSCRIBERS
-#define MIDI2_CPP_MAX_SUBSCRIBERS 4
+#ifndef MIDI2CPP_MAX_SUBSCRIBERS
+#define MIDI2CPP_MAX_SUBSCRIBERS 4
 #endif
 
 namespace midi2 {

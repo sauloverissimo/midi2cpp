@@ -61,8 +61,8 @@ extern "C" {
  * also auto-uplifts MIDI 1.0 byte-stream cable events into UMP MT 0x2
  * when the upstream device negotiates Alt 0 (legacy USB MIDI 1.0).
  *
- * Up to 4 upstream devices per driver (matches MIDI2_CPP_HOST_MAX_DEVICES
- * in midi2_cpp). With CFG_TUH_MIDI=4 + CFG_TUH_MIDI2=4 the host can
+ * Up to 4 upstream devices per driver (matches MIDI2CPP_HOST_MAX_DEVICES
+ * in midi2cpp). With CFG_TUH_MIDI=4 + CFG_TUH_MIDI2=4 the host can
  * pick up 4 legacy MIDI 1.0 + 4 MIDI 2.0 devices simultaneously, each
  * driver claiming only its matching protocol via the alt-walk defer
  * (experiment/midi-coexistence branch). */

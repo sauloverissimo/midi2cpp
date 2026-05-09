@@ -1,4 +1,4 @@
-// midi2_cpp | esp32-s3-devkitc-host-midi2
+// midi2cpp | esp32-s3-devkitc-host-midi2
 //
 // Showcase of the released-grade USB MIDI 2.0 Host path on ESP32-S3:
 //
@@ -21,7 +21,7 @@
 //      v   FreeRTOS queue (cross-core handover, USB task -> main loop)
 //      |
 //      v
-//   midi2_cpp m2host
+//   midi2cpp m2host
 //      * feedRx + task in single-threaded main-loop context
 //      * typed dispatch (NoteOn/Off, CC, PB, ChnPres, Program, ...)
 //      * Endpoint Discovery / Identity tracking per device
@@ -123,16 +123,16 @@ void setup() {
     delay(400);
     Serial.println();
     Serial.println("=====================================================");
-    Serial.println("  midi2_cpp  |  ESP32-S3-DevKitC-1  |  USB MIDI 2.0 Host");
+    Serial.println("  midi2cpp  |  ESP32-S3-DevKitC-1  |  USB MIDI 2.0 Host");
     Serial.println("=====================================================");
     Serial.println("  ESP32_Host_MIDI v6.0.0 (handler optional, no fork)");
-    Serial.println("  midi2_cpp m2host (typed dispatch + CI Initiator)");
+    Serial.println("  midi2cpp m2host (typed dispatch + CI Initiator)");
     Serial.println("  Plug a USB MIDI 2.0 device into the OTG jack (right).");
     Serial.println();
 
     s_umpQueue = xQueueCreate(32, sizeof(UMPBatch));
 
-    // ---- midi2_cpp host wiring ----
+    // ---- midi2cpp host wiring ----
     host.setWriteFn(onUMPToUsb);
     host.setNowFn([]() -> uint32_t { return (uint32_t)millis(); });
     host.setRngFn([]() -> uint32_t { return esp_random(); });

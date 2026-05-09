@@ -5,7 +5,7 @@
  * LilyGo T-Display S3 (ESP32-S3 + ST7789 1.9" 320x170 IPS, parallel 8-bit).
  *
  * What this is:
- *   The host (DAW, OS, another midi2_cpp host recipe) sends UMP, the
+ *   The host (DAW, OS, another midi2cpp host recipe) sends UMP, the
  *   T-Display S3 mirrors the note activity on the on-board piano roll.
  *   The recipe is a receiver showcase: it does NOT emit notes, it does
  *   NOT play sound, it does NOT generate music. It is a visual debugger

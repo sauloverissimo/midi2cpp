@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.16)
 # visualization on the LilyGo T-Display S3 (ESP32-S3, ST7789 1.9" IPS
 # 320x170 parallel 8-bit). The host (DAW, OS) sends UMP, the device
 # mirrors note activity on the on-board display. No emission, no audio,
-# no synth. Lives at midi2_cpp/examples/t-display-s3-midi2; consumes the
+# no synth. Lives at midi2cpp/examples/t-display-s3-midi2; consumes the
 # parent library directly from ../../../src.
 #
 # Build:

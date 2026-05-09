@@ -1,17 +1,17 @@
-# midi2_cpp
+# midi2cpp
 
 ### MIDI 2.0 engine for embedded systems
 
-![midi2_cpp](logo_midi2_cpp.png)
+![midi2cpp](logo_midi2cpp.png)
 
 *C++17, callback-first, static-by-default, depends on midi2, MIT.* From DIY to professional products.
 
-[![release](https://img.shields.io/github/v/release/sauloverissimo/midi2_cpp.svg)](https://github.com/sauloverissimo/midi2_cpp/releases/latest)
+[![release](https://img.shields.io/github/v/release/sauloverissimo/midi2cpp.svg)](https://github.com/sauloverissimo/midi2cpp/releases/latest)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C.svg)](https://en.cppreference.com/cpp/compiler_support)
 [![MIDI 2.0](https://img.shields.io/badge/MIDI-2.0-blueviolet.svg)](https://midi.org/specifications/midi-2-0-specifications)
 [![depends: midi2](https://img.shields.io/badge/depends-midi2_%E2%89%A5_0.3.3-blueviolet.svg)](https://github.com/sauloverissimo/midi2)
 [![Arduino](https://img.shields.io/badge/Arduino-IDE-00979D.svg)](https://www.arduino.cc/)
-[![PlatformIO](https://img.shields.io/badge/PlatformIO-Registry-FF7F00.svg)](https://registry.platformio.org/libraries/sauloverissimo/midi2_cpp)
+[![PlatformIO](https://img.shields.io/badge/PlatformIO-Registry-FF7F00.svg)](https://registry.platformio.org/libraries/sauloverissimo/midi2cpp)
 [![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.4-E7352C.svg)](https://docs.espressif.com/projects/esp-idf/en/stable/)
 [![Pico SDK](https://img.shields.io/badge/Pico_SDK-2.0-C51A4A.svg)](https://github.com/raspberrypi/pico-sdk)
 [![CMake](https://img.shields.io/badge/CMake-3.16%2B-064F8C.svg)](https://cmake.org/)
@@ -21,13 +21,13 @@
 
 ## The library
 
-midi2_cpp is the layer where a sketch meets the protocol. Plug a board into the laptop, write five lines of C++, flash, and the device appears on the bus as a USB MIDI 2.0 endpoint with full Capability Inquiry, Property Exchange, and 32-bit resolution.
+midi2cpp is the layer where a sketch meets the protocol. Plug a board into the laptop, write five lines of C++, flash, and the device appears on the bus as a USB MIDI 2.0 endpoint with full Capability Inquiry, Property Exchange, and 32-bit resolution.
 
-Underneath, [midi2](https://github.com/sauloverissimo/midi2) (the portable C99 core) handles parsing, dispatch, and reassembly. midi2_cpp adds the C++ ergonomics: callbacks, board glue, ready-made USB descriptors. The board does the talking; the sketch tells it what to say.
+Underneath, [midi2](https://github.com/sauloverissimo/midi2) (the portable C99 core) handles parsing, dispatch, and reassembly. midi2cpp adds the C++ ergonomics: callbacks, board glue, ready-made USB descriptors. The board does the talking; the sketch tells it what to say.
 
 ## Contents
 
-- [midi2\_cpp](#midi2_cpp)
+- [midi2\_cpp](#midi2cpp)
     - [MIDI 2.0 engine for embedded systems](#midi-20-engine-for-embedded-systems)
   - [The library](#the-library)
   - [Contents](#contents)
@@ -54,7 +54,7 @@ Underneath, [midi2](https://github.com/sauloverissimo/midi2) (the portable C99 c
 
 ## Dependencies
 
-midi2_cpp draws a clear line between what the library declares and what stays the caller's job:
+midi2cpp draws a clear line between what the library declares and what stays the caller's job:
 
 - **Exactly one declared dependency: [midi2](https://github.com/sauloverissimo/midi2).** The C99 core lives in its own repo, is versioned independently, and is resolved by whichever package manager fits the host build:
   - Arduino Library Manager: `depends=midi2 (>=0.3.3)` in `library.properties`.
@@ -66,7 +66,7 @@ midi2_cpp draws a clear line between what the library declares and what stays th
 - **No clock or RNG dependency.** Caller injects `millis` / `time_us_64` / `esp_timer_get_time` and `random` / `get_rand_32` / `esp_random` through public hooks. Unset hooks degrade silently, no missing-symbol link errors.
 
 ```bash
-git clone https://github.com/sauloverissimo/midi2_cpp.git
+git clone https://github.com/sauloverissimo/midi2cpp.git
 cmake -B build && cmake --build build && ctest --test-dir build
 ```
 
@@ -74,10 +74,10 @@ Three commands. The first `cmake configure` pulls midi2 once via FetchContent (o
 
 ## Quickstart
 
-`midi2_cpp` is platform-agnostic: it parses, dispatches, and assembles UMP, and it leaves USB transport, clock, and entropy to the caller. The sketch wires four hooks to its platform's USB MIDI driver; the library does the rest.
+`midi2cpp` is platform-agnostic: it parses, dispatches, and assembles UMP, and it leaves USB transport, clock, and entropy to the caller. The sketch wires four hooks to its platform's USB MIDI driver; the library does the rest.
 
 ```cpp
-#include <midi2_cpp.h>
+#include <midi2cpp.h>
 using namespace midi2;
 
 m2device midi;
@@ -110,7 +110,7 @@ void setup() {
   static const uint8_t mfrId[3] = {0x7D, 0x00, 0x00};  // educational prefix
   ci.begin(mfrId, /*family*/ 0x0001, /*model*/ 0x0001, /*version*/ 0x00010000);
   ci.addPropertyStatic("DeviceInfo",
-    "{\"manufacturer\":\"midi2_cpp\",\"model\":\"hello\"}");
+    "{\"manufacturer\":\"midi2cpp\",\"model\":\"hello\"}");
 
   midi.onNoteOn([](uint8_t /*g*/, uint8_t ch, uint8_t n, uint16_t v,
                    uint8_t /*at*/, uint16_t /*ad*/) {
@@ -152,7 +152,7 @@ Same callback API across the three. `m2bridge` composes `m2device` + `m2ci` + `m
 
 ## Boards
 
-Validated on real hardware against forks and PRs maintained internally while the upstream merges are pending. midi2_cpp is one of several integrations of the underlying [`midi2`](https://github.com/sauloverissimo/midi2) C99 core; concrete recipes for boards that use midi2_cpp ship under [`examples/`](examples/), one per role (device, host, bridge). The **Status** column names the override each test required.
+Validated on real hardware against forks and PRs maintained internally while the upstream merges are pending. midi2cpp is one of several integrations of the underlying [`midi2`](https://github.com/sauloverissimo/midi2) C99 core; concrete recipes for boards that use midi2cpp ship under [`examples/`](examples/), one per role (device, host, bridge). The **Status** column names the override each test required.
 
 | Board | MCU | Device | Host | Bridge | Transport | Status |
 |-------|-----|:-:|:-:|:-:|-----------|--------|
@@ -197,42 +197,42 @@ By role: 10 device, 4 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB P
 
 ### Arduino IDE
 
-Once midi2_cpp is published to the [Arduino Library Manager](https://github.com/arduino/library-registry), the IDE install becomes: search `midi2_cpp`, click Install. The dependency on `midi2` (already on the Library Manager) is resolved automatically.
+Once midi2cpp is published to the [Arduino Library Manager](https://github.com/arduino/library-registry), the IDE install becomes: search `midi2cpp`, click Install. The dependency on `midi2` (already on the Library Manager) is resolved automatically.
 
 Until then, install manually:
 
 ```bash
-git clone https://github.com/sauloverissimo/midi2_cpp.git ~/Arduino/libraries/midi2_cpp
+git clone https://github.com/sauloverissimo/midi2cpp.git ~/Arduino/libraries/midi2cpp
 ```
 
 Then install `midi2` via Library Manager (search `midi2`, click Install).
 
 ### PlatformIO
 
-Once midi2_cpp is published to the [PlatformIO Registry](https://registry.platformio.org/):
+Once midi2cpp is published to the [PlatformIO Registry](https://registry.platformio.org/):
 
 ```ini
-lib_deps = sauloverissimo/midi2_cpp @ ^0.2.0
+lib_deps = sauloverissimo/midi2cpp @ ^0.2.0
 ```
 
 Until then, use the git URL pinned by tag:
 
 ```ini
 lib_deps =
-  https://github.com/sauloverissimo/midi2_cpp.git#v0.2.0
+  https://github.com/sauloverissimo/midi2cpp.git#v0.2.0
 ```
 
 Either way, `midi2` is resolved transitively via the manifest declaration in `library.json`.
 
 ### ESP-IDF component
 
-Two paths, depending on whether midi2_cpp lives inside the project tree or alongside it:
+Two paths, depending on whether midi2cpp lives inside the project tree or alongside it:
 
 **As a local component** (current pattern in [`examples/`](examples/)):
 
 ```bash
 # from your IDF project root
-git clone https://github.com/sauloverissimo/midi2_cpp.git components/midi2_cpp
+git clone https://github.com/sauloverissimo/midi2cpp.git components/midi2cpp
 ```
 
 Declare midi2 in `main/idf_component.yml` so the Component Manager pulls it next to `managed_components/`:
@@ -245,31 +245,31 @@ dependencies:
     version: ">=0.3.3"
 ```
 
-`main/CMakeLists.txt` lists `midi2` (and any of `midi2_cpp`'s wrapper sources you use) in its `idf_component_register(...)` block. The seven ESP-IDF recipes under [`examples/`](examples/) ship working templates for device, host and bridge roles.
+`main/CMakeLists.txt` lists `midi2` (and any of `midi2cpp`'s wrapper sources you use) in its `idf_component_register(...)` block. The seven ESP-IDF recipes under [`examples/`](examples/) ship working templates for device, host and bridge roles.
 
 ### CMake FetchContent
 
 ```cmake
 include(FetchContent)
 FetchContent_Declare(
-    midi2_cpp
-    GIT_REPOSITORY https://github.com/sauloverissimo/midi2_cpp.git
+    midi2cpp
+    GIT_REPOSITORY https://github.com/sauloverissimo/midi2cpp.git
     GIT_TAG        v0.2.0
 )
-FetchContent_MakeAvailable(midi2_cpp)
+FetchContent_MakeAvailable(midi2cpp)
 ```
 
-`midi2_cpp` cascades the dependency on `midi2` to the parent project: `find_package(midi2 0.3.3 CONFIG)` is tried first, falling back to `FetchContent_Declare(midi2 GIT_TAG v0.3.3)` if no install is found.
+`midi2cpp` cascades the dependency on `midi2` to the parent project: `find_package(midi2 0.3.3 CONFIG)` is tried first, falling back to `FetchContent_Declare(midi2 GIT_TAG v0.3.3)` if no install is found.
 
 ### Git submodule
 
 ```bash
-git submodule add https://github.com/sauloverissimo/midi2_cpp.git external/midi2_cpp
+git submodule add https://github.com/sauloverissimo/midi2cpp.git external/midi2cpp
 ```
 
 ### Manual vendor
 
-Download the [midi2_cpp](https://github.com/sauloverissimo/midi2_cpp) and [midi2](https://github.com/sauloverissimo/midi2) repositories side by side. Add `midi2/dist/` and `midi2_cpp/src/` to includes. Compile `midi2/dist/midi2.c`, `midi2_cpp/src/midi2_device.cpp`, `midi2_cpp/src/midi2_ci.cpp`, and the host/bridge `.cpp` files you need alongside the project. No package manager required at build time, but the two repos must travel together.
+Download the [midi2cpp](https://github.com/sauloverissimo/midi2cpp) and [midi2](https://github.com/sauloverissimo/midi2) repositories side by side. Add `midi2/dist/` and `midi2cpp/src/` to includes. Compile `midi2/dist/midi2.c`, `midi2cpp/src/midi2_device.cpp`, `midi2cpp/src/midi2_ci.cpp`, and the host/bridge `.cpp` files you need alongside the project. No package manager required at build time, but the two repos must travel together.
 
 ## API at a glance
 
@@ -299,9 +299,9 @@ Async, callback-first, copy-paste-ready. Same shape as MIDI 1.0 Arduino librarie
 
 ## Architecture
 
-midi2_cpp: platform layer of a 4-layer MIDI 2.0 stack:
+midi2cpp: platform layer of a 4-layer MIDI 2.0 stack:
 
-![midi2_cpp](architecture.png)
+![midi2cpp](architecture.png)
 
 The sketch touches the top. The rest is invisible until needed.
 
@@ -309,18 +309,18 @@ The sketch touches the top. The rest is invisible until needed.
 
 The boundary is drawn so the wrapper stays focused. A few things deliberately do not belong here.
 
-- **Not a low-level UMP parser.** That is `midi2`. midi2_cpp wraps it and adds C++ ergonomics; if a project wants zero-overhead C with no callbacks, linking `midi2` directly is the right move.
+- **Not a low-level UMP parser.** That is `midi2`. midi2cpp wraps it and adds C++ ergonomics; if a project wants zero-overhead C with no callbacks, linking `midi2` directly is the right move.
 - **Not a synthesizer.** UMP arrives, callbacks fire, the sketch decides what to play. Sound generation is application territory.
 - **Not a desktop library.** It targets MCU boards. It compiles on desktop for tests, but the API and memory model assume embedded constraints.
-- **Not opinionated about transport.** TinyUSB, native USB (Teensy), PIO-USB (RP2350), STM32 HAL (Daisy), BLE: midi2_cpp does not bring any of them with it. The sketch wires whichever transport its platform already ships.
+- **Not opinionated about transport.** TinyUSB, native USB (Teensy), PIO-USB (RP2350), STM32 HAL (Daisy), BLE: midi2cpp does not bring any of them with it. The sketch wires whichever transport its platform already ships.
 
 ## Sponsor
 
-You can sponsor midi2_cpp at [GitHub Sponsors](https://github.com/sponsors/sauloverissimo). Sponsorship funds boards for cross-platform validation, spec access, and continued maintenance.
+You can sponsor midi2cpp at [GitHub Sponsors](https://github.com/sponsors/sauloverissimo). Sponsorship funds boards for cross-platform validation, spec access, and continued maintenance.
 
 ## About
 
-midi2_cpp is created and maintained by [Saulo Veríssimo](https://github.com/sauloverissimo). It is the C++17 sibling of midi2, originally extracted from USBMIDI2 work in arduino-esp32-uac and validated across the boards listed above.
+midi2cpp is created and maintained by [Saulo Veríssimo](https://github.com/sauloverissimo). It is the C++17 sibling of midi2, originally extracted from USBMIDI2 work in arduino-esp32-uac and validated across the boards listed above.
 
 ## Specifications and trademarks
 

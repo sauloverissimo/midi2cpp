@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(midi2_cpp VERSION 0.2.0 LANGUAGES C CXX)
+project(midi2cpp VERSION 0.2.0 LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Three-layer fallback: parent project's target -> system install
 # (vcpkg / conan / system package) -> FetchContent from GitHub.
 # This is the same pattern the midi2 README documents for downstream
-# consumers, applied to midi2_cpp itself.
+# consumers, applied to midi2cpp itself.
 if(NOT TARGET midi2)
     find_package(midi2 0.3.3 QUIET CONFIG)
     if(NOT midi2_FOUND)
@@ -26,20 +26,20 @@ endif()
 
 # Library target.
 #
-# midi2_cpp ships the C++ wrapper sources only; the C99 core lives in
+# midi2cpp ships the C++ wrapper sources only; the C99 core lives in
 # the external midi2 target this CMakeLists pulls above. Consumers
-# linking midi2_cpp transitively see midi2::midi2 because of the
+# linking midi2cpp transitively see midi2::midi2 because of the
 # PUBLIC link below.
-add_library(midi2_cpp
+add_library(midi2cpp
     src/midi2_device.cpp
     src/midi2_ci.cpp
     src/midi2_host.cpp
     src/midi2_bridge.cpp
 )
 
-target_link_libraries(midi2_cpp PUBLIC midi2::midi2)
+target_link_libraries(midi2cpp PUBLIC midi2::midi2)
 
-target_include_directories(midi2_cpp
+target_include_directories(midi2cpp
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
         $<INSTALL_INTERFACE:include>
@@ -47,23 +47,23 @@ target_include_directories(midi2_cpp
 
 # Warnings
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(midi2_cpp PRIVATE
+    target_compile_options(midi2cpp PRIVATE
         -Wall -Wextra -Wpedantic
         -Wno-unused-parameter   # spec uses many unused params in stubs
     )
 endif()
 
-# Exportable alias for consumers: midi2_cpp::midi2_cpp
-add_library(midi2_cpp::midi2_cpp ALIAS midi2_cpp)
+# Exportable alias for consumers: midi2cpp::midi2cpp
+add_library(midi2cpp::midi2cpp ALIAS midi2cpp)
 
 # Tests: build only if this is the top-level project or tests explicitly requested
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    set(MIDI2_CPP_BUILD_TESTS_DEFAULT ON)
+    set(MIDI2CPP_BUILD_TESTS_DEFAULT ON)
 else()
-    set(MIDI2_CPP_BUILD_TESTS_DEFAULT OFF)
+    set(MIDI2CPP_BUILD_TESTS_DEFAULT OFF)
 endif()
-option(MIDI2_CPP_BUILD_TESTS "Build host-side unit tests" ${MIDI2_CPP_BUILD_TESTS_DEFAULT})
-if(MIDI2_CPP_BUILD_TESTS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
+option(MIDI2CPP_BUILD_TESTS "Build host-side unit tests" ${MIDI2CPP_BUILD_TESTS_DEFAULT})
+if(MIDI2CPP_BUILD_TESTS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
     # Tests use the same public hooks the platforms wire (setWriteFn,
     # setNowFn, feedRx). No special test mode — the contract is the contract.
     enable_testing()

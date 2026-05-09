@@ -89,7 +89,7 @@ static void test_sendFlexText(void) {
     capture_reset();
 
     // bank 0x01 = metadata, status 0x04 = composer name
-    bool ok = d.sendFlexText(/*group*/ 0, /*bank*/ 0x01, /*status*/ 0x04, "midi2_cpp");
+    bool ok = d.sendFlexText(/*group*/ 0, /*bank*/ 0x01, /*status*/ 0x04, "midi2cpp");
     CHECK(ok, "sendFlexText returned false");
     CHECK_EQ(g_captured_tx_len, 4u, "MT 0xD = 4 words");
     CHECK_EQ((g_captured_tx[0] >> 28) & 0xFu, 0xDu, "MT = 0xD");

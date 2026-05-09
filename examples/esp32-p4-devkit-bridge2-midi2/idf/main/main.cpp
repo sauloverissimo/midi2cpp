@@ -5,7 +5,7 @@
  * class. The application here is just identity setup + the main loop;
  * everything that used to live inline in main.cpp / esp32_p4_devkit_bridge.cpp
  * (slot table, group rewrite, FB Name dispatch, MIDI 1.0 byte uplift,
- * Stream Discovery responder) now lives in midi2_cpp/src/midi2_bridge.cpp.
+ * Stream Discovery responder) now lives in midi2cpp/src/midi2_bridge.cpp.
  *
  *   USB-A jacks (UTMI host, rhport 1)
  *     up to MAX_SLOTS upstream MIDI 2.0 devices, plus legacy MIDI 1.0

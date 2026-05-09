@@ -66,16 +66,16 @@
 
 namespace midi2 {
 
-// kBridgeMaxSlots mirrors MIDI2_CPP_HOST_MAX_DEVICES (the upstream slot
+// kBridgeMaxSlots mirrors MIDI2CPP_HOST_MAX_DEVICES (the upstream slot
 // limit Host already advertises). Bridges that want a smaller slot
 // count still pay for the array; the tradeoff is symmetry with Host.
-#ifndef MIDI2_CPP_BRIDGE_MAX_SLOTS
-#  define MIDI2_CPP_BRIDGE_MAX_SLOTS MIDI2_CPP_HOST_MAX_DEVICES
+#ifndef MIDI2CPP_BRIDGE_MAX_SLOTS
+#  define MIDI2CPP_BRIDGE_MAX_SLOTS MIDI2CPP_HOST_MAX_DEVICES
 #endif
 
 class Bridge {
 public:
-    static constexpr uint8_t MAX_SLOTS = MIDI2_CPP_BRIDGE_MAX_SLOTS;
+    static constexpr uint8_t MAX_SLOTS = MIDI2CPP_BRIDGE_MAX_SLOTS;
 
     Bridge();
     ~Bridge();

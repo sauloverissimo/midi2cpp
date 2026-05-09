@@ -1,9 +1,9 @@
-// midi2_cpp v0.1.0
+// midi2cpp v0.1.0
 // C++17 Arduino-style wrapper for MIDI 2.0 on embedded devices.
 // Built over the portable midi2 C99 library (vendored at src/midi2.h).
 //
 // Usage in sketch:
-//   #include <midi2_cpp.h>
+//   #include <midi2cpp.h>
 //   using namespace midi2;
 //   Device midi;
 //   void setup() { midi.begin(); }
@@ -20,7 +20,7 @@
 // Adafruit nRF52 / SAMD (gcc 9+). AVR Uno is out of scope by RAM, not by
 // language. A clean diagnostic now beats a cryptic template error later.
 #if __cplusplus < 201703L
-#  error "midi2_cpp requires C++17 or newer. Set CMAKE_CXX_STANDARD=17 (or pass -std=c++17 to your build)."
+#  error "midi2cpp requires C++17 or newer. Set CMAKE_CXX_STANDARD=17 (or pass -std=c++17 to your build)."
 #endif
 
 // C99 core (vendored stb-style). User apps can also access midi2_* functions directly.

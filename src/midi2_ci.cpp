@@ -6,7 +6,7 @@ namespace midi2 {
 // ============================================================================
 // CIState — internal pimpl held behind Device::_state's sibling pointer.
 // Stores midi2_ci state, the granular dispatch (33 callbacks), caller-provided
-// arrays sized by MIDI2_CPP_MAX_*, and ~20 std::function slots for the
+// arrays sized by MIDI2CPP_MAX_*, and ~20 std::function slots for the
 // high-level callbacks the wrapper exposes (Discovery, ACK/NAK, Profile,
 // PE, PI). The raw 33-callback dispatch is intentionally not all surfaced —
 // the wrapper picks a coarser, ergonomic subset.
@@ -17,14 +17,14 @@ struct CIState {
     midi2_ci_dispatch dispatch;
 
     // Caller-provided storage (compile-time tunables: see midi2_device.h).
-    uint8_t           profile_storage[MIDI2_CPP_MAX_PROFILES][5];
-    midi2_ci_property property_storage[MIDI2_CPP_MAX_PROPERTIES];
-    midi2_ci_subscriber subscriber_storage[MIDI2_CPP_MAX_SUBSCRIBERS];
+    uint8_t           profile_storage[MIDI2CPP_MAX_PROFILES][5];
+    midi2_ci_property property_storage[MIDI2CPP_MAX_PROPERTIES];
+    midi2_ci_subscriber subscriber_storage[MIDI2CPP_MAX_SUBSCRIBERS];
 
     // PE app-side getter/setter handlers parallel to property_storage so
     // the C trampolines can route Get/Set into std::function lambdas.
-    CI::PeGetter pe_getters[MIDI2_CPP_MAX_PROPERTIES];
-    CI::PeSetter pe_setters[MIDI2_CPP_MAX_PROPERTIES];
+    CI::PeGetter pe_getters[MIDI2CPP_MAX_PROPERTIES];
+    CI::PeSetter pe_setters[MIDI2CPP_MAX_PROPERTIES];
     // PE Getter must return a const char* whose lifetime extends past the
     // call (midi2_ci copies it into the reply SysEx). User getters typically
     // return into stack-local buffers, so we cache here. 1 KB covers most
@@ -287,9 +287,9 @@ void CI::begin(const uint8_t manufacturerId[3],
     uint32_t seed = (uint32_t)((uintptr_t)s ^ (manufacturerId ? *manufacturerId : 0));
 
     midi2_ci_init_ex(&s->ci, seed,
-                     s->profile_storage,    MIDI2_CPP_MAX_PROFILES,
-                     s->property_storage,   MIDI2_CPP_MAX_PROPERTIES,
-                     s->subscriber_storage, MIDI2_CPP_MAX_SUBSCRIBERS);
+                     s->profile_storage,    MIDI2CPP_MAX_PROFILES,
+                     s->property_storage,   MIDI2CPP_MAX_PROPERTIES,
+                     s->subscriber_storage, MIDI2CPP_MAX_SUBSCRIBERS);
 
     // midi2_ci invokes property getter/setter as
     //   getter(name, state->context) / setter(name, value, state->context)

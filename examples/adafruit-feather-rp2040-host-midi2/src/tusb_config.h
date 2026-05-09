@@ -79,7 +79,7 @@ extern "C" {
 // Hub + 4 device slots so an off-board USB-A hub can fan out to several
 // MIDI 2.0 devices (matches the bridge sibling at
 // ../../adafruit-feather-rp2040-bridge-midi2 and the m2host slot count
-// MIDI2_CPP_HOST_MAX_DEVICES = 4).
+// MIDI2CPP_HOST_MAX_DEVICES = 4).
 #define CFG_TUH_HUB                1
 #define CFG_TUH_DEVICE_MAX         4
 

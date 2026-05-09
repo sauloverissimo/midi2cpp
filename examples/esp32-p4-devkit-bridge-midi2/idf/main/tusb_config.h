@@ -76,7 +76,7 @@ extern "C" {
 // responder hardcodes one window per FB and never sends FB Names.
 // Local fork patch (see external/tinyusb/src/class/midi/midi2_device.c)
 // lets MT 0xF Stream messages flow through to the app via
-// tud_midi2_n_ump_read so midi2_cpp's m2device dispatcher fires
+// tud_midi2_n_ump_read so midi2cpp's m2device dispatcher fires
 // onEndpointDiscovery / onFbDiscovery callbacks.
 #define CFG_TUD_MIDI2_USER_RESPONDER       1
 
@@ -92,8 +92,8 @@ extern "C" {
 // callback set (tuh_midi_* for legacy, tuh_midi2_* for MIDI 2.0).
 //
 // See https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence
-// Up to 4 upstream devices per driver (matches MIDI2_CPP_HOST_MAX_DEVICES
-// in midi2_cpp). With CFG_TUH_MIDI=4 + CFG_TUH_MIDI2=4 the bridge can
+// Up to 4 upstream devices per driver (matches MIDI2CPP_HOST_MAX_DEVICES
+// in midi2cpp). With CFG_TUH_MIDI=4 + CFG_TUH_MIDI2=4 the bridge can
 // host 4 legacy MIDI 1.0 + 4 MIDI 2.0 devices simultaneously, each
 // driver claiming only its matching protocol via the alt-walk defer
 // (experiment/midi-coexistence branch).

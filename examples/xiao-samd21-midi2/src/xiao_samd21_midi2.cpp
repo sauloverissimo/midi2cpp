@@ -4,7 +4,7 @@
  *
  * Owns: board_init (SAMD21 clocks, USB pins via TinyUSB BSP), TinyUSB
  * device stack init (with MIDI 2.0 class driver from PR #3571), the
- * wiring between TinyUSB and midi2_cpp via the public hooks, and the
+ * wiring between TinyUSB and midi2cpp via the public hooks, and the
  * on-board yellow LED on PA17.
  */
 #include "xiao_samd21_midi2.h"
@@ -54,7 +54,7 @@ void init(midi2::m2device& midi, midi2::m2ci& ci) {
     // First call to platform_rng_fn happens on first MUID generation.
     srand(tusb_time_millis_api() ^ 0xA5A5A5A5u);
 
-    // Wire the five midi2_cpp platform hooks. Mounted + alt setting
+    // Wire the five midi2cpp platform hooks. Mounted + alt setting
     // are kept in sync with TinyUSB by the polling loop in task(); the
     // initial values here are bootstrap defaults.
     midi.setWriteFn(platform_write_fn);

@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Device MIDI 2.0
+# [midi2cpp](../..) | Device MIDI 2.0
 ## SparkFun Pro Micro RP2350
 
 Full-spec USB MIDI 2.0 device on the **SparkFun Pro Micro RP2350** (~33 x 18 mm, RP2350 Cortex-M33, USB-C, Qwiic connector). Headless single-file showcase of every MIDI 2.0 message category beyond MIDI 1.0. Pico SDK build, no Arduino IDE.
@@ -87,4 +87,4 @@ Every scene logs to UART (GP0 / `TX` pad).
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE).
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE).

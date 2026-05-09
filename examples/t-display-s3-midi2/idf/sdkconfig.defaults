@@ -31,7 +31,7 @@ CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
 CONFIG_ESP_CONSOLE_UART_DEFAULT=y
 CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG_ENABLED=n
 
-# Compiler: C++17 to match the parent library. midi2_cpp uses
+# Compiler: C++17 to match the parent library. midi2cpp uses
 # std::function callbacks; exceptions stay off.
 CONFIG_COMPILER_CXX_EXCEPTIONS=n
 CONFIG_COMPILER_OPTIMIZATION_PERF=y

@@ -1,4 +1,4 @@
-# [midi2_cpp](../..) | Device MIDI 2.0
+# [midi2cpp](../..) | Device MIDI 2.0
 ## Seeed Studio XIAO SAMD21
 
 USB MIDI 2.0 device on the [**XIAO SAMD21**](https://wiki.seeedstudio.com/Seeeduino-XIAO/) (Cortex-M0+, 32 KB SRAM). Native CMake build via TinyUSB's `family_support.cmake`, no Arduino IDE.
@@ -85,4 +85,4 @@ Per cycle (~6.5 s):
 
 ## License
 
-MIT, inherits parent [`midi2_cpp` LICENSE](../../LICENSE).
+MIT, inherits parent [`midi2cpp` LICENSE](../../LICENSE).

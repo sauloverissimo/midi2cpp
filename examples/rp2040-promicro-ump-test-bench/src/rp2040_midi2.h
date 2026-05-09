@@ -5,18 +5,18 @@
  * the catalog emitter + trigger handler) consumes this header and
  * never touches tud_*, pico_*, or any USB symbol directly. After init,
  * the m2device + m2ci instances are wired to the platform USB stack
- * through midi2_cpp's five public hooks (setWriteFn, feedRx, setNowFn,
+ * through midi2cpp's five public hooks (setWriteFn, feedRx, setNowFn,
  * setMounted, CI::setRngFn). The app then registers callbacks, sends
  * UMPs, and calls task() in the main loop.
  */
 #pragma once
 
-#include "midi2_cpp.h"
+#include "midi2cpp.h"
 
 namespace rp2040_midi2 {
 
 // Boots board_init + tusb_init, sets up USB MIDI 2.0 device class, and
-// wires the five midi2_cpp platform hooks into the supplied m2device /
+// wires the five midi2cpp platform hooks into the supplied m2device /
 // m2ci. After this returns, the app can register callbacks, send UMPs,
 // and call task() in its main loop.
 //
@@ -28,7 +28,7 @@ void init(midi2::m2device& midi, midi2::m2ci& ci);
 void task(midi2::m2device& midi);
 
 // Bench-only: write raw UMP words straight to TinyUSB. Used by the
-// catalog for entries that midi2_cpp does not expose a sender for
+// catalog for entries that midi2cpp does not expose a sender for
 // (Endpoint Discovery, Stream Config Request, FB Discovery) and for
 // the deliberate edge cases (reserved-bit-set, unassigned status).
 // No-op when the device is not mounted or the alt setting is not 1.

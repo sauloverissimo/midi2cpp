@@ -18,7 +18,7 @@
  * Compared to the v1 sibling at ../../esp32-p4-devkit-bridge-midi2,
  * this file shrinks substantially: every shared invariant (slot table,
  * group rewrite, multi-FB Stream Discovery responder, ByteStreamConverter
- * wiring) lives inside midi2_cpp/src/midi2_bridge.cpp now.
+ * wiring) lives inside midi2cpp/src/midi2_bridge.cpp now.
  */
 #include "esp32_p4_devkit_bridge2.h"
 
