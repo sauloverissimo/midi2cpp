@@ -95,7 +95,7 @@ void emit_set_time_sig(uint8_t idx, midi2::m2device& midi,
                        uint8_t num, uint8_t denom_human, const char* label) {
     const uint8_t exp = denom_to_exp(denom_human);
     midi.sendTimeSignature(kCatalogGroup, num, exp);
-    uint32_t w[4]; midi2_msg_time_sig(w, kCatalogGroup, num, exp);
+    uint32_t w[4]; midi2_msg_time_sig(w, kCatalogGroup, num, exp, 8);
     log_words(idx, label, w, 4);
 }
 
@@ -210,14 +210,14 @@ void emit_flex_text(uint8_t idx, midi2::m2device& midi,
 void emit_note_on2(uint8_t idx, midi2::m2device& midi,
                    uint8_t note, uint16_t vel, const char* label) {
     midi.sendNoteOn(kCatalogGroup, kCatalogChannel, note, vel);
-    uint32_t w[4]; midi2_msg_note_on(w, kCatalogGroup, kCatalogChannel, note, vel, 0);
+    uint32_t w[4]; midi2_msg_note_on(w, kCatalogGroup, kCatalogChannel, note, vel, 0, 0);
     log_words(idx, label, w, 2);
 }
 
 void emit_note_off2(uint8_t idx, midi2::m2device& midi,
                     uint8_t note, uint16_t vel, const char* label) {
     midi.sendNoteOff(kCatalogGroup, kCatalogChannel, note, vel);
-    uint32_t w[4]; midi2_msg_note_off(w, kCatalogGroup, kCatalogChannel, note, vel, 0);
+    uint32_t w[4]; midi2_msg_note_off(w, kCatalogGroup, kCatalogChannel, note, vel, 0, 0);
     log_words(idx, label, w, 2);
 }
 
@@ -701,13 +701,13 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
         } break;
         case 87: {
             // Stream Configuration Request, no midi2cpp sender (host-side message).
-            uint32_t w[4]; midi2_msg_stream_config_request(w, /*protocol*/ 0x02);
+            uint32_t w[4]; midi2_msg_stream_config_request(w, /*protocol*/ 0x02, false, false);
             rp2040_midi2::pumpRaw(w, 4);
             log_words(87, "stream config_request protocol=2", w, 4);
         } break;
         case 88: {
             midi.sendStreamConfigNotify(/*protocol*/ 0x02);
-            uint32_t w[4]; midi2_msg_stream_config_notify(w, /*protocol*/ 0x02);
+            uint32_t w[4]; midi2_msg_stream_config_notify(w, /*protocol*/ 0x02, false, true);
             log_words(88, "stream config_notify protocol=2", w, 4);
         } break;
         case 89: {
@@ -717,12 +717,15 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
             log_words(89, "stream fb_discovery fb=0xFF filter=0xFF", w, 4);
         } break;
         case 90: {
-            midi.sendFbInfo(/*active*/ true, /*fb_num*/ 0, /*direction*/ 0x03,
+            midi.sendFbInfo(/*active*/ true, /*fb_num*/ 0,
+                            /*direction*/ 0x03, /*ui_hint*/ 0x02,
                             /*first_group*/ 0, /*num_groups*/ 1,
                             /*midi_ci_ver*/ 0x02, /*sysex8*/ false,
                             /*protocol*/ 0x02);
             uint32_t w[4];
-            midi2_msg_stream_fb_info(w, true, 0, 0x03, 0, 1, 0x02, false, 0x02);
+            midi2_msg_stream_fb_info(w, true, 0, /*direction*/ 0x03,
+                                     /*ui_hint*/ 0x02, 0, 1, 0x02,
+                                     /*max_sysex8*/ 0, 0x02);
             log_words(90, "stream fb_info fb=0 bidir grp0..0", w, 4);
         } break;
         case 91: {
@@ -751,12 +754,12 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
         case 95: {
             midi.sendJRClock(kCatalogGroup, 0x4000);
             log_word1(95, "utility jr_clock ts=0x4000",
-                      midi2_msg_jr_clock(kCatalogGroup, 0x4000));
+                      midi2_msg_jr_clock(0x4000));
         } break;
         case 96: {
             midi.sendJRTimestamp(kCatalogGroup, 0x2000);
             log_word1(96, "utility jr_timestamp ts=0x2000",
-                      midi2_msg_jr_timestamp(kCatalogGroup, 0x2000));
+                      midi2_msg_jr_timestamp(0x2000));
         } break;
         case 97: {
             midi.sendDctpq(480);

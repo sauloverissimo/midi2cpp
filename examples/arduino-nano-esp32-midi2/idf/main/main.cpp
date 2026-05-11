@@ -96,9 +96,10 @@ static void install_stream_responder(m2device& midi) {
         if (target != 0) return;
         if (filter & 0x01) {
             midi.sendFbInfo(/*active*/ true, /*fb_num*/ 0,
-                            /*direction*/ 0x03, /*first_group*/ 0,
-                            /*num_groups*/ 1, /*midi_ci_ver*/ 0x02,
-                            /*sysex8*/ false, /*protocol*/ 0x02);
+                            /*direction*/ 0x03, /*ui_hint*/ 0x03,
+                            /*first_group*/ 0, /*num_groups*/ 1,
+                            /*midi_ci_ver*/ 0x02, /*sysex8*/ false,
+                            /*protocol*/ 0x02);
         }
         if (filter & 0x02) midi.sendFbNameUpdate(0, kFbName);
     });

@@ -182,6 +182,7 @@ void push_fb_info(uint8_t idx) {
     g_midi_ptr->sendFbInfo(/*active*/      g_slots[idx].active,
                            /*fb_num*/      idx,
                            /*direction*/   0x03,            // bidirectional
+                           /*ui_hint*/     0x03,            // Sender + Receiver
                            /*first_group*/ base,
                            /*num_groups*/  kGroupsPerSlot,
                            /*midi_ci_ver*/ 0x02,
