@@ -120,7 +120,11 @@ public:
 
   // ==================== MT 0xD Flex Data senders ====================
   bool sendTempo(uint8_t group, uint32_t tenNsPerQuarter);
-  bool sendTimeSignature(uint8_t group, uint8_t numerator, uint8_t denominator);
+  // num32ndNotes: SMF1 compat — 8 (= 8 thirty-seconds per quarter note) is the
+  // standard default; pass a different value only when matching a non-standard
+  // tempo subdivision.
+  bool sendTimeSignature(uint8_t group, uint8_t numerator, uint8_t denominator,
+                         uint8_t num32ndNotes = 8);
   bool sendMetronome(uint8_t group, uint8_t primary, uint8_t acc1, uint8_t acc2, uint8_t acc3,
                      uint8_t sub1, uint8_t sub2);
   bool sendKeySignature(uint8_t group, int8_t sharpsFlats, bool minor);
@@ -142,7 +146,10 @@ public:
   bool sendStreamConfigNotify(uint8_t protocol);
   // Function Block Info Notification (status 0x11). Replies to host-side
   // Function Block Discovery with topology + protocol of the FB.
-  bool sendFbInfo(bool active, uint8_t fbNum, uint8_t direction,
+  // direction: 0x01=Receiver, 0x02=Sender, 0x03=Bidirectional (M2-104 §7.1.3).
+  // uiHint:    0x00=Undeclared, 0x01=Receiver, 0x02=Sender, 0x03=Sender+Receiver.
+  bool sendFbInfo(bool active, uint8_t fbNum,
+                  uint8_t direction, uint8_t uiHint,
                   uint8_t firstGroup, uint8_t numGroups,
                   uint8_t midiCiVer, bool sysex8, uint8_t protocol);
   bool sendFbNameUpdate(uint8_t fbIdx, const char* name);
@@ -263,7 +270,8 @@ public:
                                                  const char* text, uint16_t len)>;
   using StreamConfigCb      = std::function<void(uint8_t protocol)>;
   using FbDiscoveryCb       = std::function<void(uint8_t fbNum, uint8_t filter)>;
-  using FbInfoCb            = std::function<void(bool active, uint8_t fbNum, uint8_t direction,
+  using FbInfoCb            = std::function<void(bool active, uint8_t fbNum,
+                                                 uint8_t direction, uint8_t uiHint,
                                                  uint8_t firstGroup, uint8_t numGroups,
                                                  uint8_t ciVersion, bool sysex8, uint8_t protocol)>;
   using ClipCb              = std::function<void(uint8_t group, uint16_t status)>;

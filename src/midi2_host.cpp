@@ -105,25 +105,18 @@ static inline HostState* st(void* p) {
     return static_cast<HostState*>(p);
 }
 
-// Helper: pack attribute_type + attribute_data into the 16-bit attribute
-// field of MT 0x4 NoteOn/Off (mirrors Device).
-static inline bool pack_attribute(uint8_t attrType, uint16_t attrData,
-                                   uint16_t* out) {
-    if (attrData > 0x00FF) return false;
-    *out = (uint16_t)((attrType << 8) | (attrData & 0xFF));
-    return true;
-}
-
 // ----------------------------------------------------------------------------
 // C99 dispatch trampolines. Each unpacks HostDispatchContext to recover
 // (host, idx) and forwards to the host-level user callback.
 // ----------------------------------------------------------------------------
 namespace {
 
-// MT 0x0 Utility
-void tramp_jr_timestamp(uint8_t group, uint16_t ts, void* ctx) {
+// MT 0x0 Utility is Groupless per M2-104-UM v1.1.2 section 1.4. The
+// JrTimestampCb public signature keeps the leading uint8_t group (passed
+// as 0) so existing recipes keep compiling.
+void tramp_jr_timestamp(uint16_t ts, void* ctx) {
     auto* c = static_cast<HostDispatchContext*>(ctx);
-    if (c->host->cb_jr_timestamp) c->host->cb_jr_timestamp(c->idx, group, ts);
+    if (c->host->cb_jr_timestamp) c->host->cb_jr_timestamp(c->idx, /*group*/ 0, ts);
 }
 
 // MT 0x4 MIDI 2.0 Channel Voice
@@ -265,7 +258,8 @@ void tramp_stream_text(uint16_t status, uint8_t format,
     if (c->host->cb_identity_updated) c->host->cb_identity_updated(c->idx, id);
 }
 
-void tramp_fb_info(bool active, uint8_t fb_num, uint8_t /*direction*/,
+void tramp_fb_info(bool active, uint8_t fb_num,
+                    uint8_t /*direction*/, uint8_t /*ui_hint*/,
                     uint8_t /*first_group*/, uint8_t /*num_groups*/,
                     uint8_t /*midi_ci_ver*/, uint8_t /*max_sysex8_streams*/,
                     uint8_t /*protocol*/, void* ctx) {
@@ -653,10 +647,8 @@ bool Host::sendNoteOn(uint8_t idx, uint8_t group, uint8_t channel,
     if (idx >= MAX_DEVICES) return false;
     auto* s = st(_state);
     if (!s->identities[idx].mounted || !s->write_fn) return false;
-    uint16_t attribute;
-    if (!pack_attribute(attrType, attrData, &attribute)) return false;
     uint32_t words[2];
-    midi2_msg_note_on(words, group, channel, note, velocity, attribute);
+    midi2_msg_note_on(words, group, channel, note, velocity, attrType, attrData);
     s->write_fn(idx, words, 2);
     return true;
 }
@@ -666,10 +658,8 @@ bool Host::sendNoteOff(uint8_t idx, uint8_t group, uint8_t channel,
     if (idx >= MAX_DEVICES) return false;
     auto* s = st(_state);
     if (!s->identities[idx].mounted || !s->write_fn) return false;
-    uint16_t attribute;
-    if (!pack_attribute(attrType, attrData, &attribute)) return false;
     uint32_t words[2];
-    midi2_msg_note_off(words, group, channel, note, velocity, attribute);
+    midi2_msg_note_off(words, group, channel, note, velocity, attrType, attrData);
     s->write_fn(idx, words, 2);
     return true;
 }

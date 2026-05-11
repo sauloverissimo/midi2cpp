@@ -20,7 +20,7 @@ if(ESP_PLATFORM)
     return()
 endif()
 
-project(midi2cpp VERSION 0.3.1 LANGUAGES C CXX)
+project(midi2cpp VERSION 0.4.0 LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -34,12 +34,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # This is the same pattern the midi2 README documents for downstream
 # consumers, applied to midi2cpp itself.
 if(NOT TARGET midi2)
-    find_package(midi2 0.3.4 QUIET CONFIG)
+    find_package(midi2 0.4.0 QUIET CONFIG)
     if(NOT midi2_FOUND)
         include(FetchContent)
         FetchContent_Declare(midi2
             GIT_REPOSITORY https://github.com/sauloverissimo/midi2.git
-            GIT_TAG        v0.3.4
+            GIT_TAG        v0.4.0
         )
         FetchContent_MakeAvailable(midi2)
     endif()

@@ -5,6 +5,30 @@ All notable changes to `midi2cpp` are recorded here. Format follows
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
+## [0.4.0]
+
+Track midi2 v0.4.0. Public Device / Host / Bridge APIs stay
+source-compatible where possible; `sendFbInfo` gains a `uiHint`
+argument to match the new spec field.
+
+### Changed
+
+- Depends on `midi2 >= 0.4.0`.
+- `Device::sendFbInfo(...)` gains `uiHint` between `direction` and
+  `firstGroup`. Recipes must update their callsite.
+- `FbInfoCb` typedef gains `uiHint` between `direction` and
+  `firstGroup` (recipes that wire `onFbInfo` directly must update).
+- `Device::sendStreamConfigNotify(protocol)` now auto-populates the
+  `JR_TX_ENABLE` bit from the JR Heartbeat state. No API change.
+- `Device::sendNoteOn` / `sendNoteOff` no longer refuse `attrData > 0xFF`;
+  the full 16-bit attribute_data round-trips through midi2 v0.4.0.
+- `Device::sendTimeSignature` gains an optional `num32ndNotes`
+  parameter (default `8`, SMF1 standard).
+- `Device::sendJRClock` / `sendJRTimestamp` keep the leading `group`
+  argument; value is now ignored on the wire (MT 0x0 is Groupless).
+- `Host::JrTimestampCb` keeps `(idx, group, ts)`; `group` is always
+  `0`.
+
 ## [0.3.1]
 
 ESP Component Registry support. midi2cpp now ships an `idf_component.yml`

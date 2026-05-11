@@ -167,13 +167,17 @@ void tramp_noop(void* ctx) {
     auto* s = static_cast<DeviceState*>(ctx);
     if (s->cb_noop) s->cb_noop(0);
 }
-void tramp_jr_clock(uint8_t group, uint16_t ts, void* ctx) {
+// MT 0x0 Utility is Groupless per M2-104-UM v1.1.2 section 1.4: the
+// callbacks below receive only the timestamp from midi2 v0.4.0+. The
+// wrapper keeps its public JrClockCb / JrTimestampCb signatures with a
+// leading uint8_t group (always 0) so existing recipes keep compiling.
+void tramp_jr_clock(uint16_t ts, void* ctx) {
     auto* s = static_cast<DeviceState*>(ctx);
-    if (s->cb_jr_clock) s->cb_jr_clock(group, ts);
+    if (s->cb_jr_clock) s->cb_jr_clock(/*group*/ 0, ts);
 }
-void tramp_jr_timestamp(uint8_t group, uint16_t ts, void* ctx) {
+void tramp_jr_timestamp(uint16_t ts, void* ctx) {
     auto* s = static_cast<DeviceState*>(ctx);
-    if (s->cb_jr_timestamp) s->cb_jr_timestamp(group, ts);
+    if (s->cb_jr_timestamp) s->cb_jr_timestamp(/*group*/ 0, ts);
 }
 void tramp_dctpq(uint16_t tpq, void* ctx) {
     auto* s = static_cast<DeviceState*>(ctx);
@@ -382,16 +386,16 @@ void tramp_fb_discovery(uint8_t fb_num, uint8_t filter, void* ctx) {
     auto* s = static_cast<DeviceState*>(ctx);
     if (s->cb_fb_discovery) s->cb_fb_discovery(fb_num, filter);
 }
-void tramp_fb_info(bool active, uint8_t fb_num, uint8_t direction,
+void tramp_fb_info(bool active, uint8_t fb_num,
+                   uint8_t direction, uint8_t ui_hint,
                    uint8_t fg, uint8_t ng, uint8_t civ,
                    uint8_t max_sx8, uint8_t protocol, void* ctx) {
     auto* s = static_cast<DeviceState*>(ctx);
     // The C99 callback delivers max_sysex8_streams (uint8_t count); the
     // wrapper currently exposes a coarser bool (does this FB support SysEx8?).
     // Forward boolean presence so users at least know the capability exists.
-    // FbInfoCb signature redesign to carry the count is tracked for v0.1.x.
-    if (s->cb_fb_info) s->cb_fb_info(active, fb_num, direction, fg, ng, civ,
-                                     /*sysex8*/ max_sx8 != 0, protocol);
+    if (s->cb_fb_info) s->cb_fb_info(active, fb_num, direction, ui_hint,
+                                     fg, ng, civ, /*sysex8*/ max_sx8 != 0, protocol);
 }
 void tramp_clip(bool start, void* ctx) {
     auto* s = static_cast<DeviceState*>(ctx);
@@ -524,7 +528,7 @@ void Device::task() {
             // dropping idle endpoints). Value is irrelevant for the
             // keep-alive use case; receivers wanting precise JR timing
             // negotiate it via UMP Stream Config and supply their own.
-            uint32_t w = midi2_msg_jr_timestamp(/*group*/ 0, ++s->jr_timestamp);
+            uint32_t w = midi2_msg_jr_timestamp(++s->jr_timestamp);
             device_write(s, &w, 1);
             s->jr_last_heartbeat_ms = now;
             s->jr_heartbeat_initialized = true;
@@ -536,25 +540,25 @@ bool Device::isMounted() const     { return st(_state)->mounted; }
 uint8_t Device::altSetting() const { return st(_state)->alt_setting; }
 
 // ==================== MT 0x0 Utility senders ====================
-// midi2 C99 v0.3.0 has no dedicated midi2_msg_noop helper (NOOP is MT 0x0,
-// status 0x0, payload 0); build the word inline. Submit upstream when there
-// is a clear demand for the named helper.
-static inline uint32_t midi2_msg_noop_word(uint8_t group) {
-    return ((uint32_t)0x0 << 28) | ((uint32_t)(group & 0x0F) << 24);
-}
+// MT 0x0 is Groupless per M2-104-UM v1.1.2 section 1.4. The public
+// signatures keep the leading uint8_t group for source compatibility
+// with existing recipes; the value is ignored on the wire.
 
 bool Device::sendNoop(uint8_t group) {
-    uint32_t w = midi2_msg_noop_word(group);
+    (void)group;
+    uint32_t w = midi2_msg_noop();
     return device_write(st(_state), &w, 1);
 }
 
 bool Device::sendJRClock(uint8_t group, uint16_t timestamp) {
-    uint32_t w = midi2_msg_jr_clock(group, timestamp);
+    (void)group;
+    uint32_t w = midi2_msg_jr_clock(timestamp);
     return device_write(st(_state), &w, 1);
 }
 
 bool Device::sendJRTimestamp(uint8_t group, uint16_t timestamp) {
-    uint32_t w = midi2_msg_jr_timestamp(group, timestamp);
+    (void)group;
+    uint32_t w = midi2_msg_jr_timestamp(timestamp);
     return device_write(st(_state), &w, 1);
 }
 
@@ -689,33 +693,18 @@ bool Device::sendSysEx7(uint8_t group, const uint8_t* data, uint16_t len) {
 }
 
 // ==================== MT 0x4 MIDI 2.0 ====================
-// midi2 C99 v0.3.0 packs attribute as (type << 8) | dataLow8 in a single
-// uint16_t parameter, so only 8 bits of attribute_data make it to the wire.
-// The MIDI 2.0 spec (M2-104 §7.4.1) defines attribute_data as 16 bits.
-// Until upstream splits the field, refuse calls that would overflow the
-// 8-bit slot rather than silently truncate the high bits (e.g. Pitch7_9).
-// Caller can detect and either downscale or wait for midi2 v0.3.x.
-static inline bool pack_attribute(uint8_t attrType, uint16_t attrData, uint16_t* out) {
-    if (attrData > 0x00FF) return false;
-    *out = (uint16_t)((attrType << 8) | (attrData & 0xFF));
-    return true;
-}
 
 bool Device::sendNoteOn(uint8_t group, uint8_t channel, uint8_t note, uint16_t velocity,
                         uint8_t attrType, uint16_t attrData) {
-    uint16_t attribute;
-    if (!pack_attribute(attrType, attrData, &attribute)) return false;
     uint32_t words[2];
-    midi2_msg_note_on(words, group, channel, note, velocity, attribute);
+    midi2_msg_note_on(words, group, channel, note, velocity, attrType, attrData);
     return device_write(st(_state), words, 2);
 }
 
 bool Device::sendNoteOff(uint8_t group, uint8_t channel, uint8_t note, uint16_t velocity,
                          uint8_t attrType, uint16_t attrData) {
-    uint16_t attribute;
-    if (!pack_attribute(attrType, attrData, &attribute)) return false;
     uint32_t words[2];
-    midi2_msg_note_off(words, group, channel, note, velocity, attribute);
+    midi2_msg_note_off(words, group, channel, note, velocity, attrType, attrData);
     return device_write(st(_state), words, 2);
 }
 bool Device::sendPolyPressure(uint8_t group, uint8_t channel, uint8_t note, uint32_t pressure) {
@@ -834,9 +823,10 @@ bool Device::sendTempo(uint8_t group, uint32_t tenNsPerQuarter) {
     return device_write(st(_state), words, 4);
 }
 
-bool Device::sendTimeSignature(uint8_t group, uint8_t numerator, uint8_t denominator) {
+bool Device::sendTimeSignature(uint8_t group, uint8_t numerator, uint8_t denominator,
+                                uint8_t num32ndNotes) {
     uint32_t words[4];
-    midi2_msg_time_sig(words, group, numerator, denominator);
+    midi2_msg_time_sig(words, group, numerator, denominator, num32ndNotes);
     return device_write(st(_state), words, 4);
 }
 
@@ -898,20 +888,34 @@ bool Device::sendEndpointInfo(uint8_t umpVerMajor, uint8_t umpVerMinor,
 }
 
 // Stream Configuration Notification (status 0x06). 4 words.
+//
+// JR_TX_ENABLE is derived from the device's current JR Heartbeat state
+// (set by enableJRHeartbeat / disableJRHeartbeat); JR_RX_ENABLE stays
+// false by default because the wrapper does not currently process
+// inbound JR Timestamps. Callers that need explicit control over both
+// bits can construct + emit the UMP via the midi2 C99 layer directly.
 bool Device::sendStreamConfigNotify(uint8_t protocol) {
+    auto* s = st(_state);
+    const bool tx_jr_enable = s->jr_heartbeat_interval_ms > 0;
+    const bool rx_jr_enable = false;
     uint32_t words[4] = {0};
-    midi2_msg_stream_config_notify(words, protocol);
-    return device_write(st(_state), words, 4);
+    midi2_msg_stream_config_notify(words, protocol, rx_jr_enable, tx_jr_enable);
+    return device_write(s, words, 4);
 }
 
 // Function Block Info Notification (status 0x11). 4 words per M2-104 §7.1.13.
-bool Device::sendFbInfo(bool active, uint8_t fbNum, uint8_t direction,
+// The wrapper keeps `bool sysex8` for source compatibility; pass `1` for
+// "supports SysEx8" / `0` for "not supported" downstream to midi2 v0.4.0's
+// uint8_t max_sysex8_streams field.
+bool Device::sendFbInfo(bool active, uint8_t fbNum,
+                        uint8_t direction, uint8_t uiHint,
                         uint8_t firstGroup, uint8_t numGroups,
                         uint8_t midiCiVer, bool sysex8, uint8_t protocol) {
     uint32_t words[4] = {0};
-    midi2_msg_stream_fb_info(words, active, fbNum, direction,
+    const uint8_t max_sx8 = sysex8 ? 1 : 0;
+    midi2_msg_stream_fb_info(words, active, fbNum, direction, uiHint,
                               firstGroup, numGroups,
-                              midiCiVer, sysex8, protocol);
+                              midiCiVer, max_sx8, protocol);
     return device_write(st(_state), words, 4);
 }
 

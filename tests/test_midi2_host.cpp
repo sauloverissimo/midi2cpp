@@ -228,7 +228,7 @@ static void test_host_feedRx_dispatches_note_on(void) {
     // Build a real MIDI 2.0 NoteOn UMP (group 0, channel 5, note 60, vel 0xC000).
     uint32_t words[2];
     midi2_msg_note_on(words, /*group*/ 0, /*channel*/ 5, /*note*/ 60,
-                       /*vel*/ 0xC000, /*attribute*/ 0);
+                       /*vel*/ 0xC000, /*attr_type*/ 0, /*attr_data*/ 0);
     h.feedRx(/*idx*/ 2, words, 2);
 
     CHECK_EQ(fired, 1, "callback fired exactly once");
@@ -253,7 +253,7 @@ static void test_host_feedRx_isolates_idx(void) {
     });
 
     uint32_t words[2];
-    midi2_msg_note_on(words, 0, 0, 60, 0x4000, 0);
+    midi2_msg_note_on(words, 0, 0, 60, 0x4000, 0, 0);
     h.feedRx(0, words, 2);
     h.feedRx(0, words, 2);
     h.feedRx(1, words, 2);

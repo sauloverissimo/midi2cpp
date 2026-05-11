@@ -102,9 +102,10 @@ static void test_sendProgram_with_bank(void) {
                             /*bankMSB*/ 0x10, /*bankLSB*/ 0x20, /*bankValid*/ true);
     CHECK(ok, "sendProgram returned false");
     CHECK_EQ((g_captured_tx[0] >> 20) & 0xFu,  0xCu, "status hi nibble = 0xC");
-    // word 1: [bankValid|0|0|0|0|0|0|0|prog<<24|0|0|0|0|0|0|0|0|MSB|LSB]
-    CHECK_EQ(g_captured_tx[1] >> 31, 1u, "bank_valid bit = 1");
-    CHECK_EQ((g_captured_tx[1] >> 24) & 0x7Fu, 42u, "program = 42");
+    // word 0 byte 4 (option flags, bit 0 = Bank Valid) per M2-104 §7.4.9.
+    CHECK_EQ(g_captured_tx[0] & 0x1u,          1u,    "bank_valid bit set in byte 4");
+    CHECK_EQ(g_captured_tx[1] >> 31,           0u,    "byte 5 MSB reserved/zero");
+    CHECK_EQ((g_captured_tx[1] >> 24) & 0x7Fu, 42u,   "program = 42");
     CHECK_EQ((g_captured_tx[1] >> 8)  & 0x7Fu, 0x10u, "bankMSB = 0x10");
     CHECK_EQ(g_captured_tx[1]         & 0x7Fu, 0x20u, "bankLSB = 0x20");
     PASS();
@@ -266,7 +267,8 @@ static void test_onNoteOn_fires_on_inbound_mt4(void) {
     });
 
     uint32_t words[2];
-    midi2_msg_note_on(words, /*group*/ 0, /*ch*/ 7, /*note*/ 60, /*vel*/ 0x8000, /*attr*/ 0);
+    midi2_msg_note_on(words, /*group*/ 0, /*ch*/ 7, /*note*/ 60, /*vel*/ 0x8000,
+                      /*attr_type*/ 0, /*attr_data*/ 0);
     midi2_proc_feed(d.procState(), words, 2);
 
     CHECK_EQ(captured_ch,   7u,      "channel");
@@ -333,19 +335,21 @@ static void test_begin_then_send_realistic_flow(void) {
     PASS();
 }
 
-// ==================== MT 0x4 attribute boundary (I-1) ====================
+// ==================== MT 0x4 attribute round-trip ====================
 
-static void test_sendNoteOn_rejects_attrData_above_8bit(void) {
-    TEST("sendNoteOn refuses attrData > 0xFF (no silent truncation, I-1)");
+static void test_sendNoteOn_attrData_full_16bit(void) {
+    TEST("sendNoteOn round-trips attr_data full 16 bits (I-1)");
     Device d;
     d.setWriteFn(capture_write);
     capture_reset();
 
-    // attrData = 0x1234 needs 16-bit slot; midi2 C99 v0.3.0 only carries 8 bits.
+    // Pitch7_9 attribute (type 0x03) carries a 16-bit attribute_data.
     bool ok = d.sendNoteOn(/*group*/ 0, /*ch*/ 0, /*note*/ 60, /*vel16*/ 0x8000,
                            /*attrType*/ 0x03, /*attrData*/ 0x1234);
-    CHECK(!ok, "expected refusal");
-    CHECK_EQ(g_captured_tx_len, 0u, "no UMP emitted on refusal");
+    CHECK(ok, "sendNoteOn returned true");
+    CHECK_EQ(g_captured_tx_len, 2u, "2-word UMP emitted");
+    CHECK_EQ(g_captured_tx[0] & 0xFFu,      0x03u,   "attr_type=0x03 in byte 4");
+    CHECK_EQ(g_captured_tx[1] & 0xFFFFu,    0x1234u, "attr_data=0x1234 in w[1] low 16 bits");
     PASS();
 }
 
@@ -438,7 +442,7 @@ static void test_jr_heartbeat_emits_on_interval(void) {
 static void test_setUmpGroup_rewrites_word0(void) {
     TEST("setUmpGroup rewrites the group nibble of an MT 0x4 word");
     uint32_t words[2];
-    midi2_msg_note_on(words, /*group*/ 0, 0, 60, 0x8000, 0);
+    midi2_msg_note_on(words, /*group*/ 0, 0, 60, 0x8000, 0, 0);
     Device::setUmpGroup(&words[0], 7);
     CHECK_EQ((words[0] >> 24) & 0xFu, 7u, "group set to 7");
     PASS();
@@ -447,7 +451,7 @@ static void test_setUmpGroup_rewrites_word0(void) {
 static void test_downgradeMt4ToMt2_translates_note_on(void) {
     TEST("downgradeMt4ToMt2 translates MT 0x4 NoteOn to MT 0x2 NoteOn");
     uint32_t in[2];
-    midi2_msg_note_on(in, /*group*/ 0, /*ch*/ 3, /*note*/ 60, /*vel*/ 0xFFFF, 0);
+    midi2_msg_note_on(in, /*group*/ 0, /*ch*/ 3, /*note*/ 60, /*vel*/ 0xFFFF, 0, 0);
     uint32_t out[1] = {0};
     uint8_t outCount = 0;
     bool ok = Device::downgradeMt4ToMt2(in, /*count*/ 2, out, &outCount);
@@ -612,7 +616,7 @@ int main(void) {
 
     // Realistic flow + boundary cases
     test_begin_then_send_realistic_flow();
-    test_sendNoteOn_rejects_attrData_above_8bit();
+    test_sendNoteOn_attrData_full_16bit();
     test_sendSystemGeneric();
 
     // Inbound dispatch

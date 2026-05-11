@@ -9,7 +9,7 @@
 [![release](https://img.shields.io/github/v/release/sauloverissimo/midi2cpp.svg)](https://github.com/sauloverissimo/midi2cpp/releases/latest)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C.svg)](https://en.cppreference.com/cpp/compiler_support)
 [![MIDI 2.0](https://img.shields.io/badge/MIDI-2.0-blueviolet.svg)](https://midi.org/specifications/midi-2-0-specifications)
-[![depends: midi2](https://img.shields.io/badge/depends-midi2_%E2%89%A5_0.3.4-blueviolet.svg)](https://github.com/sauloverissimo/midi2)
+[![depends: midi2](https://img.shields.io/badge/depends-midi2_%E2%89%A5_0.4.0-blueviolet.svg)](https://github.com/sauloverissimo/midi2)
 [![Arduino](https://img.shields.io/badge/Arduino-IDE-00979D.svg)](https://www.arduino.cc/)
 [![PlatformIO](https://img.shields.io/badge/PlatformIO-Registry-FF7F00.svg)](https://registry.platformio.org/libraries/sauloverissimo/midi2cpp)
 [![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.4-E7352C.svg)](https://docs.espressif.com/projects/esp-idf/en/stable/)
@@ -26,13 +26,14 @@ midi2cpp is the layer where a sketch meets the protocol. Plug a board into the l
 
 Underneath, [midi2](https://github.com/sauloverissimo/midi2) (the portable C99 core) handles parsing, dispatch, and reassembly. midi2cpp adds the C++ ergonomics: callbacks, board glue, ready-made USB descriptors. The board does the talking; the sketch tells it what to say.
 
+Single declared dependency: midi2. Transport, clock, and RNG are caller-supplied; no submodules.
+
 ## Contents
 
 - [midi2cpp](#midi2cpp)
     - [MIDI 2.0 engine for embedded systems](#midi-20-engine-for-embedded-systems)
   - [The library](#the-library)
   - [Contents](#contents)
-  - [Dependencies](#dependencies)
   - [Quickstart](#quickstart)
   - [What you get](#what-you-get)
   - [Three shapes](#three-shapes)
@@ -52,26 +53,6 @@ Underneath, [midi2](https://github.com/sauloverissimo/midi2) (the portable C99 c
   - [About](#about)
   - [Specifications and trademarks](#specifications-and-trademarks)
   - [License](#license)
-
-## Dependencies
-
-midi2cpp draws a clear line between what the library declares and what stays the caller's job:
-
-- **Exactly one declared dependency: [midi2](https://github.com/sauloverissimo/midi2).** The C99 core lives in its own repo, is versioned independently, and is resolved by whichever package manager fits the host build:
-  - Arduino Library Manager: `depends=midi2 (>=0.3.4)` in `library.properties`.
-  - PlatformIO Registry: `dependencies."sauloverissimo/midi2": "^0.3.4"` in `library.json`.
-  - ESP-IDF Component Manager: `idf_component.yml` declaration plus `midi2` in `REQUIRES`.
-  - CMake: `find_package(midi2 0.3.4 CONFIG)` first, falls back to `FetchContent_Declare(midi2 GIT_TAG v0.3.4)`.
-- **No submodules.** `git clone` is the install. No `--recurse-submodules`, no half-initialised state.
-- **No transport library pulled in.** TinyUSB, Teensy native USB, PIO-USB, libDaisy USBMidi: all caller-supplied. The library does not include `<Arduino.h>`, `pico/time.h`, `esp_timer.h`, or any USB header.
-- **No clock or RNG dependency.** Caller injects `millis` / `time_us_64` / `esp_timer_get_time` and `random` / `get_rand_32` / `esp_random` through public hooks. Unset hooks degrade silently, no missing-symbol link errors.
-
-```bash
-git clone https://github.com/sauloverissimo/midi2cpp.git
-cmake -B build && cmake --build build && ctest --test-dir build
-```
-
-Three commands. The first `cmake configure` pulls midi2 once via FetchContent (or picks it up from a system install via `find_package`); subsequent rebuilds and tests run offline. Anywhere C++17 + CMake reach: Linux, macOS, Windows, embedded cross-toolchains for ARM/RISC-V/Xtensa.
 
 ## Quickstart
 
@@ -213,14 +194,14 @@ Then install `midi2` via Library Manager (search `midi2`, click Install).
 Published on the [PlatformIO Registry](https://registry.platformio.org/libraries/sauloverissimo/midi2cpp):
 
 ```ini
-lib_deps = sauloverissimo/midi2cpp @ ^0.3.1
+lib_deps = sauloverissimo/midi2cpp @ ^0.4.0
 ```
 
 Or pin by git tag:
 
 ```ini
 lib_deps =
-  https://github.com/sauloverissimo/midi2cpp.git#v0.3.1
+  https://github.com/sauloverissimo/midi2cpp.git#v0.4.0
 ```
 
 Either way, `midi2` is resolved transitively via the manifest declaration in `library.json`.
@@ -235,7 +216,7 @@ Published on the [ESP Component Registry](https://components.espressif.com/compo
 # main/idf_component.yml
 dependencies:
   idf: ">=5.0"
-  sauloverissimo/midi2cpp: ">=0.3.1"
+  sauloverissimo/midi2cpp: ">=0.4.0"
 ```
 
 `midi2` is pulled transitively through `midi2cpp`'s manifest. `idf.py reconfigure` drops both into `managed_components/`.
@@ -252,7 +233,7 @@ Then declare `midi2` in `main/idf_component.yml`:
 ```yaml
 dependencies:
   idf: ">=5.0"
-  sauloverissimo/midi2: ">=0.3.4"
+  sauloverissimo/midi2: ">=0.4.0"
 ```
 
 `main/CMakeLists.txt` lists `midi2cpp` in its `idf_component_register(... REQUIRES midi2cpp ...)` block. The seven ESP-IDF recipes under [`examples/`](examples/) ship working templates for device, host and bridge roles.
@@ -264,12 +245,12 @@ include(FetchContent)
 FetchContent_Declare(
     midi2cpp
     GIT_REPOSITORY https://github.com/sauloverissimo/midi2cpp.git
-    GIT_TAG        v0.3.1
+    GIT_TAG        v0.4.0
 )
 FetchContent_MakeAvailable(midi2cpp)
 ```
 
-`midi2cpp` cascades the dependency on `midi2` to the parent project: `find_package(midi2 0.3.4 CONFIG)` is tried first, falling back to `FetchContent_Declare(midi2 GIT_TAG v0.3.4)` if no install is found.
+`midi2cpp` cascades the dependency on `midi2` to the parent project: `find_package(midi2 0.4.0 CONFIG)` is tried first, falling back to `FetchContent_Declare(midi2 GIT_TAG v0.4.0)` if no install is found.
 
 ### Git submodule
 
