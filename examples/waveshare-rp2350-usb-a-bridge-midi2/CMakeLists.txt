@@ -27,7 +27,7 @@ if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     FetchContent_Declare(
         tinyusb_fork
         GIT_REPOSITORY https://github.com/sauloverissimo/tinyusb.git
-        GIT_TAG        31d730d8bb0b5c0832c5490378a2a2dd60ab72aa
+        GIT_TAG        97852816e873bf7f91f3a81f093ad08f96179656
         GIT_SHALLOW    TRUE
     )
     FetchContent_MakeAvailable(tinyusb_fork)

@@ -22,7 +22,6 @@ idf_component_register(
         "${TUSB_SRC}/common/tusb_fifo.c"
         # Device stack
         "${TUSB_SRC}/device/usbd.c"
-        "${TUSB_SRC}/device/usbd_control.c"
         "${TUSB_SRC}/class/midi/midi_device.c"
         "${TUSB_SRC}/class/midi/midi2_device.c"
         # Synopsys DWC2 DCD (ESP32-S3 USB-OTG IP)

@@ -20,7 +20,7 @@ TARGET="${IDF_DIR}/external/tinyusb"
 # Pinned to the same SHA as the Pico SDK recipes (see CMakeLists.txt of
 # adafruit-feather-rp2040-host-midi2). Update both in lockstep.
 TINYUSB_REPO="https://github.com/sauloverissimo/tinyusb.git"
-TINYUSB_SHA="31d730d8bb0b5c0832c5490378a2a2dd60ab72aa"
+TINYUSB_SHA="97852816e873bf7f91f3a81f093ad08f96179656"
 
 mkdir -p "${IDF_DIR}/external"
 
