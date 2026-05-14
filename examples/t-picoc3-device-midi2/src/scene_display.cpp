@@ -139,7 +139,7 @@ const char* scene_label(Scene s) {
         case Scene::D_ProgramBank:      return "D | Program + Bank";
         case Scene::E_RpnNrpn:          return "E | RPN / NRPN";
         case Scene::F_NoteAttribute:    return "F | Note Attribute";
-        case Scene::G_SysEx8:           return "G | SysEx8";
+        case Scene::G_SysEx7:           return "G | SysEx7";
         case Scene::H_DeltaClockstamp:  return "H | Delta Clockstamp";
         case Scene::I_PENotify:         return "I | PE Notify";
         case Scene::J_EndOfClip:        return "J | End of Clip";
@@ -155,7 +155,7 @@ uint16_t scene_accent(Scene s) {
         case Scene::D_ProgramBank:      return kAccentD;
         case Scene::E_RpnNrpn:          return kAccentE;
         case Scene::F_NoteAttribute:    return kAccentF;
-        case Scene::G_SysEx8:           return kAccentA;
+        case Scene::G_SysEx7:           return kAccentA;
         case Scene::H_DeltaClockstamp:  return kAccentC;
         case Scene::I_PENotify:         return kAccentB;
         case Scene::J_EndOfClip:        return kInkDim;
@@ -500,7 +500,7 @@ void render_f(float local_phase) {
                         kScreenW / 2, kMainY + kMainH - 2);
 }
 
-// G — SysEx8: scrolling hex bytes.
+// G — SysEx7: scrolling hex bytes.
 void render_g(float local_phase) {
     g_canvas.fillRect(0, kMainY, kScreenW, kMainH, kBg);
 
@@ -516,8 +516,9 @@ void render_g(float local_phase) {
     for (int i = 0; i < n && x < kScreenW; ++i) {
         char b[3];
         std::snprintf(b, sizeof(b), "%02X", g_g_bytes[i]);
-        bool eight_bit = g_g_bytes[i] >= 0x80;
-        g_canvas.setTextColor(eight_bit ? kAccentA : kInkDim, 0);
+        // Universal SysEx markers (0x7E/0x7F) highlighted.
+        bool marker = g_g_bytes[i] == 0x7E || g_g_bytes[i] == 0x7F;
+        g_canvas.setTextColor(marker ? kAccentA : kInkDim, 0);
         g_canvas.drawString(b, x, y);
         x += 30;
     }
@@ -525,7 +526,7 @@ void render_g(float local_phase) {
     g_canvas.setFont(&fonts::Font2);
     g_canvas.setTextColor(kInk, 0);
     g_canvas.setTextDatum(lgfx::textdatum_t::bottom_left);
-    g_canvas.drawString("SysEx8 — raw 8-bit, no 7-bit aliasing",
+    g_canvas.drawString("SysEx7 - Universal Identity Reply",
                         6, kMainY + kMainH - 6);
 }
 
@@ -645,7 +646,7 @@ void core1_render() {
             case Scene::D_ProgramBank:     render_d(local_phase); break;
             case Scene::E_RpnNrpn:         render_e(local_phase); break;
             case Scene::F_NoteAttribute:   render_f(local_phase); break;
-            case Scene::G_SysEx8:          render_g(local_phase); break;
+            case Scene::G_SysEx7:          render_g(local_phase); break;
             case Scene::H_DeltaClockstamp: render_h(local_phase); break;
             case Scene::I_PENotify:        render_i(local_phase); break;
             case Scene::J_EndOfClip:       render_j(local_phase); break;
@@ -746,7 +747,7 @@ void notify_attribute(uint8_t note, int16_t cents) {
     g_f_cents.store(cents);
 }
 
-void notify_sysex8(const uint8_t* bytes, size_t count) {
+void notify_sysex7(const uint8_t* bytes, size_t count) {
     uint8_t n = (uint8_t)(count > 16 ? 16 : count);
     for (uint8_t i = 0; i < n; ++i) g_g_bytes[i] = bytes[i];
     g_g_count.store(n);

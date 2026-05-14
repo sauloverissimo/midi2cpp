@@ -3,7 +3,7 @@
  * LilyGO T-PicoC3 on-board ST7789V (240 x 135, IPS, landscape).
  *
  * The recipe's main.cpp drives the showcase cycle (10 scenes A..J on
- * MT 0x0/0x4/0x5/0xD/0xF). Each scene calls set_scene() at the top and
+ * MT 0x0/0x3/0x4/0xD/0xF). Each scene calls set_scene() at the top and
  * pushes scene-specific events through the notify_*() entry points; a
  * dedicated FreeRTOS-free render loop on core1 paints frames at ~30 fps.
  *
@@ -37,7 +37,7 @@ enum class Scene : uint8_t {
     D_ProgramBank,
     E_RpnNrpn,
     F_NoteAttribute,
-    G_SysEx8,
+    G_SysEx7,
     H_DeltaClockstamp,
     I_PENotify,
     J_EndOfClip,
@@ -83,8 +83,8 @@ void notify_rpn(RpnVariant v, uint8_t msb, uint8_t lsb, int64_t value_or_delta);
 // Scene F: pitch_7_9 microtonal attribute.
 void notify_attribute(uint8_t note, int16_t cents);
 
-// Scene G: 16 raw 8-bit bytes scrolling.
-void notify_sysex8(const uint8_t* bytes, size_t count);
+// Scene G: SysEx7 payload bytes scrolling (up to 16).
+void notify_sysex7(const uint8_t* bytes, size_t count);
 
 // Scene H: ticks per quarter + delta ticks.
 void notify_dctpq(uint16_t tpq, uint32_t delta_ticks);

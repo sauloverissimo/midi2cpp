@@ -30,7 +30,7 @@
  *     Scene D — Program Change with Bank in a single UMP
  *     Scene E — RPN/NRPN 32-bit + Relative RPN/NRPN (incremental)
  *     Scene F — Note On with Attribute pitch_7_9 (microtonal +50¢)
- *     Scene G — SysEx8 emission (8-bit SysEx, no 7-bit aliasing)
+ *     Scene G — SysEx7 emission (fragmented Universal SysEx Identity Reply)
  *     Scene H — Delta Clockstamp (DCTPQ + delta ticks)
  *     Scene I — Property Exchange Notify (broadcast OverlayRate change
  *               to any current subscribers)
@@ -195,7 +195,7 @@ constexpr uint8_t  kF_Note      =    64;     // E4
 constexpr uint32_t kF_OnMs      = 14800;
 constexpr uint32_t kF_OffMs     = 16500;
 
-// Scene G: SysEx8
+// Scene G: SysEx7
 constexpr uint32_t kG_Ms        = 17200;
 
 // Scene H: Delta Clockstamp
@@ -456,25 +456,25 @@ static void scene_f_attribute(m2device& midi, Showcase& s, uint32_t t) {
     }
 }
 
-static void scene_g_sysex8(m2device& midi, Showcase& s, uint32_t t) {
+static void scene_g_sysex7(m2device& midi, Showcase& s, uint32_t t) {
     if (s.g_done || t < kG_Ms) return;
-    // Custom SysEx8 payload — full 8-bit bytes per packet, no 7-bit
-    // aliasing. UNIQUE to MIDI 2.0 (MT 0x5).
+    // Universal SysEx Identity Reply, 12 bytes of 7-bit data.
+    // sendSysEx7 fragments automatically into Start + End packets (MT 0x3).
     static const uint8_t payload[] = {
-        0x7E, 0x7F, 0x06, 0x01,                    // Universal SysEx Identity Reply prefix
-        0xFF, 0xC3, 0xA1, 0xB2, 0xC4, 0xD5, 0xE6,  // 8-bit bytes (would need MCoded7 in 1.0)
-        0xF7, 0x00, 0x80, 0xAA, 0x55,
+        0x7E, 0x7F, 0x06, 0x02,  // Universal Non-Realtime, device 0x7F, Identity Reply
+        0x7D, 0x01, 0x00, 0x40,  // mfr id + family LSB/MSB + model LSB
+        0x00, 0x04, 0x00, 0x00,  // model MSB + version v0.4.0.0
     };
-    midi.sendSysEx8(/*group*/ 0, /*streamId*/ 1, payload, sizeof(payload));
-    scene_display::notify_sysex8(payload, sizeof(payload));
+    midi.sendSysEx7(/*group*/ 0, payload, sizeof(payload));
+    scene_display::notify_sysex7(payload, sizeof(payload));
     scene_display::bump_counter(scene_display::CounterKind::Other);
-    std::printf("[G] SysEx8 emitted (%zu raw 8-bit bytes)\r\n", sizeof(payload));
+    std::printf("[G] SysEx7 emitted (%zu bytes, Identity Reply)\r\n", sizeof(payload));
     s.g_done = true;
 }
 
 static void scene_g_set(Showcase& s, uint32_t t) {
     if (t >= kG_Ms && t < kH_Ms) {
-        scene_display::set_scene(scene_display::Scene::G_SysEx8, s.cycle_count);
+        scene_display::set_scene(scene_display::Scene::G_SysEx7, s.cycle_count);
     }
 }
 
@@ -542,7 +542,7 @@ static void showcase_step(m2device& midi, m2ci& ci, Showcase& s) {
     scene_e_rpn_nrpn(midi, s, t);
     scene_f_attribute(midi, s, t);
     scene_g_set(s, t);
-    scene_g_sysex8(midi, s, t);
+    scene_g_sysex7(midi, s, t);
     scene_h_dctpq(midi, s, t);
     scene_i_pe_notify(ci, s, t);
     scene_j_clip_end(midi, s, t);
