@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 # fetch_tinyusb.sh, one-off bootstrap.
 #
-# Clones the TinyUSB PR #3571 fork into idf/external/tinyusb at a
-# pinned SHA. The shim component at idf/components/tinyusb registers a
-# subset of the fork's source files as an ESP-IDF component, so the
-# fork lives outside components/ to avoid name collisions with the
-# component manager.
+# Clones TinyUSB upstream into idf/external/tinyusb at a pinned SHA.
+# The shim component at idf/components/tinyusb registers a subset of
+# the source files as an ESP-IDF component, kept outside components/
+# to avoid name collisions with the component manager.
 #
 # Re-running this script is safe; it only touches external/tinyusb.
-# If you have a working copy of the fork on disk, symlink it manually:
+# If you have a working copy on disk, symlink it manually:
 #   ln -sfn /path/to/your/tinyusb idf/external/tinyusb
 
 set -euo pipefail
@@ -17,10 +16,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IDF_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET="${IDF_DIR}/external/tinyusb"
 
-# Pinned to the same SHA as the Pico SDK recipes (see CMakeLists.txt of
-# adafruit-feather-rp2040-host-midi2). Update both in lockstep.
-TINYUSB_REPO="https://github.com/sauloverissimo/tinyusb.git"
-TINYUSB_SHA="97852816e873bf7f91f3a81f093ad08f96179656"
+# Pinned to the same SHA as the Pico SDK recipes. Update in lockstep.
+TINYUSB_REPO="https://github.com/hathach/tinyusb.git"
+TINYUSB_SHA="4c87db341e4af7d53ce9cbbdf693593a520dc538"
 
 mkdir -p "${IDF_DIR}/external"
 

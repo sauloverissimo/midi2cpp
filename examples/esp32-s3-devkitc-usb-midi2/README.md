@@ -5,8 +5,6 @@ Full-spec USB MIDI 2.0 device on the **ESP32-S3-DevKitC-1** (Xtensa LX7, USB-OTG
 
 ![esp32-s3-devkitc-usb-midi2 banner](board/banner.png)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via `idf/external/tinyusb` (registered as an ESP-IDF component by the shim at `idf/components/tinyusb`).
-
 ## USB identity
 
 | Field | Value |
@@ -21,7 +19,7 @@ Requires ESP-IDF v5.4+ with `. $IDF_PATH/export.sh` sourced, an ESP32-S3-DevKitC
 
 ```bash
 cd idf
-./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of the fork
+./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of TinyUSB upstream
 . $IDF_PATH/export.sh
 idf.py set-target esp32s3
 idf.py build

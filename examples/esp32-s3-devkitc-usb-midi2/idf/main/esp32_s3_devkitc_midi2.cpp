@@ -2,9 +2,9 @@
  * esp32_s3_devkitc_midi2.cpp, board core implementation.
  *
  * Owns: ESP32-S3 USB-OTG PHY init (USB_PHY_TARGET_INT), TinyUSB device
- * driver install (with MIDI 2.0 class driver from PR #3571), the wiring
- * between TinyUSB and midi2cpp via the five public hooks, and the
- * on-board RGB LED indicator on GPIO48. The application layer only sees
+ * driver install (with MIDI 2.0 class driver), the wiring between
+ * TinyUSB and midi2cpp via the five public hooks, and the on-board RGB
+ * LED indicator on GPIO48. The application layer only sees
  * `midi2::m2device` + `midi2::m2ci` objects that are already alive.
  */
 #include "esp32_s3_devkitc_midi2.h"
@@ -103,9 +103,8 @@ void init(midi2::m2device& midi, midi2::m2ci& ci) {
     usb_phy_init();
     led_strip_init();
 
-    // TinyUSB device init, direct API of the PR #3571 fork. The
-    // MIDI 2.0 class driver registers itself when CFG_TUD_MIDI2 is
-    // enabled in tusb_config.h.
+    // TinyUSB device init. The MIDI 2.0 class driver registers itself
+    // when CFG_TUD_MIDI2 is enabled in tusb_config.h.
     tusb_rhport_init_t dev_init = {};
     dev_init.role  = TUSB_ROLE_DEVICE;
     dev_init.speed = TUSB_SPEED_AUTO;

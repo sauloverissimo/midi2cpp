@@ -1,9 +1,10 @@
 # main component for esp32-s3-devkitc-usb-midi2.
 #
 # Pulls midi2cpp directly from ../../../../src (parent library, not
-# vendored). The TinyUSB PR #3571 fork is expected to live at
-# ../components/tinyusb after running ./scripts/fetch_tinyusb.sh; ESP-IDF
-# resolves local components ahead of the built-in path, so the fork wins.
+# vendored). TinyUSB upstream is expected to live at
+# ../components/tinyusb after running ./scripts/fetch_tinyusb.sh;
+# ESP-IDF resolves local components ahead of the built-in path, so the
+# local copy wins.
 
 set(MIDI2CPP_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../src")
 
