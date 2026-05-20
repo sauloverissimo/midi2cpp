@@ -16,10 +16,11 @@ cmake_minimum_required(VERSION 3.16)
 # Build:
 #   . $IDF_PATH/export.sh
 #   cd examples/esp32-p4-devkit-bridge2-midi2/idf
-#   ./scripts/fetch_tinyusb.sh        # one-off: clones TinyUSB PR #3571
-#                                       fork into external/tinyusb at a
-#                                       pinned SHA (symlinked from the
-#                                       host sibling).
+#   ./scripts/fetch_tinyusb.sh        # one-off: clones TinyUSB
+#                                       experiment/midi-coexistence
+#                                       branch into external/tinyusb
+#                                       at a pinned SHA (symlinked from
+#                                       the host sibling).
 #   idf.py set-target esp32p4
 #   idf.py build
 #   idf.py -p /dev/ttyACM0 flash monitor

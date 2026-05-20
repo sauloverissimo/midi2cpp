@@ -164,33 +164,11 @@ void init(midi2::m2bridge& bridge) {
 }
 
 void task(midi2::m2bridge& bridge) {
-    // Device side: refresh mount/alt and drain RX into the bridge,
-    // which iterates per-packet internally before feeding the m2 Device.
+    // Refresh device mount/alt; RX drain on both sides happens in
+    // tud_midi2_rx_cb / tuh_midi2_rx_cb below.
     bool mounted = tud_midi2_n_mounted(0);
     bridge.setDeviceMounted(mounted);
     bridge.setDeviceAltSetting(mounted ? tud_midi2_n_alt_setting(0) : 0);
-    if (mounted) {
-        uint32_t buf[16];
-        for (;;) {
-            uint32_t n = tud_midi2_n_ump_read(0, buf, 16);
-            if (n == 0) break;
-            bridge.feedDeviceRx(buf, n);
-        }
-    }
-
-    // Host side: drain RX per device idx into the bridge. The bridge's
-    // feedHostRx forwards (with group rewrite) and feeds m2 Host's
-    // identity tracking in one call.
-    for (uint8_t idx = 0; idx < midi2::Bridge::MAX_SLOTS; ++idx) {
-        if (!tuh_midi2_mounted(idx)) continue;
-        uint32_t buf[16];
-        for (;;) {
-            uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
-            if (n == 0) break;
-            bridge.feedHostRx(idx, buf, n);
-        }
-    }
-
     bridge.task();
 }
 
@@ -200,6 +178,16 @@ void task(midi2::m2bridge& bridge) {
  * TinyUSB device callbacks (rhport 0).
  *--------------------------------------------------------------------*/
 extern "C" {
+
+void tud_midi2_rx_cb(uint8_t itf) {
+    if (!esp32_p4_devkit_bridge2::g_bridge) return;
+    uint32_t buf[16];
+    for (;;) {
+        uint32_t n = tud_midi2_n_ump_read(itf, buf, 16);
+        if (n == 0) break;
+        esp32_p4_devkit_bridge2::g_bridge->feedDeviceRx(buf, n);
+    }
+}
 
 void tud_midi2_set_itf_cb(uint8_t itf, uint8_t alt) {
     (void)itf;
@@ -260,7 +248,15 @@ void tuh_midi2_mount_cb(uint8_t idx, const tuh_midi2_mount_cb_t* m) {
     esp32_p4_devkit_bridge2::g_slot_busy[idx] = true;
 }
 
-void tuh_midi2_rx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {}
+void tuh_midi2_rx_cb(uint8_t idx, uint32_t /*xferred_bytes*/) {
+    if (!esp32_p4_devkit_bridge2::g_bridge) return;
+    uint32_t buf[16];
+    for (;;) {
+        uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
+        if (n == 0) break;
+        esp32_p4_devkit_bridge2::g_bridge->feedHostRx(idx, buf, n);
+    }
+}
 void tuh_midi2_tx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {}
 
 void tuh_midi2_umount_cb(uint8_t idx) {

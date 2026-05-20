@@ -1,19 +1,22 @@
-# components/tinyusb, ESP-IDF shim component for the TinyUSB PR #3571 fork.
+# components/tinyusb, ESP-IDF shim component for the TinyUSB
+# experiment/midi-coexistence branch (upstream master + alt-walk
+# bcdMSC defer for MIDI 1.0 + 2.0 host coexistence + opt-in user
+# responder).
 #
 # Dual-stack: device on rhport 0 (INT PHY, USB-Device USB-C jack) plus
 # host on rhport 1 (UTMI PHY, USB-A jacks). Both sides share the
 # Synopsys DWC2 portable layer. usb_descriptors.c lives here so the
 # tud_descriptor_*_cb symbols are in the same archive as usbd.c.
 
-set(TUSB_FORK "${CMAKE_CURRENT_LIST_DIR}/../../external/tinyusb")
+set(TUSB_DIR "${CMAKE_CURRENT_LIST_DIR}/../../external/tinyusb")
 
-if(NOT EXISTS "${TUSB_FORK}/src/tusb.h")
+if(NOT EXISTS "${TUSB_DIR}/src/tusb.h")
     message(FATAL_ERROR
-        "TinyUSB fork not found at ${TUSB_FORK}. "
+        "TinyUSB not found at ${TUSB_DIR}. "
         "Run idf/scripts/fetch_tinyusb.sh from the recipe root.")
 endif()
 
-set(TUSB_SRC "${TUSB_FORK}/src")
+set(TUSB_SRC "${TUSB_DIR}/src")
 
 idf_component_register(
     SRCS
@@ -21,7 +24,6 @@ idf_component_register(
         "${TUSB_SRC}/common/tusb_fifo.c"
         # Device stack
         "${TUSB_SRC}/device/usbd.c"
-        "${TUSB_SRC}/device/usbd_control.c"
         "${TUSB_SRC}/class/midi/midi_device.c"
         "${TUSB_SRC}/class/midi/midi2_device.c"
         # Host stack

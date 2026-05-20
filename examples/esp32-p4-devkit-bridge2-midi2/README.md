@@ -5,7 +5,7 @@ Dual-stack USB MIDI 2.0 bridge on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**, iden
 
 ![esp32-p4-devkit-bridge2-midi2 banner](board/banner.png)
 
-> Same TinyUSB pin as the v1 sibling: depends on a coexistence experiment branch on top of TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). The build pulls the [`sauloverissimo/tinyusb` branch `experiment/midi-coexistence`](https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence) at a pinned SHA, which sits on top of the PR #3571 base and adds the alt-walk `bcdMSC` defer plus the `CFG_TUD_MIDI2_USER_RESPONDER` opt-in that lets the app own MT 0xF Stream messages instead of the built-in responder consuming them. Staged as a follow-up patch on top of PR #3571, not part of the PR itself yet.
+> Same TinyUSB pin as the v1 sibling: built against the TinyUSB [`experiment/midi-coexistence`](https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence) branch on top of upstream master. The branch adds the alt-walk `bcdMSC` defer plus the `CFG_TUD_MIDI2_USER_RESPONDER` opt-in that lets the app own MT 0xF Stream messages instead of the built-in responder consuming them. Staged as follow-up PRs upstream.
 
 ## What this is
 
@@ -145,7 +145,7 @@ midi2cpp/examples/esp32-p4-devkit-bridge2-midi2/
     ├── scripts/fetch_tinyusb.sh        bootstrap: clones the experiment/midi-coexistence branch
     ├── external/                       (gitignored, populated by fetch_tinyusb.sh; symlinked from the host sibling)
     ├── components/tinyusb/
-    │   ├── CMakeLists.txt              shim: registers the fork's selected sources (device + host)
+    │   ├── CMakeLists.txt              shim: registers the selected sources (device + host)
     │   └── usb_descriptors.c           PID 0x4095, Product "ESP32P4Bridge2"
     └── main/
         ├── CMakeLists.txt              idf_component_register, pulls midi2cpp + midi2_bridge from ../../../../src
@@ -158,4 +158,4 @@ midi2cpp/examples/esp32-p4-devkit-bridge2-midi2/
 
 ## License
 
-MIT, inherits the parent [`midi2cpp` LICENSE](../../LICENSE). The TinyUSB fork (cloned on demand into `idf/external/tinyusb`) is MIT (upstream by hathach, fork by sauloverissimo carrying the MIDI 2.0 class drivers from the still-open [PR #3571](https://github.com/hathach/tinyusb/pull/3571) plus the experiment/midi-coexistence follow-ups).
+MIT, inherits the parent [`midi2cpp` LICENSE](../../LICENSE). TinyUSB (cloned on demand into `idf/external/tinyusb` from the [`experiment/midi-coexistence`](https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence) branch on top of upstream master) is MIT.

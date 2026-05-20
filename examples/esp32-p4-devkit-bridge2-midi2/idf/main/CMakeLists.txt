@@ -5,10 +5,11 @@
 # Pulls midi2cpp directly from ../../../../src (parent library, not
 # vendored). Includes midi2_bridge so the recipe consumes the reusable
 # m2bridge class instead of carrying the slot table + Stream Discovery
-# responder + UMP forward path inline. The TinyUSB PR #3571 fork is
-# expected to live at ../external/tinyusb after running
-# ./scripts/fetch_tinyusb.sh; the shim at ../components/tinyusb wires
-# its device + host sources into the build.
+# responder + UMP forward path inline. The TinyUSB
+# experiment/midi-coexistence branch is expected to live at
+# ../external/tinyusb after running ./scripts/fetch_tinyusb.sh; the
+# shim at ../components/tinyusb wires its device + host sources into
+# the build.
 
 set(MIDI2CPP_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../src")
 
