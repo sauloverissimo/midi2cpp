@@ -17,6 +17,8 @@
 
 namespace rp2040_midi2 {
 
+midi2::m2device* g_midi = nullptr;
+
 namespace {
 
 // Outbound UMP, invoked by the library for every sendXxx() and the
@@ -45,6 +47,8 @@ void init(midi2::m2device& midi, midi2::m2ci& ci) {
     // call (USB is dedicated to MIDI in this core, but the app may want
     // UART debug print).
     board_init();
+
+    g_midi = &midi;
 
     tusb_rhport_init_t dev_init = {
         .role  = TUSB_ROLE_DEVICE,
@@ -76,16 +80,7 @@ void task(midi2::m2device& midi) {
     // Drain the USB stack itself.
     tud_task();
 
-    // Drain RX, pump any UMP words from TinyUSB into the library's
-    // dispatcher. Bounded buffer; the inner while loop handles bursts.
-    if (mounted) {
-        uint32_t buf[16];
-        for (;;) {
-            uint32_t n = tud_midi2_n_ump_read(0, buf, 16);
-            if (n == 0) break;
-            midi.feedRx(buf, n);
-        }
-    }
+    // RX drain happens in tud_midi2_rx_cb below.
 
     // Library housekeeping (heartbeat, deferred sends).
     midi.task();
@@ -103,6 +98,17 @@ void task(midi2::m2device& midi) {
  * replace this translation unit in their own build.
  *--------------------------------------------------------------------*/
 extern "C" {
+
+// Pump UMP words from TinyUSB into the library's dispatcher.
+void tud_midi2_rx_cb(uint8_t itf) {
+    if (!rp2040_midi2::g_midi) return;
+    uint32_t buf[16];
+    for (;;) {
+        uint32_t n = tud_midi2_n_ump_read(itf, buf, 16);
+        if (n == 0) break;
+        rp2040_midi2::g_midi->feedRx(buf, n);
+    }
+}
 
 // Fires on alt-setting change (host issued SET_INTERFACE). State is
 // already propagated via polling in task(); no extra work needed here.
