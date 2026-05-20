@@ -256,13 +256,7 @@ void task() {
     tuh_task();
     tud_task();
 
-    // RX drain (both directions): pull every pending word from each
-    // stack into the router queues. Cheap when idle.
-    for (uint8_t idx = 0; idx < MAX_HOST_DEVICES; ++idx) {
-        if (!tuh_midi2_mounted(idx)) continue;
-        drain_upstream_rx(idx);
-    }
-    if (g_device_mounted) drain_downstream_rx();
+    // RX drain happens in tud_midi2_rx_cb / tuh_midi2_rx_cb below.
 
     // Forward 1 message in each direction per task() call. With a 1 ms
     // typical loop period this caps each direction at ~1 kmsg/s, well
@@ -343,8 +337,8 @@ void tuh_midi2_descriptor_cb(uint8_t /*idx*/, const tuh_midi2_descriptor_cb_t* /
     // it but here we forward UMP raw, so no use.
 }
 
-void tuh_midi2_rx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {
-    // Drain happens in feather_bridge::task. Marker only.
+void tuh_midi2_rx_cb(uint8_t idx, uint32_t /*xferred_bytes*/) {
+    feather_bridge::drain_upstream_rx(idx);
 }
 
 void tuh_midi2_tx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {
@@ -375,6 +369,19 @@ void tud_suspend_cb(bool /*remote_wakeup_en*/) {
 
 void tud_resume_cb(void) {
     feather_bridge::g_device_mounted = true;
+}
+
+void tud_midi2_rx_cb(uint8_t /*itf*/) {
+    feather_bridge::drain_downstream_rx();
+}
+
+void tud_midi2_set_itf_cb(uint8_t /*itf*/, uint8_t /*alt*/) {
+    // Alt state polled via tud_midi2_n_alt_setting in drain/forward paths.
+}
+
+bool tud_midi2_get_req_itf_cb(uint8_t /*rhport*/,
+                               const tusb_control_request_t* /*request*/) {
+    return false;
 }
 
 }  // extern "C"
