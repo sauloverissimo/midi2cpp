@@ -3,10 +3,10 @@
  * nRF52840 class boards (Nice!Nano and clones).
  *
  * Owns: board_init (nRF52840 clocks, USB pins via TinyUSB BSP), TinyUSB
- * device stack init (with MIDI 2.0 class driver from PR #3571), the
- * wiring between TinyUSB and midi2cpp via the public hooks, and the
- * on-board LED via the TinyUSB BSP (P1.15 on Feather Express; not
- * visible on most generic Pro Micro clones).
+ * device stack init (with MIDI 2.0 class driver), the wiring between
+ * TinyUSB and midi2cpp via the public hooks, and the on-board LED via
+ * the TinyUSB BSP (P1.15 on Feather Express; not visible on most
+ * generic Pro Micro clones).
  */
 #include "nrf52840_promicro_midi2.h"
 

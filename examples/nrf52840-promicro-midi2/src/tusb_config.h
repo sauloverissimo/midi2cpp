@@ -59,8 +59,8 @@ extern "C" {
 #define CFG_TUD_ENDPOINT0_SIZE  64
 #endif
 
-/* Enable MIDI 2.0 Device class (PR #3571). All other classes off; the
- * recipe is a clean MIDI 2.0 device showcase, no CDC or HID.
+/* Enable MIDI 2.0 Device class. All other classes off; the recipe is
+ * a clean MIDI 2.0 device showcase, no CDC or HID.
  */
 #define CFG_TUD_MIDI2           1
 

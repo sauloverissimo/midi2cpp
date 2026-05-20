@@ -5,8 +5,6 @@ Tier B USB MIDI 2.0 device on **Pro Micro nRF52840** class boards (Nice!Nano, Bl
 
 ![nrf52840-promicro-midi2 banner](monitor/banner.png)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via FetchContent.
-
 This recipe uses the upstream `feather_nrf52840_express` BSP because it matches the three things that matter on a Pro Micro nRF52840: same MCU (nRF52840 Cortex-M4F), same flash layout (FLASH ORIGIN `0x26000` matching the Adafruit nRF52 UF2 bootloader + S140 v6 region) and same RAM reservation (`0x20003400`). Only the on-board LED pin diverges (Feather: P1.15; typical clone LEDs: P1.06 / P1.07). USB enumeration and MIDI streaming are unaffected.
 
 ## USB identity
@@ -22,21 +20,21 @@ This recipe uses the upstream `feather_nrf52840_express` BSP because it matches 
 Requires CMake 3.20+, `arm-none-eabi-gcc`, Python 3.
 
 ```bash
-cmake -B build         # first run fetches TinyUSB fork + Nordic nrfx SDK
+cmake -B build         # first run fetches TinyUSB + Nordic nrfx SDK
 cmake --build build -j
 ```
 
 Convert to UF2:
 
 ```bash
-python3 build/_deps/tinyusb_fork-src/tools/uf2/utils/uf2conv.py \
+python3 build/_deps/tinyusb-src/tools/uf2/utils/uf2conv.py \
     -c -b 0x26000 -f 0xADA52840 \
     -o build/nrf52840-promicro-midi2.uf2 build/nrf52840-promicro-midi2.bin
 ```
 
 The `0x26000` offset matches the Adafruit nRF52 UF2 bootloader region. `0xADA52840` is the Adafruit nRF52840 family identifier.
 
-Pointing at a local TinyUSB checkout: `cmake -B build -DTINYUSB_FORK_PATH=/path/to/tinyusb`.
+Pointing at a local TinyUSB checkout: `cmake -B build -DTINYUSB_PATH=/path/to/tinyusb`.
 
 ## Flash
 
