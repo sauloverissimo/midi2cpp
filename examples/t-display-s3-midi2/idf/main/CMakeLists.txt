@@ -1,10 +1,10 @@
 # main component for t-display-s3-midi2.
 #
 # Pulls midi2cpp directly from ../../../../src (parent library, not
-# vendored). The TinyUSB PR #3571 fork lives at ../external/tinyusb
-# (cloned by scripts/fetch_tinyusb.sh, or symlinked to a local working
-# copy) and is exposed as the ESP-IDF component "tinyusb" through the
-# shim at ../components/tinyusb. The on-board ST7789 piano UI lives in
+# vendored). TinyUSB upstream lives at ../external/tinyusb (cloned by
+# scripts/fetch_tinyusb.sh, or symlinked to a local working copy) and
+# is exposed as the ESP-IDF component "tinyusb" through the shim at
+# ../components/tinyusb. The on-board ST7789 piano UI lives in
 # ../components/piano_display and depends on LovyanGFX as a managed
 # component (see idf_component.yml).
 

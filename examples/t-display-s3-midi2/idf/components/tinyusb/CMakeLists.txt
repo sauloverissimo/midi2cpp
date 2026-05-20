@@ -1,20 +1,20 @@
-# components/tinyusb, ESP-IDF shim component for the TinyUSB PR #3571 fork.
+# components/tinyusb, ESP-IDF shim component for TinyUSB upstream.
 #
-# The fork is cloned raw into ../../external/tinyusb by
+# TinyUSB is cloned raw into ../../external/tinyusb by
 # scripts/fetch_tinyusb.sh. This shim picks the source files needed for
 # a USB MIDI 2.0 device on ESP32-S3 (Synopsys DWC2 dcd) and registers
 # them as a single ESP-IDF component named "tinyusb". The recipe's
 # main component lists this name in REQUIRES.
 
-set(TUSB_FORK "${CMAKE_CURRENT_LIST_DIR}/../../external/tinyusb")
+set(TUSB_DIR "${CMAKE_CURRENT_LIST_DIR}/../../external/tinyusb")
 
-if(NOT EXISTS "${TUSB_FORK}/src/tusb.h")
+if(NOT EXISTS "${TUSB_DIR}/src/tusb.h")
     message(FATAL_ERROR
-        "TinyUSB fork not found at ${TUSB_FORK}. "
+        "TinyUSB not found at ${TUSB_DIR}. "
         "Run idf/scripts/fetch_tinyusb.sh from the recipe root.")
 endif()
 
-set(TUSB_SRC "${TUSB_FORK}/src")
+set(TUSB_SRC "${TUSB_DIR}/src")
 
 idf_component_register(
     SRCS
@@ -48,6 +48,5 @@ target_include_directories(${COMPONENT_LIB} PUBLIC
     "${CMAKE_CURRENT_LIST_DIR}/../../main"
 )
 
-# The fork carries some warnings under -Werror that upstream allows; keep
-# downgrade local to this component, never propagate to the main app.
+# Keep -Wno-error local to this component, never propagate to the main app.
 target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-error)

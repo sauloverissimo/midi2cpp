@@ -5,8 +5,6 @@ USB MIDI 2.0 device receiver on the **LilyGo T-Display S3** (ESP32-S3R8, 8 MB Oc
 
 ![t-display-s3-midi2 banner](board/banner.jpg)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via `idf/external/tinyusb` (registered as an ESP-IDF component by the shim at `idf/components/tinyusb`).
-
 This recipe is a **receiver showcase**: it does not emit notes, does not generate sound, does not synthesise audio. Its job is to be a well-formed USB MIDI 2.0 device, accept whatever a host (DAW, OS) sends over UMP, and visualise the activity on the on-board ST7789. The `piano_display` ESP-IDF component renders a 25-key roll plus an info bar (identity, USB lifecycle, per-category UMP counters) at ~60 fps from a dedicated FreeRTOS task pinned to core 1; the TinyUSB device task runs on core 0.
 
 ## USB identity
@@ -23,7 +21,7 @@ Requires ESP-IDF v5.4+ with `. $IDF_PATH/export.sh` sourced, a LilyGo T-Display 
 
 ```bash
 cd idf
-./scripts/fetch_tinyusb.sh         # one-off, clones the fork at the pinned SHA
+./scripts/fetch_tinyusb.sh         # one-off, clones TinyUSB upstream at the pinned SHA
 . $IDF_PATH/export.sh
 idf.py set-target esp32s3
 idf.py build

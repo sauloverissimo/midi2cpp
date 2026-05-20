@@ -20,10 +20,10 @@
 namespace t_display_s3_midi2 {
 
 // Boots USB-OTG PHY, installs TinyUSB device task with the MIDI 2.0
-// class driver from PR #3571, brings up the ST7789 display + piano UI,
-// and wires the five midi2cpp platform hooks into the supplied
-// m2device / m2ci. After this returns, the app can register callbacks
-// and call task() in its main loop.
+// class driver, brings up the ST7789 display + piano UI, and wires
+// the five midi2cpp platform hooks into the supplied m2device /
+// m2ci. After this returns, the app can register callbacks and call
+// task() in its main loop.
 //
 // Must be called once from app_main(), before any midi.send* / ci.*
 // calls.
