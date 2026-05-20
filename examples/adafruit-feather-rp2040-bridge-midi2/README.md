@@ -5,8 +5,6 @@ Transparent USB MIDI 2.0 bridge on the **Adafruit Feather RP2040 USB Host**. Run
 
 ![adafruit-feather-rp2040-bridge-midi2 banner](board/banner.png)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via FetchContent.
-
 ## Topology
 
 ```
@@ -44,7 +42,7 @@ What the PC sees on the device side (USB-C):
 Requires Pico SDK 2.x (with `PICO_SDK_PATH` exported), `arm-none-eabi-gcc`, CMake 3.14+.
 
 ```bash
-cmake -B build         # first run fetches TinyUSB fork + Pico-PIO-USB
+cmake -B build         # first run fetches TinyUSB + Pico-PIO-USB
 cmake --build build -j
 ```
 

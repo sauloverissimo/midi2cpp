@@ -304,7 +304,6 @@ int main() {
     feather_bridge::init();
 
     display_live_begin();
-    display_log("BETA: TinyUSB PR #3571 fork", COLOR_WARN);
     display_status("Waiting...");
 
     uint32_t last_status_ms = 0;
