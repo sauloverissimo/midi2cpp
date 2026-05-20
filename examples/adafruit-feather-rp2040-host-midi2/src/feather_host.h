@@ -2,7 +2,7 @@
  * feather_host.h: public API of the Adafruit Feather RP2040 USB Host
  * platform layer.
  *
- * Wires Pico SDK + PIO-USB + TinyUSB host (PR #3571 fork) into m2host
+ * Wires Pico SDK + PIO-USB + TinyUSB host into m2host
  * via the five public hooks. The application sees only midi2::m2host
  * and never touches tuh_*, pico_*, or any USB symbol directly.
  *

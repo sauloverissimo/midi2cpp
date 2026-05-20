@@ -5,8 +5,6 @@ USB MIDI 2.0 host on the **Adafruit Feather RP2040 USB Host**. Plug an upstream 
 
 ![adafruit-feather-rp2040-host-midi2 banner](board/rp2040-feather-host-pinout.png)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via FetchContent.
-
 ## USB identity
 
 Host-only role: no USB VID / PID consumed. The host plays MIDI-CI **Initiator**: it transmits Discovery Inquiry on every device mount and stores remote MUIDs in `m2host::identity(idx).ciMuid`.
@@ -22,7 +20,7 @@ Host-only role: no USB VID / PID consumed. The host plays MIDI-CI **Initiator**:
 Requires Pico SDK 2.x (with `PICO_SDK_PATH` exported), `arm-none-eabi-gcc`, CMake 3.14+.
 
 ```bash
-cmake -B build         # first run fetches TinyUSB fork + Pico-PIO-USB
+cmake -B build         # first run fetches TinyUSB + Pico-PIO-USB
 cmake --build build -j
 ```
 
@@ -68,7 +66,7 @@ MIDI-CI: Discovery Initiator only (auto-fired on mount). Replies populate `m2hos
 
 ## Showcase
 
-On boot: 1.5 s splash + BETA hint, then spinner while no device is plugged. Auto-discovery fires UMP Stream + MIDI-CI Discovery Inquiry on mount without app code.
+On boot: 1.5 s splash, then spinner while no device is plugged. Auto-discovery fires UMP Stream + MIDI-CI Discovery Inquiry on mount without app code.
 
 Per device, the OLED displays one event per UMP packet:
 

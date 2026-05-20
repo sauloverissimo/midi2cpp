@@ -200,7 +200,7 @@ extern "C" {
 void tuh_midi2_descriptor_cb(uint8_t idx,
                               const tuh_midi2_descriptor_cb_t* d) {
     // Capture bcdMSC ahead of mount_cb so notifyDeviceMounted has the
-    // full picture. mount_cb does not carry bcdMSC in PR #3571.
+    // full picture. mount_cb does not carry bcdMSC.
     if (idx >= midi2::Host::MAX_DEVICES || !d) return;
     feather_host::g_bcdMSC[idx] =
         ((uint16_t)d->bcdMSC_hi << 8) | (uint16_t)d->bcdMSC_lo;

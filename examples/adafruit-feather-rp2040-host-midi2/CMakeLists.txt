@@ -8,29 +8,18 @@ cmake_minimum_required(VERSION 3.14)  # FetchContent_MakeAvailable
 
 set(PICO_BOARD adafruit_feather_rp2040_usb_host CACHE STRING "Board type")
 
-# Pull TinyUSB PR #3571 fork (MIDI 2.0 host class drivers, not yet
-# merged upstream). Pinned by SHA for reproducibility; GIT_SHALLOW
-# keeps the fetch around 5 MB. Exposed to Pico SDK via PICO_TINYUSB_PATH.
-#
-# Note on the pinned SHA: the fork branch may be rebased as the PR
-# evolves, which can make this SHA disappear from the public branch
-# tip. If the fetch fails with "object not found", bump GIT_TAG to a
-# current commit on feat/midi2-device-host-driver, or use a local
-# checkout via -DPICO_TINYUSB_PATH (see override below).
-#
-# Override available: pass -DPICO_TINYUSB_PATH=/path/to/local/fork to
-# cmake to point at a working copy on disk (skips the fetch entirely).
+# Pull TinyUSB upstream, pinned by SHA.
 include(FetchContent)
 if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     FetchContent_Declare(
-        tinyusb_fork
-        GIT_REPOSITORY https://github.com/sauloverissimo/tinyusb.git
-        GIT_TAG        97852816e873bf7f91f3a81f093ad08f96179656
+        tinyusb
+        GIT_REPOSITORY https://github.com/hathach/tinyusb.git
+        GIT_TAG        4c87db341e4af7d53ce9cbbdf693593a520dc538
         GIT_SHALLOW    TRUE
     )
-    FetchContent_MakeAvailable(tinyusb_fork)
-    set(PICO_TINYUSB_PATH "${tinyusb_fork_SOURCE_DIR}"
-        CACHE PATH "TinyUSB fork (PR #3571)")
+    FetchContent_MakeAvailable(tinyusb)
+    set(PICO_TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
+        CACHE PATH "TinyUSB upstream")
 endif()
 
 # Pico-PIO-USB: bit-banged USB host on PIO state machines. Required
@@ -45,7 +34,7 @@ endif()
 # add_subdirectory. The Pico SDK's TinyUSB integration consumes the
 # library via PICO_PIO_USB_PATH later.
 if(NOT DEFINED PICO_PIO_USB_PATH AND NOT DEFINED ENV{PICO_PIO_USB_PATH})
-    # Pin to the SHA the TinyUSB PR #3571 fork ships in
+    # Pin to the SHA TinyUSB upstream ships in
     # hw/mcu/raspberry_pi/Pico-PIO-USB. Released tag 0.7.1 is too old:
     # it predates Pico-PIO-USB PR #186 ("reduce handshake delay") and
     # without that fix the SET_INTERFACE control transfer that switches
