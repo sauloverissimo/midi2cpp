@@ -193,14 +193,14 @@ Then install `midi2` via Library Manager (search `midi2`, click Install).
 Published on the [PlatformIO Registry](https://registry.platformio.org/libraries/sauloverissimo/midi2cpp):
 
 ```ini
-lib_deps = sauloverissimo/midi2cpp @ ^0.4.0
+lib_deps = sauloverissimo/midi2cpp @ ^0.4.1
 ```
 
 Or pin by git tag:
 
 ```ini
 lib_deps =
-  https://github.com/sauloverissimo/midi2cpp.git#v0.4.0
+  https://github.com/sauloverissimo/midi2cpp.git#v0.4.1
 ```
 
 Either way, `midi2` is resolved transitively via the manifest declaration in `library.json`.
@@ -215,7 +215,7 @@ Published on the [ESP Component Registry](https://components.espressif.com/compo
 # main/idf_component.yml
 dependencies:
   idf: ">=5.0"
-  sauloverissimo/midi2cpp: ">=0.4.0"
+  sauloverissimo/midi2cpp: ">=0.4.1"
 ```
 
 `midi2` is pulled transitively through `midi2cpp`'s manifest. `idf.py reconfigure` drops both into `managed_components/`.
@@ -244,7 +244,7 @@ include(FetchContent)
 FetchContent_Declare(
     midi2cpp
     GIT_REPOSITORY https://github.com/sauloverissimo/midi2cpp.git
-    GIT_TAG        v0.4.0
+    GIT_TAG        v0.4.1
 )
 FetchContent_MakeAvailable(midi2cpp)
 ```
