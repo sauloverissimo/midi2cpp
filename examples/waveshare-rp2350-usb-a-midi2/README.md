@@ -7,8 +7,6 @@ This recipe drives the USB-C side only as a device. The USB-A receptacle and the
 
 ![waveshare-RP2350-USB-A board](board/banner.png)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via FetchContent.
-
 ## USB identity
 
 | Field | Value |
@@ -22,7 +20,7 @@ This recipe drives the USB-C side only as a device. The USB-A receptacle and the
 Requires Pico SDK 2.x (RP2350 support is in 2.0+), `arm-none-eabi-gcc` (SDK auto-selects Cortex-M33), CMake 3.14+.
 
 ```bash
-cmake -B build         # first run fetches TinyUSB fork
+cmake -B build         # first run fetches TinyUSB
 cmake --build build -j
 ```
 
