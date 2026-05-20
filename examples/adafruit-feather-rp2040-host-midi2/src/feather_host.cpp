@@ -151,29 +151,7 @@ void task(midi2::m2host& midi) {
     // Drain the USB host stack itself.
     tuh_task();
 
-    // Pump any UMP words from each connected device into midi.feedRx.
-    // tuh_midi2_rx_cb is implemented below as a marker (future hook for
-    // ISR-aware paths); the actual RX drain happens here in task context
-    // per m2host's threading contract. m2host's feedRx -> midi2_proc_feed
-    // processes one UMP packet per call (ignores word_count and uses MT
-    // to size the packet), so the buffer is iterated packet-by-packet
-    // here to avoid silently dropping every UMP past the first.
-    for (uint8_t idx = 0; idx < midi2::Host::MAX_DEVICES; ++idx) {
-        if (!tuh_midi2_mounted(idx)) continue;
-        uint32_t buf[16];
-        for (;;) {
-            uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
-            if (n == 0) break;
-            uint32_t i = 0;
-            while (i < n) {
-                uint8_t mt = (uint8_t)((buf[i] >> 28) & 0x0F);
-                uint8_t wc = kMtWordCount[mt];
-                if (i + wc > n) break;
-                midi.feedRx(idx, &buf[i], wc);
-                i += wc;
-            }
-        }
-    }
+    // RX drain happens in tuh_midi2_rx_cb below.
 
     // Library housekeeping (CI Discovery timeout sweep).
     midi.task();
@@ -218,9 +196,21 @@ void tuh_midi2_mount_cb(uint8_t idx, const tuh_midi2_mount_cb_t* m) {
         /*bcdMSC*/            bcd);
 }
 
-void tuh_midi2_rx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {
-    // RX drain happens in feather_host::task. This callback is a
-    // notification-only marker.
+void tuh_midi2_rx_cb(uint8_t idx, uint32_t /*xferred_bytes*/) {
+    if (!feather_host::g_midi) return;
+    uint32_t buf[16];
+    for (;;) {
+        uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
+        if (n == 0) break;
+        uint32_t i = 0;
+        while (i < n) {
+            uint8_t mt = (uint8_t)((buf[i] >> 28) & 0x0F);
+            uint8_t wc = feather_host::kMtWordCount[mt];
+            if (i + wc > n) break;
+            feather_host::g_midi->feedRx(idx, &buf[i], wc);
+            i += wc;
+        }
+    }
 }
 
 void tuh_midi2_tx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {
