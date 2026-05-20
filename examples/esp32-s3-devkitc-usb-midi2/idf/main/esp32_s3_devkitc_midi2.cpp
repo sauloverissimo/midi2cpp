@@ -23,6 +23,8 @@
 
 namespace esp32_s3_devkitc_midi2 {
 
+midi2::m2device* g_midi = nullptr;
+
 namespace {
 
 constexpr const char* TAG = "esp32-s3-midi2";
@@ -103,6 +105,8 @@ void init(midi2::m2device& midi, midi2::m2ci& ci) {
     usb_phy_init();
     led_strip_init();
 
+    g_midi = &midi;
+
     // TinyUSB device init. The MIDI 2.0 class driver registers itself
     // when CFG_TUD_MIDI2 is enabled in tusb_config.h.
     tusb_rhport_init_t dev_init = {};
@@ -140,16 +144,7 @@ void task(midi2::m2device& midi) {
     midi.setMounted(mounted);
     midi.setAltSetting(mounted ? tud_midi2_n_alt_setting(0) : 0);
 
-    // Drain RX, pump any UMP words from TinyUSB into the library's
-    // dispatcher. Bounded buffer; the inner while loop handles bursts.
-    if (mounted) {
-        uint32_t buf[16];
-        for (;;) {
-            uint32_t n = tud_midi2_n_ump_read(0, buf, 16);
-            if (n == 0) break;
-            midi.feedRx(buf, n);
-        }
-    }
+    // RX drain happens in tud_midi2_rx_cb below.
 
     // Library housekeeping (heartbeat, deferred sends).
     midi.task();
@@ -177,6 +172,16 @@ void led_show_mounted(bool mounted) {
  * control can replace this translation unit in their own build.
  *--------------------------------------------------------------------*/
 extern "C" {
+
+void tud_midi2_rx_cb(uint8_t itf) {
+    if (!esp32_s3_devkitc_midi2::g_midi) return;
+    uint32_t buf[16];
+    for (;;) {
+        uint32_t n = tud_midi2_n_ump_read(itf, buf, 16);
+        if (n == 0) break;
+        esp32_s3_devkitc_midi2::g_midi->feedRx(buf, n);
+    }
+}
 
 void tud_midi2_set_itf_cb(uint8_t itf, uint8_t alt) {
     (void)itf;
