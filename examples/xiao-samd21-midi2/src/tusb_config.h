@@ -70,10 +70,6 @@ extern "C" {
  * smaller buffer just means more frequent USB transactions, which is
  * fine for the showcase emission rate.
  */
-#define CFG_TUD_MIDI2_TX_BUFSIZE   128
-#define CFG_TUD_MIDI2_RX_BUFSIZE   128
-#define CFG_TUD_MIDI2_TX_EPSIZE    64
-#define CFG_TUD_MIDI2_RX_EPSIZE    64
 
 #ifdef __cplusplus
 }

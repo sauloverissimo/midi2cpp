@@ -16,6 +16,8 @@
 
 namespace xiao_samd21_midi2 {
 
+midi2::m2device* g_midi = nullptr;
+
 namespace {
 
 // Outbound UMP, invoked by the library for every sendXxx and the JR
@@ -45,6 +47,8 @@ uint32_t platform_rng_fn() {
 void init(midi2::m2device& midi, midi2::m2ci& ci) {
     board_init();
 
+    g_midi = &midi;
+
     tusb_rhport_init_t dev_init = {};
     dev_init.role  = TUSB_ROLE_DEVICE;
     dev_init.speed = TUSB_SPEED_AUTO;
@@ -73,15 +77,7 @@ void task(midi2::m2device& midi) {
     midi.setMounted(mounted);
     midi.setAltSetting(mounted ? tud_midi2_n_alt_setting(0) : 0);
 
-    // Drain RX, pump any UMP words into the dispatcher.
-    if (mounted) {
-        uint32_t buf[8];
-        for (;;) {
-            uint32_t n = tud_midi2_n_ump_read(0, buf, 8);
-            if (n == 0) break;
-            midi.feedRx(buf, n);
-        }
-    }
+    // RX drain happens in tud_midi2_rx_cb below.
 
     // Library housekeeping (heartbeat, deferred sends).
     midi.task();
@@ -101,6 +97,16 @@ void led_show_mounted(bool mounted) {
  * propagation, so these stubs do nothing.
  *--------------------------------------------------------------------*/
 extern "C" {
+
+void tud_midi2_rx_cb(uint8_t itf) {
+    if (!xiao_samd21_midi2::g_midi) return;
+    uint32_t buf[8];
+    for (;;) {
+        uint32_t n = tud_midi2_n_ump_read(itf, buf, 8);
+        if (n == 0) break;
+        xiao_samd21_midi2::g_midi->feedRx(buf, n);
+    }
+}
 
 void tud_midi2_set_itf_cb(uint8_t itf, uint8_t alt) {
     (void)itf;
