@@ -54,7 +54,7 @@ extern "C" {
 #define CFG_TUD_ENDPOINT0_SIZE  64
 #endif
 
-/* Enable MIDI 2.0 Device class driver (from our fork). */
+/* Enable MIDI 2.0 Device class driver. */
 #define CFG_TUD_MIDI2         1
 
 /* MIDI 2.0 config

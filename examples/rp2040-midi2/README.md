@@ -5,8 +5,6 @@ Full-spec USB MIDI 2.0 device on the **Raspberry Pi Pico (RP2040)**. Headless si
 
 ![rp2040-midi2 banner](monitor/banner.png)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via FetchContent.
-
 ## USB identity
 
 | Field | Value |
@@ -20,7 +18,7 @@ Full-spec USB MIDI 2.0 device on the **Raspberry Pi Pico (RP2040)**. Headless si
 Requires Pico SDK 2.x (with `PICO_SDK_PATH` exported), `arm-none-eabi-gcc`, CMake 3.14+.
 
 ```bash
-cmake -B build         # first run fetches TinyUSB fork
+cmake -B build         # first run fetches TinyUSB
 cmake --build build -j
 ```
 

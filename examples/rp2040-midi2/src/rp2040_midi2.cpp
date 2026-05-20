@@ -2,10 +2,10 @@
  * rp2040_midi2.cpp — board core implementation.
  *
  * Owns: Pico SDK board init, TinyUSB device init (with MIDI 2.0 class
- * driver from PR #3571), and the wiring between TinyUSB and midi2cpp
- * via the five public hooks. The application layer never sees any of
- * this — it only sees `midi2::m2device` + `midi2::m2ci` objects that
- * are already alive.
+ * driver), and the wiring between TinyUSB and midi2cpp via the five
+ * public hooks. The application layer never sees any of this — it
+ * only sees `midi2::m2device` + `midi2::m2ci` objects that are already
+ * alive.
  */
 #include "rp2040_midi2.h"
 
