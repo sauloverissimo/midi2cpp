@@ -15,8 +15,8 @@
 namespace xiao_samd21_midi2 {
 
 // Boots board (clocks, USB pins, LED), installs TinyUSB device stack
-// with the MIDI 2.0 class driver from PR #3571, and wires the public
-// hooks into the supplied m2device / m2ci.
+// with the MIDI 2.0 class driver, and wires the public hooks into the
+// supplied m2device / m2ci.
 //
 // Must be called once from main(), before any midi.send* / ci.* calls.
 void init(midi2::m2device& midi, midi2::m2ci& ci);

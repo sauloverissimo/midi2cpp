@@ -3,9 +3,9 @@
  * SAMD21.
  *
  * Owns: board_init (SAMD21 clocks, USB pins via TinyUSB BSP), TinyUSB
- * device stack init (with MIDI 2.0 class driver from PR #3571), the
- * wiring between TinyUSB and midi2cpp via the public hooks, and the
- * on-board yellow LED on PA17.
+ * device stack init (with MIDI 2.0 class driver), the wiring between
+ * TinyUSB and midi2cpp via the public hooks, and the on-board yellow
+ * LED on PA17.
  */
 #include "xiao_samd21_midi2.h"
 

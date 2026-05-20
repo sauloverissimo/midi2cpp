@@ -5,23 +5,23 @@ cmake_minimum_required(VERSION 3.20)
 # library directly from ../../src.
 #
 # Build system: TinyUSB native CMake (family_support.cmake) + ARM GNU
-# toolchain (arm-none-eabi-gcc). The TinyUSB PR #3571 fork is pulled
-# via FetchContent at a pinned SHA. Same SHA used by Pico SDK and
-# ESP-IDF recipes.
+# toolchain (arm-none-eabi-gcc). TinyUSB upstream is pulled via
+# FetchContent, pinned by SHA.
 
-# Pull TinyUSB fork BEFORE family_support.cmake processes BOARD/FAMILY,
-# so the include path of family_support resolves to our fork's hw/bsp.
+# Pull TinyUSB upstream BEFORE family_support.cmake processes
+# BOARD/FAMILY, so the include path of family_support resolves to the
+# fetched hw/bsp.
 include(FetchContent)
-if(NOT DEFINED TINYUSB_FORK_PATH AND NOT DEFINED ENV{TINYUSB_FORK_PATH})
+if(NOT DEFINED TINYUSB_PATH AND NOT DEFINED ENV{TINYUSB_PATH})
     FetchContent_Declare(
-        tinyusb_fork
-        GIT_REPOSITORY https://github.com/sauloverissimo/tinyusb.git
-        GIT_TAG        97852816e873bf7f91f3a81f093ad08f96179656
+        tinyusb
+        GIT_REPOSITORY https://github.com/hathach/tinyusb.git
+        GIT_TAG        4c87db341e4af7d53ce9cbbdf693593a520dc538
         GIT_SHALLOW    TRUE
     )
-    FetchContent_MakeAvailable(tinyusb_fork)
-    set(TINYUSB_FORK_PATH "${tinyusb_fork_SOURCE_DIR}"
-        CACHE PATH "TinyUSB fork (PR #3571)")
+    FetchContent_MakeAvailable(tinyusb)
+    set(TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
+        CACHE PATH "TinyUSB upstream")
 endif()
 
 # TinyUSB BSPs depend on per-MCU SDK submodules (CMSIS_5 for ARM core
@@ -30,12 +30,12 @@ endif()
 # clone these into hw/mcu/<vendor> and lib/CMSIS_5. We trigger the
 # same flow at configure time so a fresh clone produces a working
 # build without manual steps.
-if(NOT EXISTS "${TINYUSB_FORK_PATH}/hw/mcu/microchip/samd21/gcc/system_samd21.c"
-   OR NOT EXISTS "${TINYUSB_FORK_PATH}/lib/CMSIS_5/CMSIS/Core/Include/cmsis_compiler.h")
+if(NOT EXISTS "${TINYUSB_PATH}/hw/mcu/microchip/samd21/gcc/system_samd21.c"
+   OR NOT EXISTS "${TINYUSB_PATH}/lib/CMSIS_5/CMSIS/Core/Include/cmsis_compiler.h")
     message(STATUS "Fetching TinyUSB SAMD21 deps via tools/get_deps.py...")
     execute_process(
-        COMMAND python3 "${TINYUSB_FORK_PATH}/tools/get_deps.py" samd2x_l2x
-        WORKING_DIRECTORY "${TINYUSB_FORK_PATH}"
+        COMMAND python3 "${TINYUSB_PATH}/tools/get_deps.py" samd2x_l2x
+        WORKING_DIRECTORY "${TINYUSB_PATH}"
         RESULT_VARIABLE   GET_DEPS_RC
         OUTPUT_VARIABLE   GET_DEPS_OUT
         ERROR_VARIABLE    GET_DEPS_ERR
@@ -53,7 +53,7 @@ set(BOARD seeeduino_xiao CACHE STRING "TinyUSB BSP")
 
 # Include family_support BEFORE project(); it sets CMAKE_TOOLCHAIN_FILE
 # (arm-none-eabi-gcc) which has to be in place when project() runs.
-include(${TINYUSB_FORK_PATH}/hw/bsp/family_support.cmake)
+include(${TINYUSB_PATH}/hw/bsp/family_support.cmake)
 
 project(xiao-samd21-midi2 C CXX ASM)
 

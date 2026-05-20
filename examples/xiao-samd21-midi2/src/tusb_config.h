@@ -56,8 +56,8 @@ extern "C" {
 #define CFG_TUD_ENDPOINT0_SIZE  64
 #endif
 
-/* Enable MIDI 2.0 Device class (PR #3571). All other classes off to
- * keep the SAMD21's flash + SRAM footprint minimal.
+/* Enable MIDI 2.0 Device class. All other classes off to keep the
+ * SAMD21's flash + SRAM footprint minimal.
  */
 #define CFG_TUD_MIDI2           1
 

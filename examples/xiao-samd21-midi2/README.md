@@ -5,8 +5,6 @@ USB MIDI 2.0 device on the [**XIAO SAMD21**](https://wiki.seeedstudio.com/Seeedu
 
 ![xiao-samd21-midi2 banner](board/banner.png)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via FetchContent.
-
 ## USB identity
 
 | Field | Value |
@@ -22,19 +20,19 @@ USB MIDI 2.0 device on the [**XIAO SAMD21**](https://wiki.seeedstudio.com/Seeedu
 Requires CMake 3.20+, `arm-none-eabi-gcc`, Python 3.
 
 ```bash
-cmake -B build         # first run fetches TinyUSB fork + SAMD21 SDK
+cmake -B build         # first run fetches TinyUSB + SAMD21 SDK
 cmake --build build -j
 ```
 
 Convert to UF2:
 
 ```bash
-python3 build/_deps/tinyusb_fork-src/tools/uf2/utils/uf2conv.py \
+python3 build/_deps/tinyusb-src/tools/uf2/utils/uf2conv.py \
     -c -b 0x2000 -f SAMD21 \
     -o build/xiao-samd21-midi2.uf2 build/xiao-samd21-midi2.bin
 ```
 
-Pointing at a local TinyUSB checkout: `cmake -B build -DTINYUSB_FORK_PATH=/path/to/tinyusb`.
+Pointing at a local TinyUSB checkout: `cmake -B build -DTINYUSB_PATH=/path/to/tinyusb`.
 
 ## Flash
 
