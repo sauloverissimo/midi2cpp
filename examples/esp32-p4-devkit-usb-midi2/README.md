@@ -5,8 +5,6 @@ Full-spec USB MIDI 2.0 device on the **Waveshare ESP32-P4-WIFI6-DEV-KIT** (RISC-
 
 ![esp32-p4-devkit-usb-midi2 banner](board/banner.jpg)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via `idf/external/tinyusb` (registered as an ESP-IDF component by the shim at `idf/components/tinyusb`).
-
 The Waveshare kit exposes two USB-C jacks: **USB-Device** routes the P4 internal PHY (used here for USB MIDI 2.0); **ToUART** routes the CH343 USB-Serial-JTAG bridge for console + flashing. The two USB-A jacks tied to the UTMI host PHY are not used in this device-only recipe.
 
 ## USB identity
@@ -23,7 +21,7 @@ Requires ESP-IDF v5.4+ with `. $IDF_PATH/export.sh` sourced and the RISC-V toolc
 
 ```bash
 cd idf
-./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of the fork
+./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of TinyUSB upstream
 . $IDF_PATH/export.sh
 idf.py set-target esp32p4
 idf.py build

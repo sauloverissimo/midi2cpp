@@ -93,9 +93,8 @@ void tinyusb_task(void* arg) {
 void init(midi2::m2device& midi, midi2::m2ci& ci) {
     usb_phy_init();
 
-    // TinyUSB device init, direct API of the PR #3571 fork. The
-    // MIDI 2.0 class driver registers itself when CFG_TUD_MIDI2 is
-    // enabled in tusb_config.h.
+    // TinyUSB device init. The MIDI 2.0 class driver registers itself
+    // when CFG_TUD_MIDI2 is enabled in tusb_config.h.
     tusb_rhport_init_t dev_init = {};
     dev_init.role  = TUSB_ROLE_DEVICE;
     dev_init.speed = TUSB_SPEED_AUTO;
