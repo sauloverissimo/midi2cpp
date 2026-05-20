@@ -3,10 +3,10 @@
 # Dual-stack: USB MIDI 2.0 device on rhport 0 (INT PHY, USB-Device USB-C
 # jack) AND USB MIDI 2.0 host on rhport 1 (UTMI PHY, USB-A jacks).
 # Pulls midi2cpp directly from ../../../../src (parent library, not
-# vendored). The TinyUSB PR #3571 fork is expected to live at
-# ../external/tinyusb after running ./scripts/fetch_tinyusb.sh; the
-# shim at ../components/tinyusb wires its device + host sources into
-# the build.
+# vendored). The TinyUSB experiment/midi-coexistence branch is
+# expected to live at ../external/tinyusb after running
+# ./scripts/fetch_tinyusb.sh; the shim at ../components/tinyusb wires
+# its device + host sources into the build.
 
 set(MIDI2CPP_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../src")
 

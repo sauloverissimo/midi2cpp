@@ -262,53 +262,14 @@ void init(midi2::m2device& midi, midi2::m2ci& ci, midi2::m2host& host) {
 }
 
 void task(midi2::m2device& midi, midi2::m2host& host) {
-    // Device side: refresh mount/alt and drain RX
+    // Device side: refresh mount/alt; RX drain happens in
+    // tud_midi2_rx_cb below.
     bool mounted = tud_midi2_n_mounted(0);
     midi.setMounted(mounted);
     midi.setAltSetting(mounted ? tud_midi2_n_alt_setting(0) : 0);
-    if (mounted) {
-        uint32_t buf[16];
-        for (;;) {
-            uint32_t n = tud_midi2_n_ump_read(0, buf, 16);
-            if (n == 0) break;
-            // Same per-packet iteration as the host side (see below):
-            // m2device's feedRx delegates to midi2_proc_feed which only
-            // processes one UMP per call.
-            uint32_t i = 0;
-            while (i < n) {
-                uint8_t mt = (uint8_t)((buf[i] >> 28) & 0x0F);
-                uint8_t wc = kMtWordCount[mt];
-                if (i + wc > n) break;
-                midi.feedRx(&buf[i], wc);
-                i += wc;
-            }
-        }
-    }
     midi.task();
 
-    // Host side: drain RX per device idx, forward raw to PC + feed
-    // m2host so its Stream Discovery / Identity tracking still fires.
-    // m2host's feedRx -> midi2_proc_feed processes one UMP packet per
-    // call (ignores word_count and uses MT to size the packet), so we
-    // iterate packet-by-packet here. forward_ump_to_pc handles the
-    // multi-packet buffer internally.
-    for (uint8_t idx = 0; idx < midi2::Host::MAX_DEVICES; ++idx) {
-        if (!tuh_midi2_mounted(idx)) continue;
-        uint32_t buf[16];
-        for (;;) {
-            uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
-            if (n == 0) break;
-            forward_ump_to_pc(idx, buf, n);
-            uint32_t i = 0;
-            while (i < n) {
-                uint8_t mt = (uint8_t)((buf[i] >> 28) & 0x0F);
-                uint8_t wc = kMtWordCount[mt];
-                if (i + wc > n) break;
-                host.feedRx(idx, &buf[i], wc);
-                i += wc;
-            }
-        }
-    }
+    // Host side: RX drain happens in tuh_midi2_rx_cb below.
     host.task();
 }
 
@@ -366,6 +327,23 @@ int8_t g_midi1_slot_map[kNumSlots] = {-1, -1, -1, -1};
  *--------------------------------------------------------------------*/
 extern "C" {
 
+void tud_midi2_rx_cb(uint8_t itf) {
+    if (!esp32_p4_devkit_bridge::g_midi_ptr) return;
+    uint32_t buf[16];
+    for (;;) {
+        uint32_t n = tud_midi2_n_ump_read(itf, buf, 16);
+        if (n == 0) break;
+        uint32_t i = 0;
+        while (i < n) {
+            uint8_t mt = (uint8_t)((buf[i] >> 28) & 0x0F);
+            uint8_t wc = esp32_p4_devkit_bridge::kMtWordCount[mt];
+            if (i + wc > n) break;
+            esp32_p4_devkit_bridge::g_midi_ptr->feedRx(&buf[i], wc);
+            i += wc;
+        }
+    }
+}
+
 void tud_midi2_set_itf_cb(uint8_t itf, uint8_t alt) {
     (void)itf;
     (void)alt;
@@ -419,7 +397,23 @@ void tuh_midi2_mount_cb(uint8_t idx, const tuh_midi2_mount_cb_t* m) {
         m->alt_setting_active, bcd);
 }
 
-void tuh_midi2_rx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {}
+void tuh_midi2_rx_cb(uint8_t idx, uint32_t /*xferred_bytes*/) {
+    if (!esp32_p4_devkit_bridge::g_host) return;
+    uint32_t buf[16];
+    for (;;) {
+        uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
+        if (n == 0) break;
+        esp32_p4_devkit_bridge::forward_ump_to_pc(idx, buf, n);
+        uint32_t i = 0;
+        while (i < n) {
+            uint8_t mt = (uint8_t)((buf[i] >> 28) & 0x0F);
+            uint8_t wc = esp32_p4_devkit_bridge::kMtWordCount[mt];
+            if (i + wc > n) break;
+            esp32_p4_devkit_bridge::g_host->feedRx(idx, &buf[i], wc);
+            i += wc;
+        }
+    }
+}
 void tuh_midi2_tx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {}
 
 void tuh_midi2_umount_cb(uint8_t idx) {

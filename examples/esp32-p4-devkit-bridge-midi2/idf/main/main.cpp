@@ -61,10 +61,11 @@ extern "C" void app_main(void) {
     g_ci.begin(kManufacturerId, kFamily, kModel, kVersion);
 
     // ------------------------------------------------------------------
-    // UMP Stream Discovery responder (PC-facing). The local TinyUSB
-    // fork patch (CFG_TUD_MIDI2_USER_RESPONDER=1) lets MT 0xF Stream
-    // messages pass through to the app so we can answer with per-FB
-    // group windows + dynamic FB Names tied to each slot.
+    // UMP Stream Discovery responder (PC-facing). The
+    // experiment/midi-coexistence opt-in user responder
+    // (CFG_TUD_MIDI2_USER_RESPONDER=1) lets MT 0xF Stream messages
+    // pass through to the app so we can answer with per-FB group
+    // windows + dynamic FB Names tied to each slot.
     // ------------------------------------------------------------------
     g_midi.onEndpointDiscovery([](uint8_t filter) {
         if (filter & 0x01) {

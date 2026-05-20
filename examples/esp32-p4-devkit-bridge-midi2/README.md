@@ -5,7 +5,7 @@ Dual-stack USB MIDI 2.0 bridge on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**. Runs
 
 ![esp32-p4-devkit-bridge-midi2 banner](board/banner.png)
 
-> Depends on a coexistence experiment branch on top of TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Running `CFG_TUH_MIDI=CFG_TUH_MIDI2=1` requires a tie-breaker between the legacy and MIDI 2.0 host class drivers (both match the same Audio + MIDIStreaming class triple). The build pulls the [`sauloverissimo/tinyusb` branch `experiment/midi-coexistence`](https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence) at a pinned SHA, which sits on top of the PR #3571 base and adds an alt-walk `bcdMSC` defer (~85 lines, gated by `#if CFG_TUH_MIDI2` and `#if !CFG_TUH_MIDI2_LEGACY_FALLBACK`). Staged as a follow-up patch on top of PR #3571, not part of the PR itself yet.
+> Built against the TinyUSB [`experiment/midi-coexistence`](https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence) branch on top of upstream master. Running `CFG_TUH_MIDI=CFG_TUH_MIDI2=1` requires a tie-breaker between the legacy and MIDI 2.0 host class drivers (both match the same Audio + MIDIStreaming class triple); the branch adds an alt-walk `bcdMSC` defer (~85 lines, gated by `#if CFG_TUH_MIDI2` and `#if !CFG_TUH_MIDI2_LEGACY_FALLBACK`) plus an opt-in user responder (`CFG_TUD_MIDI2_USER_RESPONDER`) for per-FB group windows and dynamic FB Names. Staged as follow-up PRs upstream.
 
 ## Topology
 
@@ -28,7 +28,7 @@ PC / DAW ─── USB-Device USB-C ───►│ Waveshare ESP32-P4-WIFI6-DEV
 
 ## MIDI 1.0 + MIDI 2.0 host coexistence
 
-The legacy `midi_host.c` and the new `midi2_host.c` (PR #3571) both match the same Audio + MIDIStreaming class triple, so without a tie-breaker the order of `usbh_class_drivers[]` decides who claims each upstream interface (legacy wins, dropping MIDI 2.0 traffic to byte-stream). Our `experiment/midi-coexistence` branch on top of PR #3571 adds an alt-walk `bcdMSC` defer so each driver only claims interfaces that match its own protocol version. With the fix in place, plugging an Arturia MiniLab 25 (MIDI 1.0) and an ESP32-S3 device (MIDI 2.0) into the same hub gives one mount per device, each routed through its own class driver. The bridge forwards `tuh_midi2_*` typed callbacks through `m2device` to the PC and instruments the legacy callbacks with diagnostic prints (no MIDI 1.0 forwarding yet). Staged as a follow-up pending PR #3571 merge.
+The legacy `midi_host.c` and the new `midi2_host.c` (merged upstream via PR #3571) both match the same Audio + MIDIStreaming class triple, so without a tie-breaker the order of `usbh_class_drivers[]` decides who claims each upstream interface (legacy wins, dropping MIDI 2.0 traffic to byte-stream). The `experiment/midi-coexistence` branch on top of upstream master adds an alt-walk `bcdMSC` defer so each driver only claims interfaces that match its own protocol version. With the fix in place, plugging an Arturia MiniLab 25 (MIDI 1.0) and an ESP32-S3 device (MIDI 2.0) into the same hub gives one mount per device, each routed through its own class driver. The bridge forwards `tuh_midi2_*` typed callbacks through `m2device` to the PC and instruments the legacy callbacks with diagnostic prints (no MIDI 1.0 forwarding yet). Staged as a follow-up PR upstream.
 
 ## USB identity
 

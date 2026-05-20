@@ -60,22 +60,19 @@ extern "C" {
 // Multi-slot bridge: 4 upstream devices x 4 groups = 16 groups, 4 FBs (one per slot).
 #define CFG_TUD_MIDI2_NUM_GROUPS           16
 #define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS  4
-#define CFG_TUD_MIDI2_TX_BUFSIZE   512
-#define CFG_TUD_MIDI2_RX_BUFSIZE   256
-#define CFG_TUD_MIDI2_TX_EPSIZE    64
-#define CFG_TUD_MIDI2_RX_EPSIZE    64
 
 // EP / product identity (used by both built-in and user responder paths;
 // the built-in is bypassed below and the app sends Endpoint Name +
 // Product Instance ID itself, but the macros must still be defined for
-// the fork's GTB descriptor + a few static fallbacks).
+// the GTB descriptor + a few static fallbacks).
 #define CFG_TUD_MIDI2_EP_NAME              "ESP32P4Bridge"
 #define CFG_TUD_MIDI2_PRODUCT_ID           "ESP32P4Bridge-0001"
 
 // Bridge needs per-FB group windows + dynamic FB Names; the built-in
-// responder hardcodes one window per FB and never sends FB Names.
-// Local fork patch (see external/tinyusb/src/class/midi/midi2_device.c)
-// lets MT 0xF Stream messages flow through to the app via
+// responder hardcodes one window per FB and never sends FB Names. The
+// experiment/midi-coexistence branch adds an opt-in user responder
+// (see external/tinyusb/src/class/midi/midi2_device.c) that lets MT
+// 0xF Stream messages flow through to the app via
 // tud_midi2_n_ump_read so midi2cpp's m2device dispatcher fires
 // onEndpointDiscovery / onFbDiscovery callbacks.
 #define CFG_TUD_MIDI2_USER_RESPONDER       1
@@ -85,26 +82,23 @@ extern "C" {
 #define CFG_TUH_DEVICE_MAX      (CFG_TUH_HUB ? 4 : 1)
 #define CFG_TUH_ENUMERATION_BUFSIZE  256
 // Both MIDI 1.0 and MIDI 2.0 host drivers enabled (scenario C). The
-// alt-walk bcdMSC defer on the experiment/midi-coexistence fork branch
-// (commit 91a54581) makes the two drivers disjoint: each one walks all
-// alt settings of the MIDIStreaming interface and only claims when the
-// device matches its own protocol version. Each driver fires its own
-// callback set (tuh_midi_* for legacy, tuh_midi2_* for MIDI 2.0).
+// alt-walk bcdMSC defer from the experiment/midi-coexistence branch
+// makes the two drivers disjoint: each one walks all alt settings of
+// the MIDIStreaming interface and only claims when the device matches
+// its own protocol version. Each driver fires its own callback set
+// (tuh_midi_* for legacy, tuh_midi2_* for MIDI 2.0).
 //
 // See https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence
 // Up to 4 upstream devices per driver (matches MIDI2CPP_HOST_MAX_DEVICES
 // in midi2cpp). With CFG_TUH_MIDI=4 + CFG_TUH_MIDI2=4 the bridge can
 // host 4 legacy MIDI 1.0 + 4 MIDI 2.0 devices simultaneously, each
-// driver claiming only its matching protocol via the alt-walk defer
-// (experiment/midi-coexistence branch).
+// driver claiming only its matching protocol via the alt-walk defer.
 #define CFG_TUH_MIDI            4
 #define CFG_TUH_MIDI2           4
 #define CFG_TUH_MIDI2_NUM_GROUPS           1
 #define CFG_TUH_MIDI2_NUM_FUNCTION_BLOCKS  1
 #define CFG_TUH_MIDI2_RX_BUFSIZE    512
-#define CFG_TUH_MIDI2_TX_BUFSIZE    256
-#define CFG_TUH_MIDI2_RX_EPSIZE     64
-#define CFG_TUH_MIDI2_TX_EPSIZE     64
+#define CFG_TUH_MIDI2_TX_BUFSIZE    512
 
 #ifdef __cplusplus
 }
