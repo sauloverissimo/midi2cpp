@@ -25,6 +25,8 @@
 
 namespace t_display_s3_midi2 {
 
+midi2::m2device* g_midi = nullptr;
+
 namespace {
 
 constexpr const char* TAG = "t-display-s3-midi2";
@@ -86,6 +88,8 @@ void piano_render_task(void* arg) {
 void init(midi2::m2device& midi, midi2::m2ci& ci) {
     usb_phy_init();
 
+    g_midi = &midi;
+
     // ST7789 + piano roll. Allocates the LovyanGFX driver, full-screen
     // sprite (320x170 16bpp = 108 KB in PSRAM), and the active-note
     // state buffer.
@@ -129,14 +133,7 @@ void task(midi2::m2device& midi) {
     midi.setMounted(mounted);
     midi.setAltSetting(mounted ? tud_midi2_n_alt_setting(0) : 0);
 
-    if (mounted) {
-        uint32_t buf[16];
-        for (;;) {
-            uint32_t n = tud_midi2_n_ump_read(0, buf, 16);
-            if (n == 0) break;
-            midi.feedRx(buf, n);
-        }
-    }
+    // RX drain happens in tud_midi2_rx_cb below.
 
     midi.task();
 }
@@ -152,6 +149,16 @@ void show_mounted(bool mounted) {
  * TinyUSB MIDI 2.0 callbacks, required hooks per midi2_device.h API.
  *--------------------------------------------------------------------*/
 extern "C" {
+
+void tud_midi2_rx_cb(uint8_t itf) {
+    if (!t_display_s3_midi2::g_midi) return;
+    uint32_t buf[16];
+    for (;;) {
+        uint32_t n = tud_midi2_n_ump_read(itf, buf, 16);
+        if (n == 0) break;
+        t_display_s3_midi2::g_midi->feedRx(buf, n);
+    }
+}
 
 void tud_midi2_set_itf_cb(uint8_t itf, uint8_t alt) {
     (void)itf;

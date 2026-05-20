@@ -63,10 +63,6 @@ extern "C" {
 #define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS  1
 
 /* TX buffer sized for short bursts of UMP words during the showcase. */
-#define CFG_TUD_MIDI2_TX_BUFSIZE   512
-#define CFG_TUD_MIDI2_RX_BUFSIZE   256
-#define CFG_TUD_MIDI2_TX_EPSIZE    64
-#define CFG_TUD_MIDI2_RX_EPSIZE    64
 
 #ifdef __cplusplus
 }
