@@ -16,30 +16,25 @@ cmake_minimum_required(VERSION 3.14)  # FetchContent_MakeAvailable
 # PIO_USB_DP_PIN_DEFAULT to GP12 below.
 set(PICO_BOARD pico2 CACHE STRING "Board type")
 
-# Pull TinyUSB PR #3571 fork (MIDI 2.0 host + device drivers, not yet
-# merged upstream). Pinned by SHA for reproducibility; GIT_SHALLOW keeps
-# the fetch around 5 MB. Exposed to Pico SDK via PICO_TINYUSB_PATH.
-#
-# Override available: pass -DPICO_TINYUSB_PATH=/path/to/local/fork to
-# cmake to point at a working copy on disk (skips the fetch entirely).
+# Pull TinyUSB upstream, pinned by SHA.
 include(FetchContent)
 if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     FetchContent_Declare(
-        tinyusb_fork
-        GIT_REPOSITORY https://github.com/sauloverissimo/tinyusb.git
-        GIT_TAG        97852816e873bf7f91f3a81f093ad08f96179656
+        tinyusb
+        GIT_REPOSITORY https://github.com/hathach/tinyusb.git
+        GIT_TAG        4c87db341e4af7d53ce9cbbdf693593a520dc538
         GIT_SHALLOW    TRUE
     )
-    FetchContent_MakeAvailable(tinyusb_fork)
-    set(PICO_TINYUSB_PATH "${tinyusb_fork_SOURCE_DIR}"
-        CACHE PATH "TinyUSB fork (PR #3571)")
+    FetchContent_MakeAvailable(tinyusb)
+    set(PICO_TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
+        CACHE PATH "TinyUSB upstream")
 endif()
 
 # Pico-PIO-USB drives the second USB port on GP12/GP13 via PIO state
 # machines. SOURCE_SUBDIR pointing to a path with no CMakeLists.txt so
 # FetchContent_MakeAvailable populates without add_subdirectory.
 if(NOT DEFINED PICO_PIO_USB_PATH AND NOT DEFINED ENV{PICO_PIO_USB_PATH})
-    # Pin to the SHA the TinyUSB PR #3571 fork ships in
+    # Pin to the SHA TinyUSB upstream ships in
     # hw/mcu/raspberry_pi/Pico-PIO-USB. Released tag 0.7.1 is too old:
     # it predates Pico-PIO-USB PR #186 ("reduce handshake delay") and
     # without that fix the SET_INTERFACE control transfer that switches

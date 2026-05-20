@@ -5,8 +5,6 @@ Transparent USB MIDI 2.0 bridge on the **Waveshare RP2350-USB-A**. Runs TinyUSB 
 
 ![waveshare-RP2350-USB-A bridge banner](board/banner.png)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via FetchContent.
-
 > **Hardware modification required.** The Waveshare RP2350-USB-A ships with a 1.5 kΩ pull-up resistor (`R13`) on the USB-A `D+` line. That pull-up biases the line for **device** mode; in **host** mode it prevents the RP2350 from detecting low-speed devices and hot-plug events. **`R13` must be desoldered before the bridge can enumerate anything on the USB-A port.** With this modification, the USB-A connector on this board can no longer be used as a device, only as a host. Photos and a step-by-step removal procedure: [Quentin Santos' write-up](https://qsantos.fr/2025/11/21/fixing-the-rp2350-usb-a-not-working-as-usb-host/).
 
 ## Topology
@@ -46,7 +44,7 @@ What the PC sees on the device side (USB-C):
 Requires Pico SDK 2.x (RP2350 support is in 2.0+), `arm-none-eabi-gcc` (SDK auto-selects Cortex-M33), CMake 3.14+.
 
 ```bash
-cmake -B build         # first run fetches TinyUSB fork + Pico-PIO-USB
+cmake -B build         # first run fetches TinyUSB + Pico-PIO-USB
 cmake --build build -j
 ```
 
