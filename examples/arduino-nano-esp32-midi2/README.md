@@ -5,8 +5,6 @@
 
 Full-spec USB MIDI 2.0 device on the [**Arduino Nano ESP32**](https://docs.arduino.cc/hardware/nano-esp32/) (ESP32-S3-MINI-1 in Nano form factor, single-channel `LED_BUILTIN` on D13 / GPIO48). Headless single-file showcase of every MIDI 2.0 message category beyond MIDI 1.0. ESP-IDF v5.4 build, no Arduino IDE.
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via `idf/external/tinyusb`.
-
 ## USB identity
 
 | Field | Value |
@@ -21,7 +19,7 @@ Requires ESP-IDF v5.4+ with `. $IDF_PATH/export.sh` sourced, an Arduino Nano ESP
 
 ```bash
 cd idf
-./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of the fork
+./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of TinyUSB upstream
 . $IDF_PATH/export.sh
 idf.py set-target esp32s3
 idf.py build

@@ -9,9 +9,9 @@ cmake_minimum_required(VERSION 3.16)
 # Build:
 #   . $IDF_PATH/export.sh
 #   cd examples/arduino-nano-esp32-midi2/idf
-#   ./scripts/fetch_tinyusb.sh        # one-off: clones TinyUSB PR #3571
-#                                       fork into external/tinyusb at a
-#                                       pinned SHA, overrides built-in.
+#   ./scripts/fetch_tinyusb.sh        # one-off: clones TinyUSB upstream
+#                                       into external/tinyusb at a pinned
+#                                       SHA, overrides built-in.
 #   idf.py set-target esp32s3
 #   idf.py build
 #   idf.py -p /dev/ttyACM0 flash monitor

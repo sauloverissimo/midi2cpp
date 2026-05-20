@@ -2,10 +2,10 @@
  * arduino_nano_esp32_midi2.cpp, board core implementation.
  *
  * Owns: ESP32-S3 USB-OTG PHY init (USB_PHY_TARGET_INT), TinyUSB device
- * driver install (with MIDI 2.0 class driver from PR #3571), the wiring
- * between TinyUSB and midi2cpp via the five public hooks, and a single
- * GPIO LED indicator (LED_BUILTIN on most Arduino Nano ESP32 / Pro
- * Micro ESP32-S3 form factors). The application layer only sees
+ * driver install (with MIDI 2.0 class driver), the wiring between
+ * TinyUSB and midi2cpp via the five public hooks, and a single GPIO
+ * LED indicator (LED_BUILTIN on most Arduino Nano ESP32 / Pro Micro
+ * ESP32-S3 form factors). The application layer only sees
  * `midi2::m2device` + `midi2::m2ci` objects that are already alive.
  */
 #include "arduino_nano_esp32_midi2.h"
