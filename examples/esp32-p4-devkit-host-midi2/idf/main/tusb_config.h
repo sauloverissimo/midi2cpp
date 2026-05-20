@@ -57,9 +57,9 @@ extern "C" {
 #define CFG_TUH_DEVICE_MAX      (CFG_TUH_HUB ? 4 : 1)
 #define CFG_TUH_ENUMERATION_BUFSIZE  256
 
-/* Enable MIDI 2.0 Host class driver (from PR #3571 fork). The fork
- * also auto-uplifts MIDI 1.0 byte-stream cable events into UMP MT 0x2
- * when the upstream device negotiates Alt 0 (legacy USB MIDI 1.0).
+/* Enable MIDI 2.0 Host class driver. The driver also auto-uplifts
+ * MIDI 1.0 byte-stream cable events into UMP MT 0x2 when the
+ * upstream device negotiates Alt 0 (legacy USB MIDI 1.0).
  *
  * Up to 4 upstream devices per driver (matches MIDI2CPP_HOST_MAX_DEVICES
  * in midi2cpp). With CFG_TUH_MIDI=4 + CFG_TUH_MIDI2=4 the host can
@@ -73,9 +73,7 @@ extern "C" {
 #define CFG_TUH_MIDI2_NUM_FUNCTION_BLOCKS  1
 
 #define CFG_TUH_MIDI2_RX_BUFSIZE    512
-#define CFG_TUH_MIDI2_TX_BUFSIZE    256
-#define CFG_TUH_MIDI2_RX_EPSIZE     64
-#define CFG_TUH_MIDI2_TX_EPSIZE     64
+#define CFG_TUH_MIDI2_TX_BUFSIZE    512
 
 #ifdef __cplusplus
 }

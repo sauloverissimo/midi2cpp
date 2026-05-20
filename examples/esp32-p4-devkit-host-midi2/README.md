@@ -5,7 +5,7 @@ USB MIDI 2.0 host on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**. Plug an upstream 
 
 ![esp32-p4-devkit-host-midi2 banner](board/banner.jpg)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via `idf/external/tinyusb` (registered as an ESP-IDF component by the shim at `idf/components/tinyusb`).
+> Built against the TinyUSB [`experiment/midi-coexistence`](https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence) branch on top of upstream master. The branch adds an alt-walk `bcdMSC` defer that lets `CFG_TUH_MIDI=1` and `CFG_TUH_MIDI2=1` coexist (each driver claims only its matching protocol version). Staged as a follow-up PR upstream.
 
 ## USB identity
 
@@ -22,7 +22,7 @@ Requires ESP-IDF v5.4+ with `. $IDF_PATH/export.sh` sourced and the RISC-V toolc
 
 ```bash
 cd idf
-./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of the fork
+./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of the experiment branch
 . $IDF_PATH/export.sh
 idf.py set-target esp32p4
 idf.py build

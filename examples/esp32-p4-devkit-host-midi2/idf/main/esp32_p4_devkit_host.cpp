@@ -2,9 +2,9 @@
  * esp32_p4_devkit_host.cpp, board core implementation (host role).
  *
  * Owns: ESP32-P4 USB-OTG UTMI PHY init (host role, high speed),
- * TinyUSB host driver install (with MIDI 2.0 host class from PR #3571),
- * and the wiring between TinyUSB host and midi2cpp via the m2host
- * hooks. The application layer only sees `midi2::m2host` after init().
+ * TinyUSB host driver install (with MIDI 2.0 host class), and the
+ * wiring between TinyUSB host and midi2cpp via the m2host hooks. The
+ * application layer only sees `midi2::m2host` after init().
  *
  * The Waveshare ESP32-P4-WIFI6-DEV-KIT routes the UTMI PHY to the two
  * USB-A jacks. No software PHY swap is required for the host role
@@ -35,10 +35,10 @@ constexpr uint8_t TUH_RHPORT = 1;   // matches BOARD_TUH_RHPORT in tusb_config.h
 // in init(); the program is the lifetime.
 midi2::m2host* g_midi = nullptr;
 
-// bcdMSC arrives via descriptor_cb but mount_cb does not carry it in
-// PR #3571. Stash per-idx so the mount handler can pass the right
-// value to m2host. Default 0x0200 covers spec v2 if descriptor_cb is
-// somehow skipped.
+// bcdMSC arrives via descriptor_cb but mount_cb does not carry it.
+// Stash per-idx so the mount handler can pass the right value to
+// m2host. Default 0x0200 covers spec v2 if descriptor_cb is somehow
+// skipped.
 uint16_t g_bcdMSC[midi2::Host::MAX_DEVICES] = {0x0200, 0x0200, 0x0200, 0x0200};
 
 namespace {
@@ -124,28 +124,7 @@ static const uint8_t kMtWordCount[16] = {
 };
 
 void task(midi2::m2host& midi) {
-    // RX drain runs from this task context. tuh_midi2_rx_cb is below as
-    // a notification-only marker that keeps the linker happy. m2host's
-    // feedRx -> midi2_proc_feed processes one UMP packet per call
-    // (ignores word_count and uses MT to size the packet), so the buffer
-    // is iterated packet-by-packet here.
-    for (uint8_t idx = 0; idx < midi2::Host::MAX_DEVICES; ++idx) {
-        if (!tuh_midi2_mounted(idx)) continue;
-        uint32_t buf[16];
-        for (;;) {
-            uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
-            if (n == 0) break;
-            uint32_t i = 0;
-            while (i < n) {
-                uint8_t mt = (uint8_t)((buf[i] >> 28) & 0x0F);
-                uint8_t wc = kMtWordCount[mt];
-                if (i + wc > n) break;
-                midi.feedRx(idx, &buf[i], wc);
-                i += wc;
-            }
-        }
-    }
-
+    // RX drain happens in tuh_midi2_rx_cb below.
     midi.task();
 }
 
@@ -156,8 +135,8 @@ void task(midi2::m2host& midi) {
  *
  * mount/umount notify the m2host instance of lifecycle changes; m2host
  * then auto-discovers (auto_discover=true by default) by sending UMP
- * Stream Endpoint Discovery + CI Discovery Inquiry. RX is drained from
- * task context above, so rx_cb is intentionally a no-op marker.
+ * Stream Endpoint Discovery + CI Discovery Inquiry. RX is drained
+ * inside rx_cb below per packet word count.
  *--------------------------------------------------------------------*/
 extern "C" {
 
@@ -180,8 +159,21 @@ void tuh_midi2_mount_cb(uint8_t idx, const tuh_midi2_mount_cb_t* m) {
         bcd);
 }
 
-void tuh_midi2_rx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {
-    // RX drain happens in esp32_p4_devkit_host::task. Notification-only.
+void tuh_midi2_rx_cb(uint8_t idx, uint32_t /*xferred_bytes*/) {
+    if (!esp32_p4_devkit_host::g_midi) return;
+    uint32_t buf[16];
+    for (;;) {
+        uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
+        if (n == 0) break;
+        uint32_t i = 0;
+        while (i < n) {
+            uint8_t mt = (uint8_t)((buf[i] >> 28) & 0x0F);
+            uint8_t wc = esp32_p4_devkit_host::kMtWordCount[mt];
+            if (i + wc > n) break;
+            esp32_p4_devkit_host::g_midi->feedRx(idx, &buf[i], wc);
+            i += wc;
+        }
+    }
 }
 
 void tuh_midi2_tx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {
