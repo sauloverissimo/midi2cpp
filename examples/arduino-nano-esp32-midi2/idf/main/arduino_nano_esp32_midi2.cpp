@@ -23,6 +23,8 @@
 
 namespace arduino_nano_esp32_midi2 {
 
+midi2::m2device* g_midi = nullptr;
+
 namespace {
 
 constexpr const char* TAG = "arduino-nano-esp32-midi2";
@@ -84,6 +86,8 @@ void init(midi2::m2device& midi, midi2::m2ci& ci) {
     usb_phy_init();
     led_init();
 
+    g_midi = &midi;
+
     tusb_rhport_init_t dev_init = {};
     dev_init.role  = TUSB_ROLE_DEVICE;
     dev_init.speed = TUSB_SPEED_AUTO;
@@ -111,14 +115,7 @@ void task(midi2::m2device& midi) {
     midi.setMounted(mounted);
     midi.setAltSetting(mounted ? tud_midi2_n_alt_setting(0) : 0);
 
-    if (mounted) {
-        uint32_t buf[16];
-        for (;;) {
-            uint32_t n = tud_midi2_n_ump_read(0, buf, 16);
-            if (n == 0) break;
-            midi.feedRx(buf, n);
-        }
-    }
+    // RX drain happens in tud_midi2_rx_cb below.
 
     midi.task();
 }
@@ -130,6 +127,16 @@ void led_show_mounted(bool mounted) {
 }  // namespace arduino_nano_esp32_midi2
 
 extern "C" {
+
+void tud_midi2_rx_cb(uint8_t itf) {
+    if (!arduino_nano_esp32_midi2::g_midi) return;
+    uint32_t buf[16];
+    for (;;) {
+        uint32_t n = tud_midi2_n_ump_read(itf, buf, 16);
+        if (n == 0) break;
+        arduino_nano_esp32_midi2::g_midi->feedRx(buf, n);
+    }
+}
 
 void tud_midi2_set_itf_cb(uint8_t itf, uint8_t alt) {
     (void)itf;
