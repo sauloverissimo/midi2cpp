@@ -13,17 +13,18 @@ cmake_minimum_required(VERSION 3.14)  # FetchContent_MakeAvailable
 
 set(PICO_BOARD pico CACHE STRING "Board type")
 
+# Pull TinyUSB upstream, pinned by SHA.
 include(FetchContent)
 if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     FetchContent_Declare(
-        tinyusb_fork
-        GIT_REPOSITORY https://github.com/sauloverissimo/tinyusb.git
-        GIT_TAG        97852816e873bf7f91f3a81f093ad08f96179656
+        tinyusb
+        GIT_REPOSITORY https://github.com/hathach/tinyusb.git
+        GIT_TAG        4c87db341e4af7d53ce9cbbdf693593a520dc538
         GIT_SHALLOW    TRUE
     )
-    FetchContent_MakeAvailable(tinyusb_fork)
-    set(PICO_TINYUSB_PATH "${tinyusb_fork_SOURCE_DIR}"
-        CACHE PATH "TinyUSB fork (PR #3571)")
+    FetchContent_MakeAvailable(tinyusb)
+    set(PICO_TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
+        CACHE PATH "TinyUSB upstream")
 endif()
 
 include(pico_sdk_import.cmake)

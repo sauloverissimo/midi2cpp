@@ -2,10 +2,10 @@
  * t_picoc3_midi2.cpp — board core implementation for LilyGO T-PicoC3.
  *
  * Owns: Pico SDK board init, TinyUSB device init (with MIDI 2.0 class
- * driver from PR #3571), and the wiring between TinyUSB and midi2cpp
- * via the five public hooks. The application layer never sees any of
- * this — it only sees `midi2::m2device` + `midi2::m2ci` objects that
- * are already alive.
+ * driver), and the wiring between TinyUSB and midi2cpp via the five
+ * public hooks. The application layer never sees any of this — it
+ * only sees `midi2::m2device` + `midi2::m2ci` objects that are already
+ * alive.
  *
  * The T-PicoC3 carries an RP2040 plus an ESP32-C3 sharing one USB-C
  * connector through an orientation switch. This core targets the RP2040
