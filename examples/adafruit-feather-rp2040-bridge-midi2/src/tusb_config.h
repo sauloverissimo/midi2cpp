@@ -80,11 +80,6 @@ extern "C" {
 #define CFG_TUD_MIDI2_NUM_GROUPS            16
 #define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS   1
 
-#define CFG_TUD_MIDI2_TX_BUFSIZE            1024
-#define CFG_TUD_MIDI2_RX_BUFSIZE            512
-#define CFG_TUD_MIDI2_TX_EPSIZE             64
-#define CFG_TUD_MIDI2_RX_EPSIZE             64
-
 #define CFG_TUD_MIDI2_EP_NAME               "rp2040-midi2 bridge"
 #define CFG_TUD_MIDI2_PRODUCT_ID            "feather-bridge"
 
@@ -102,8 +97,8 @@ extern "C" {
 
 #define CFG_TUH_MIDI                        0
 #define CFG_TUH_MIDI2                       4
-#define CFG_TUH_MIDI2_RX_BUFSIZE            1024
-#define CFG_TUH_MIDI2_TX_BUFSIZE            256
+#define CFG_TUH_MIDI2_RX_BUFSIZE            512
+#define CFG_TUH_MIDI2_TX_BUFSIZE            512
 
 #ifdef __cplusplus
 }
