@@ -73,10 +73,6 @@ extern "C" {
  * more burst tolerance for SysEx / Property Exchange flows that the
  * Tier C XIAO sibling could not absorb.
  */
-#define CFG_TUD_MIDI2_TX_BUFSIZE   512
-#define CFG_TUD_MIDI2_RX_BUFSIZE   512
-#define CFG_TUD_MIDI2_TX_EPSIZE    64
-#define CFG_TUD_MIDI2_RX_EPSIZE    64
 
 #ifdef __cplusplus
 }
