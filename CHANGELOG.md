@@ -5,6 +5,44 @@ All notable changes to `midi2cpp` are recorded here. Format follows
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
+## [0.4.1]
+
+TinyUSB upstream. Recipes that pulled the MIDI 2.0 driver from the
+sauloverissimo/tinyusb fork now pull from hathach/tinyusb at the
+merge commit of PR #3571. RX drain migrated from polling loop to the
+`tud_midi2_rx_cb` / `tuh_midi2_rx_cb` callbacks across 18 device, host,
+and bridge recipes. BUFSIZE aligned with upstream defaults (device
+without override = EPSIZE, host 512/512).
+
+### Changed
+
+- Examples: 15 recipes bumped TinyUSB pin to `hathach/tinyusb` upstream
+  (PR #3571 merged 2026-05-19).
+- Examples: 3 ESP32-P4 recipes (`esp32-p4-devkit-host-midi2`,
+  `esp32-p4-devkit-bridge-midi2`, `esp32-p4-devkit-bridge2-midi2`)
+  bumped to the `experiment/midi-coexistence` branch on top of upstream
+  master (alt-walk `bcdMSC` defer + opt-in user responder, staged as
+  follow-up PRs).
+- Examples: RX drain moved from polling loops to driver callbacks
+  (`tud_midi2_rx_cb`, `tuh_midi2_rx_cb`).
+- Examples: `CFG_TUD_MIDI2_*_BUFSIZE` overrides removed where the
+  upstream default (= EPSIZE) is sufficient; host recipes aligned with
+  the upstream `midi2_host` example (512/512).
+- README: Boards table reorganized; `Status` column renamed to `Notes`,
+  per-row `override` badges removed. The Waveshare ESP32-P4-WIFI6-DEV-KIT
+  is now listed as two rows: device-only (upstream, stable) and
+  host / bridge (experimental branch).
+
+### Fixed
+
+- Examples: removed stale reference to the deprecated `usbd_control.c`
+  source in the `components/tinyusb/CMakeLists.txt` of
+  `esp32-p4-devkit-bridge-midi2` and `esp32-p4-devkit-bridge2-midi2`
+  (the upstream merged `usbd_control.c` into `usbd.c`).
+- Examples: added default for `CFG_TUD_MIDI2_USER_RESPONDER` in the
+  experimental branch so the opt-in macro compiles cleanly under
+  `-Werror=undef` and `-Werror=unused-function`.
+
 ## [0.4.0]
 
 Track midi2 v0.4.0. Public Device / Host / Bridge APIs stay

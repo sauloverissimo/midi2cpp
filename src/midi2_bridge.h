@@ -47,9 +47,9 @@
 // feedDeviceRx and the Bridge replies with per-FB group windows + the
 // dynamic FB Name for each active slot. This requires the underlying
 // TinyUSB build to leave MT 0xF Stream messages in the RX FIFO instead
-// of consuming them with the built-in responder; on the PR #3571 fork
-// this is opt-in via CFG_TUD_MIDI2_USER_RESPONDER (see the
-// experiment/midi-coexistence branch).
+// of consuming them with the built-in responder; opt-in via
+// CFG_TUD_MIDI2_USER_RESPONDER on the experiment/midi-coexistence
+// branch.
 //
 // Threading: same single-task contract as m2 Device and m2 Host. Call
 // begin() / task() / feed*() / slotSetActive() from one task only.
