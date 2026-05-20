@@ -5,8 +5,6 @@ USB MIDI 2.0 device on the **Tenstar Robot RP2040 Pro Micro**, configured as a *
 
 ![rp2040-promicro-ump-test-bench banner](monitor/banner.png)
 
-> Depends on TinyUSB [PR #3571](https://github.com/hathach/tinyusb/pull/3571). Until merged, the build pulls a pinned fork via FetchContent.
-
 ## USB identity
 
 | Field | Value |
@@ -21,7 +19,7 @@ USB MIDI 2.0 device on the **Tenstar Robot RP2040 Pro Micro**, configured as a *
 Requires Pico SDK 2.x (with `PICO_SDK_PATH` exported), `arm-none-eabi-gcc`, CMake 3.14+.
 
 ```bash
-cmake -B build         # first run fetches TinyUSB fork
+cmake -B build         # first run fetches TinyUSB
 cmake --build build -j
 ```
 
