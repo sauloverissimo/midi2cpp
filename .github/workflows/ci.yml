@@ -67,6 +67,12 @@ jobs:
           cd "$HOME/pico-sdk"
           git submodule update --init --depth 1
 
+      - name: Cache TinyUSB FetchContent (keyed on pinned SHA)
+        uses: actions/cache@v4
+        with:
+          path: examples/rp2040-midi2/build/_deps/tinyusb-src
+          key: tinyusb-fetchcontent-${{ hashFiles('examples/rp2040-midi2/CMakeLists.txt') }}
+
       - name: Configure + build rp2040-midi2-showcase
         env:
           PICO_SDK_PATH: ${{ github.workspace }}/../pico-sdk
@@ -142,6 +148,12 @@ jobs:
           compiled=0
           for sketch in examples/*/; do
             name=$(basename "$sketch")
+            case "$name" in
+              teensy*|esp32-*|nrf52*|samd*|stm32*|xiao-samd*|arduino-nano-esp32-*|t-display-s3-*)
+                echo "Skip $name (not compatible with ${{ matrix.fqbn }})"
+                continue
+                ;;
+            esac
             inos=("$sketch"*.ino)
             if [ ${#inos[@]} -eq 0 ]; then
               echo "Skip $name (no .ino files; not an Arduino sketch)"

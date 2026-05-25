@@ -10,10 +10,7 @@
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C.svg)](https://en.cppreference.com/cpp/compiler_support)
 [![MIDI 2.0](https://img.shields.io/badge/MIDI-2.0-blueviolet.svg)](https://midi.org/specifications/midi-2-0-specifications)
 [![ESP Component Registry](https://components.espressif.com/components/sauloverissimo/midi2cpp/badge.svg)](https://components.espressif.com/components/sauloverissimo/midi2cpp)
-[![Arduino](https://img.shields.io/badge/Arduino-IDE-00979D.svg)](https://www.arduino.cc/)
-[![PlatformIO](https://img.shields.io/badge/PlatformIO-Registry-FF7F00.svg)](https://registry.platformio.org/libraries/sauloverissimo/midi2cpp)
-[![Pico SDK](https://img.shields.io/badge/Pico_SDK-2.0-C51A4A.svg)](https://github.com/raspberrypi/pico-sdk)
-[![CMake](https://img.shields.io/badge/CMake-3.16%2B-064F8C.svg)](https://cmake.org/)
+[![Platform](https://img.shields.io/badge/Platform-Arduino%20%7C%20PlatformIO%20%7C%20Pico_SDK%20%7C%20ESP--IDF%20%7C%20CMake-E8B838.svg)](#install)
 
 
 ---
@@ -66,7 +63,7 @@ m2ci     ci(midi);
 // 1. Outbound UMP. Forward to the platform's USB MIDI write API.
 void plat_write(const uint32_t* words, size_t count) {
   // tud_midi_n_stream_write(0, (uint8_t*)words, count * 4);  // TinyUSB
-  // usbMIDI.sendUMP(words, count);                           // Teensy native
+  // usbMIDI2.write(words, count);                            // Teensy (cores fork)
   // ...
 }
 
@@ -142,7 +139,7 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 | **Waveshare ESP32-P4-WIFI6-DEV-KIT** (host / bridge) | ESP32-P4 | - | ✅ | ✅ | ![experimental](https://img.shields.io/badge/-experimental-yellow.svg) TinyUSB | TinyUSB [`experiment/midi-coexistence`](https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence) branch on top of upstream (alt-walk `bcdMSC` defer for MIDI 1.0 + 2.0 host coexistence + opt-in user responder for per-FB group windows). Recipes in [`esp32-p4-devkit-host-midi2`](examples/esp32-p4-devkit-host-midi2) (host, UTMI PHY, OTG_HS), [`esp32-p4-devkit-bridge-midi2`](examples/esp32-p4-devkit-bridge-midi2) (bridge inline glue) and [`esp32-p4-devkit-bridge2-midi2`](examples/esp32-p4-devkit-bridge2-midi2) (same role on `m2bridge`, PID 0x4095) |
 | **LilyGo T-Display S3** | ESP32-S3 | ✅ | - | - | TinyUSB | Tier A receiver, on-board ST7789 piano roll. Recipe in [`t-display-s3-midi2`](examples/t-display-s3-midi2). Hardware validated 2026-05-01: enumerates `cafe:4094` as `TDisplayS3`, `Group 1 (Main)` visible to ALSA, NoteOn/Off lights piano keys live |
 | T-Display S3 AMOLED | ESP32-S3 | ✅ | ✅ | - | TinyUSB | direct consumer |
-| Teensy 4.1 | i.MX RT1062 | ✅ | ✅ | - | midi2 direct | Teensy core fork, native USB MIDI 2.0 with AS0 + AS1 alt settings |
+| **Teensy 4.1** | i.MX RT1062 | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) Teensyduino native | Cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0, AS0 + AS1 alt settings). Recipe in [`teensy41-midi2`](examples/teensy41-midi2). Hardware validated 2026-05-25: enumerates `16C0:0485` as `Teensy41`, MT 0x4 / 0xD / 0x0 captured via `/dev/snd/umpC*D0`, decoded natively as MIDI 2.0 by Windows MIDI Services Console RC4 |
 | **Raspberry Pi Pico** | RP2040 | ✅ | - | - | TinyUSB | recipe in [`examples/rp2040-midi2`](examples/rp2040-midi2) |
 | **Waveshare RP2040 Pi Zero** | RP2040 | ✅ | - | - | TinyUSB | recipe in [`examples/waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2) |
 | **Adafruit Feather RP2040 USB Host** | RP2040 | ✅ | ✅ | ✅ | TinyUSB, PIO-USB | Pico-PIO-USB pinned at SHA `675543b` (PR #186 "reduce handshake delay" not yet tagged). Recipes in [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2) and [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2) |
@@ -155,11 +152,11 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 | **Seeed XIAO SAMD21** | SAMD21 | ✅ | - | - | TinyUSB | TinyUSB native CMake build (FetchContent + `hw/bsp/family_support.cmake`, BSP `seeeduino_xiao` upstream), recipe in [`xiao-samd21-midi2`](examples/xiao-samd21-midi2) (Tier C). Hardware validated 2026-04-30: enumerates `cafe:40F0`, `Group 1 (Main)` visible to ALSA, chromatic walk + CC sweep streaming live |
 | **T-PicoC3** (RP2040 side) | RP2040 + ESP32-C3 | ✅ | - | - | TinyUSB | recipe in [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2) with on-board LCD scene_display visualizer (LovyanGFX). Hardware validated on Linux (`Group 1 (Main)` visible to ALSA) and Windows MIDI Services SDK RC4 (`Native data format = Universal MIDI Packet`, `MIDI 2.0 Protocol = True`): enumerates `cafe:4079` as `TPicoC3` |
 
-Two dependencies pinned outside their upstream release: [Pico-PIO-USB](https://github.com/sekigon-gonnoc/Pico-PIO-USB) at SHA `675543b` (PR #186 "reduce handshake delay" not yet tagged, required for MIDI 2.0 host enumeration over PIO-USB) and a local Teensy core fork (native USB MIDI 2.0 with AS0 + AS1 alt settings). Each retires when the upstream release ships.
+Two dependencies pinned outside their upstream release: [Pico-PIO-USB](https://github.com/sekigon-gonnoc/Pico-PIO-USB) at SHA `675543b` (PR #186 "reduce handshake delay" not yet tagged, required for MIDI 2.0 host enumeration over PIO-USB) and the Teensy cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0 with AS0 + AS1 alt settings, not yet submitted upstream). Each retires when the upstream release ships.
 
 ### Recipes by build system
 
-21 recipes ship under [`examples/`](examples/), grouped by build path:
+22 recipes ship under [`examples/`](examples/), grouped by build path:
 
 | Build system | Count | Recipes |
 |---|:-:|---|
@@ -167,8 +164,9 @@ Two dependencies pinned outside their upstream release: [Pico-PIO-USB](https://g
 | **ESP-IDF** | 7 | [`arduino-nano-esp32-midi2`](examples/arduino-nano-esp32-midi2), [`esp32-s3-devkitc-usb-midi2`](examples/esp32-s3-devkitc-usb-midi2), [`esp32-p4-devkit-usb-midi2`](examples/esp32-p4-devkit-usb-midi2), [`esp32-p4-devkit-host-midi2`](examples/esp32-p4-devkit-host-midi2), [`esp32-p4-devkit-bridge-midi2`](examples/esp32-p4-devkit-bridge-midi2), [`esp32-p4-devkit-bridge2-midi2`](examples/esp32-p4-devkit-bridge2-midi2), [`t-display-s3-midi2`](examples/t-display-s3-midi2) |
 | **PlatformIO + ESP32_Host_MIDI** | 3 | [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2), [`esp32-s3-devkitc-host-midi2`](examples/esp32-s3-devkitc-host-midi2), [`t-display-s3-shield-host-midi2`](examples/t-display-s3-shield-host-midi2) |
 | **TinyUSB native CMake** | 2 | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2), [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2) |
+| **Arduino IDE / arduino-cli** | 1 | [`teensy41-midi2`](examples/teensy41-midi2) |
 
-By role: 11 device, 4 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench.
+By role: 12 device, 4 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench.
 
 ### Coming soon
 

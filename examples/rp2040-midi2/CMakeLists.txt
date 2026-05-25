@@ -22,7 +22,10 @@ if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
         tinyusb
         GIT_REPOSITORY https://github.com/hathach/tinyusb.git
         GIT_TAG        4c87db341e4af7d53ce9cbbdf693593a520dc538
-        GIT_SHALLOW    TRUE
+        # Shallow clone of an arbitrary commit SHA is not guaranteed by
+        # the git protocol; the GitHub side stopped serving this SHA
+        # via --depth 1. Full fetch keeps the pin working.
+        GIT_SHALLOW    FALSE
     )
     FetchContent_MakeAvailable(tinyusb)
     set(PICO_TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
