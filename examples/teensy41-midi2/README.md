@@ -7,6 +7,8 @@ USB MIDI 2.0 device on the **Teensy 4.1** (Cortex-M7 @ 600 MHz, 1 MB SRAM). Firs
 
 > ![override](https://img.shields.io/badge/-override-purple.svg) **Cores fork + USB names override.** Built against the Teensy cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (USB MIDI 2.0 descriptor + raw I/O primitives, +613 LOC over PaulStoffregen master, not yet submitted upstream). Overlay `teensy4/usb.c`, `teensy4/usb_desc.{c,h}`, `teensy4/usb_midi2.{c,h}` onto your Teensyduino install at `~/.arduino15/packages/teensy/hardware/avr/<version>/cores/teensy4/`. Manufacturer + Product strings come from `src/usb_names_override.c` via the cores' weak-alias hook (`usb_names.h`).
 
+> ![boards](https://img.shields.io/badge/-boards-blue.svg) **USB Type menu entries.** The cores fork carries the USB MIDI 2.0 implementation, but the Arduino IDE Tools > USB Type menu entries live one level up in the Teensyduino install. Copy [`boards.local.txt`](boards.local.txt) into `~/.arduino15/packages/teensy/hardware/avr/<version>/` (Linux / macOS) or `C:\Program Files (x86)\Arduino\hardware\teensy\avr\` (Windows, IDE 1.x), then restart the Arduino IDE. The snippet was contributed by **h4yn0nnym0u5e** via the [PJRC forum thread #55239, post #368245](https://forum.pjrc.com/index.php?threads/midi-2-0.55239/post-368245), and covers Teensy 4.1, 4.0 and MicroMod.
+
 ## USB identity
 
 | Field | Value |

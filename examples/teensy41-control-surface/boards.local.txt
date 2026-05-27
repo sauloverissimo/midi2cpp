@@ -1,0 +1,77 @@
+## boards.local.txt: extra USB Type menu entries for Teensy 4.x boards.
+##
+## Required by the sauloverissimo/cores fork (branch
+## feature/usb-midi2-descriptors) to surface "USB Type > MIDI 2.0"
+## options in Arduino IDE > Tools.
+##
+## Install:
+##   Copy or merge into your Teensyduino hardware folder, then
+##   restart the Arduino IDE.
+##
+##     Linux / macOS:
+##       ~/.arduino15/packages/teensy/hardware/avr/<version>/boards.local.txt
+##
+##     Windows (Arduino IDE 1.x):
+##       C:\Program Files (x86)\Arduino\hardware\teensy\avr\boards.local.txt
+##
+## After install, four new entries appear under Tools > USB Type:
+##   - MIDI 2.0
+##   - Serial + MIDI 2.0
+##   - MIDI 2.0 x 4
+##   - MIDI 2.0 x 16
+##
+## Covers Teensy 4.1, Teensy 4.0 and Teensy MicroMod (all iMXRT1062).
+##
+## Snippet contributed by h4yn0nnym0u5e via PJRC forum thread #55239
+## (post #368245).
+
+## USB
+# Extra menu entries for custom USB devices
+
+teensy41.menu.usb.midi2=MIDI 2.0
+teensy41.menu.usb.midi2.build.usbtype=USB_MIDI2
+teensy41.menu.usb.midi2.upload_port.usbtype=USB_MIDI2
+teensy41.menu.usb.midi2.fake_serial=teensy_gateway
+teensy41.menu.usb.midi2serial=Serial + MIDI 2.0
+teensy41.menu.usb.midi2serial.build.usbtype=USB_MIDI2_SERIAL
+teensy41.menu.usb.midi2serial.upload_port.usbtype=USB_MIDI2_SERIAL
+teensy41.menu.usb.midi2x4=MIDI 2.0 x 4
+teensy41.menu.usb.midi2x4.build.usbtype=USB_MIDI2_4
+teensy41.menu.usb.midi2x4.upload_port.usbtype=USB_MIDI2_4
+teensy41.menu.usb.midi2x4.fake_serial=teensy_gateway
+teensy41.menu.usb.midi2x16=MIDI 2.0 x 16
+teensy41.menu.usb.midi2x16.build.usbtype=USB_MIDI2_16
+teensy41.menu.usb.midi2x16.upload_port.usbtype=USB_MIDI2_16
+teensy41.menu.usb.midi2x16.fake_serial=teensy_gateway
+
+teensy40.menu.usb.midi2=MIDI 2.0
+teensy40.menu.usb.midi2.build.usbtype=USB_MIDI2
+teensy40.menu.usb.midi2.upload_port.usbtype=USB_MIDI2
+teensy40.menu.usb.midi2.fake_serial=teensy_gateway
+teensy40.menu.usb.midi2serial=Serial + MIDI 2.0
+teensy40.menu.usb.midi2serial.build.usbtype=USB_MIDI2_SERIAL
+teensy40.menu.usb.midi2serial.upload_port.usbtype=USB_MIDI2_SERIAL
+teensy40.menu.usb.midi2x4=MIDI 2.0 x 4
+teensy40.menu.usb.midi2x4.build.usbtype=USB_MIDI2_4
+teensy40.menu.usb.midi2x4.upload_port.usbtype=USB_MIDI2_4
+teensy40.menu.usb.midi2x4.fake_serial=teensy_gateway
+teensy40.menu.usb.midi2x16=MIDI 2.0 x 16
+teensy40.menu.usb.midi2x16.build.usbtype=USB_MIDI2_16
+teensy40.menu.usb.midi2x16.upload_port.usbtype=USB_MIDI2_16
+teensy40.menu.usb.midi2x16.fake_serial=teensy_gateway
+
+teensyMM.menu.usb.midi2=MIDI 2.0
+teensyMM.menu.usb.midi2.build.usbtype=USB_MIDI2
+teensyMM.menu.usb.midi2.upload_port.usbtype=USB_MIDI2
+teensyMM.menu.usb.midi2.fake_serial=teensy_gateway
+teensyMM.menu.usb.midi2serial=Serial + MIDI 2.0
+teensyMM.menu.usb.midi2serial.build.usbtype=USB_MIDI2_SERIAL
+teensyMM.menu.usb.midi2serial.upload_port.usbtype=USB_MIDI2_SERIAL
+teensyMM.menu.usb.midi2x4=MIDI 2.0 x 4
+teensyMM.menu.usb.midi2x4.build.usbtype=USB_MIDI2_4
+teensyMM.menu.usb.midi2x4.upload_port.usbtype=USB_MIDI2_4
+teensyMM.menu.usb.midi2x4.fake_serial=teensy_gateway
+teensyMM.menu.usb.midi2x16=MIDI 2.0 x 16
+teensyMM.menu.usb.midi2x16.build.usbtype=USB_MIDI2_16
+teensyMM.menu.usb.midi2x16.upload_port.usbtype=USB_MIDI2_16
+teensyMM.menu.usb.midi2x16.fake_serial=teensy_gateway
