@@ -139,7 +139,7 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 | **Waveshare ESP32-P4-WIFI6-DEV-KIT** (host / bridge) | ESP32-P4 | - | ✅ | ✅ | ![experimental](https://img.shields.io/badge/-experimental-yellow.svg) TinyUSB | TinyUSB [`experiment/midi-coexistence`](https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence) branch on top of upstream (alt-walk `bcdMSC` defer for MIDI 1.0 + 2.0 host coexistence + opt-in user responder for per-FB group windows). Recipes in [`esp32-p4-devkit-host-midi2`](examples/esp32-p4-devkit-host-midi2) (host, UTMI PHY, OTG_HS), [`esp32-p4-devkit-bridge-midi2`](examples/esp32-p4-devkit-bridge-midi2) (bridge inline glue) and [`esp32-p4-devkit-bridge2-midi2`](examples/esp32-p4-devkit-bridge2-midi2) (same role on `m2bridge`, PID 0x4095) |
 | **LilyGo T-Display S3** | ESP32-S3 | ✅ | - | - | TinyUSB | Tier A receiver, on-board ST7789 piano roll. Recipe in [`t-display-s3-midi2`](examples/t-display-s3-midi2). Hardware validated 2026-05-01: enumerates `cafe:4094` as `TDisplayS3`, `Group 1 (Main)` visible to ALSA, NoteOn/Off lights piano keys live |
 | T-Display S3 AMOLED | ESP32-S3 | ✅ | ✅ | - | TinyUSB | direct consumer |
-| **Teensy 4.1** | i.MX RT1062 | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) Teensyduino native | Cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0, AS0 + AS1 alt settings). Recipe in [`teensy41-midi2`](examples/teensy41-midi2). Hardware validated 2026-05-25: enumerates `16C0:0485` as `Teensy41`, MT 0x4 / 0xD / 0x0 captured via `/dev/snd/umpC*D0`, decoded natively as MIDI 2.0 by Windows MIDI Services Console RC4 |
+| **Teensy 4.1** | i.MX RT1062 | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) Teensyduino native | Cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0, AS0 + AS1 alt settings). Recipes in [`teensy41-midi2`](examples/teensy41-midi2) (device showcase) and [`teensy41-control-surface`](examples/teensy41-control-surface) (hardware-driven pots + switches). Hardware validated 2026-05-25 (showcase) and 2026-05-27 (control surface) on Linux ALSA and Windows MIDI Services Console RC4 |
 | **Raspberry Pi Pico** | RP2040 | ✅ | - | - | TinyUSB | recipe in [`examples/rp2040-midi2`](examples/rp2040-midi2) |
 | **Waveshare RP2040 Pi Zero** | RP2040 | ✅ | - | - | TinyUSB | recipe in [`examples/waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2) |
 | **Adafruit Feather RP2040 USB Host** | RP2040 | ✅ | ✅ | ✅ | TinyUSB, PIO-USB | Pico-PIO-USB pinned at SHA `675543b` (PR #186 "reduce handshake delay" not yet tagged). Recipes in [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2) and [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2) |
@@ -156,7 +156,7 @@ Two dependencies pinned outside their upstream release: [Pico-PIO-USB](https://g
 
 ### Recipes by build system
 
-22 recipes ship under [`examples/`](examples/), grouped by build path:
+23 recipes ship under [`examples/`](examples/), grouped by build path:
 
 | Build system | Count | Recipes |
 |---|:-:|---|
@@ -164,9 +164,9 @@ Two dependencies pinned outside their upstream release: [Pico-PIO-USB](https://g
 | **ESP-IDF** | 7 | [`arduino-nano-esp32-midi2`](examples/arduino-nano-esp32-midi2), [`esp32-s3-devkitc-usb-midi2`](examples/esp32-s3-devkitc-usb-midi2), [`esp32-p4-devkit-usb-midi2`](examples/esp32-p4-devkit-usb-midi2), [`esp32-p4-devkit-host-midi2`](examples/esp32-p4-devkit-host-midi2), [`esp32-p4-devkit-bridge-midi2`](examples/esp32-p4-devkit-bridge-midi2), [`esp32-p4-devkit-bridge2-midi2`](examples/esp32-p4-devkit-bridge2-midi2), [`t-display-s3-midi2`](examples/t-display-s3-midi2) |
 | **PlatformIO + ESP32_Host_MIDI** | 3 | [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2), [`esp32-s3-devkitc-host-midi2`](examples/esp32-s3-devkitc-host-midi2), [`t-display-s3-shield-host-midi2`](examples/t-display-s3-shield-host-midi2) |
 | **TinyUSB native CMake** | 2 | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2), [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2) |
-| **Arduino IDE / arduino-cli** | 1 | [`teensy41-midi2`](examples/teensy41-midi2) |
+| **Arduino IDE / arduino-cli** | 2 | [`teensy41-midi2`](examples/teensy41-midi2), [`teensy41-control-surface`](examples/teensy41-control-surface) |
 
-By role: 12 device, 4 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench.
+By role: 13 device, 4 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench.
 
 ### Coming soon
 
@@ -176,7 +176,7 @@ By role: 12 device, 4 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB P
 
 ### Arduino IDE
 
-Listed on the [Arduino Library Manager](https://github.com/arduino/library-registry). The IDE install path: search the manager, click Install. The dependency on `midi2` is resolved automatically.
+Listed on the Arduino Library Manager. The IDE install path: search the manager, click Install. The dependency on `midi2` is resolved automatically.
 
 Manual install (mirror, or while the manager index is propagating):
 
