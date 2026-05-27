@@ -5,6 +5,9 @@
 //   - Teensyduino with the cores fork sauloverissimo/cores
 //     branch feature/usb-midi2-descriptors applied to teensy4/.
 //   - Arduino IDE > Tools > USB Type > MIDI2
+//   - midi2cpp Arduino library (sauloverissimo/midi2cpp).
+//   - midi2 Arduino library (sauloverissimo/midi2), pulled in by
+//     midi2cpp.
 //
 // Hardware:
 //   - 4 x 10k linear pots on A0..A3 (CTR pin to A0..A3, ends to 3V3 / GND)
