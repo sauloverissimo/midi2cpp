@@ -23,6 +23,15 @@
   },
   "headers": "midi2cpp.h",
   "export": {
-    "exclude": ["tests/build/*", "build/*", ".github/*", ".intern/*", "scripts/*"]
+    "exclude": [
+      "tests/build/*", "build/*", ".github/*", ".intern/*", "scripts/*",
+      "examples/*/build", "examples/*/build/*",
+      "examples/*/idf/build", "examples/*/idf/build/*",
+      "examples/*/idf/external", "examples/*/idf/external/*",
+      "examples/*/idf/managed_components", "examples/*/idf/managed_components/*",
+      "examples/*/idf/dependencies.lock",
+      "examples/*/idf/sdkconfig", "examples/*/idf/sdkconfig.old",
+      "examples/*/pio/.pio", "examples/*/pio/.pio/*"
+    ]
   }
 }
