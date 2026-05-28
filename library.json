@@ -24,7 +24,7 @@
   "headers": "midi2cpp.h",
   "export": {
     "exclude": [
-      "tests/build/*", "build/*", ".github/*", ".intern/*", "scripts/*",
+      "tests/build/*", "build/*", ".github/*", "scripts/*",
       "examples/*/build", "examples/*/build/*",
       "examples/*/idf/build", "examples/*/idf/build/*",
       "examples/*/idf/external", "examples/*/idf/external/*",
