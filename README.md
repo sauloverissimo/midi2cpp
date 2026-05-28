@@ -140,6 +140,7 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 | **LilyGo T-Display S3** | ESP32-S3 | ✅ | - | - | TinyUSB | Tier A receiver, on-board ST7789 piano roll. Recipe in [`t-display-s3-midi2`](examples/t-display-s3-midi2). Hardware validated 2026-05-01: enumerates `cafe:4094` as `TDisplayS3`, `Group 1 (Main)` visible to ALSA, NoteOn/Off lights piano keys live |
 | T-Display S3 AMOLED | ESP32-S3 | ✅ | ✅ | - | TinyUSB | direct consumer |
 | **Teensy 4.1** | i.MX RT1062 | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) Teensyduino native | Cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0, AS0 + AS1 alt settings). Recipes in [`teensy41-midi2`](examples/teensy41-midi2) (device showcase) and [`teensy41-control-surface`](examples/teensy41-control-surface) (hardware-driven pots + switches). Hardware validated 2026-05-25 (showcase) and 2026-05-27 (control surface) on Linux ALSA and Windows MIDI Services Console RC4 |
+| **Daisy Seed** | STM32H750 | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) libDaisy fork | libDaisy fork [`sauloverissimo/libDaisy`](https://github.com/sauloverissimo/libDaisy/tree/feat/usb-midi2-transport) branch `feat/usb-midi2-transport` (USB MIDI 2.0 descriptors Alt 0 + Alt 1, raw UMP RX/TX on `MidiUsbTransport`, STM32 HAL stack not TinyUSB). Recipe in [`daisyseed-midi2`](examples/daisyseed-midi2) |
 | **Raspberry Pi Pico** | RP2040 | ✅ | - | - | TinyUSB | recipe in [`examples/rp2040-midi2`](examples/rp2040-midi2) |
 | **Waveshare RP2040 Pi Zero** | RP2040 | ✅ | - | - | TinyUSB | recipe in [`examples/waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2) |
 | **Adafruit Feather RP2040 USB Host** | RP2040 | ✅ | ✅ | ✅ | TinyUSB, PIO-USB | Pico-PIO-USB pinned at SHA `675543b` (PR #186 "reduce handshake delay" not yet tagged). Recipes in [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2) and [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2) |
@@ -156,7 +157,7 @@ Two dependencies pinned outside their upstream release: [Pico-PIO-USB](https://g
 
 ### Recipes by build system
 
-23 recipes ship under [`examples/`](examples/), grouped by build path:
+24 recipes ship under [`examples/`](examples/), grouped by build path:
 
 | Build system | Count | Recipes |
 |---|:-:|---|
@@ -165,8 +166,9 @@ Two dependencies pinned outside their upstream release: [Pico-PIO-USB](https://g
 | **PlatformIO + ESP32_Host_MIDI** | 3 | [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2), [`esp32-s3-devkitc-host-midi2`](examples/esp32-s3-devkitc-host-midi2), [`t-display-s3-shield-host-midi2`](examples/t-display-s3-shield-host-midi2) |
 | **TinyUSB native CMake** | 2 | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2), [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2) |
 | **Arduino IDE / arduino-cli** | 2 | [`teensy41-midi2`](examples/teensy41-midi2), [`teensy41-control-surface`](examples/teensy41-control-surface) |
+| **libDaisy / Makefile** | 1 | [`daisyseed-midi2`](examples/daisyseed-midi2) |
 
-By role: 13 device, 4 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench.
+By role: 14 device, 4 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench.
 
 ### Coming soon
 
@@ -191,14 +193,14 @@ Then install `midi2` via Library Manager (search `midi2`, click Install).
 Published on the [PlatformIO Registry](https://registry.platformio.org/libraries/sauloverissimo/midi2cpp):
 
 ```ini
-lib_deps = sauloverissimo/midi2cpp @ ^0.4.1
+lib_deps = sauloverissimo/midi2cpp @ ^0.5.0
 ```
 
 Or pin by git tag:
 
 ```ini
 lib_deps =
-  https://github.com/sauloverissimo/midi2cpp.git#v0.4.1
+  https://github.com/sauloverissimo/midi2cpp.git#v0.5.0
 ```
 
 Either way, `midi2` is resolved transitively via the manifest declaration in `library.json`.
@@ -213,7 +215,7 @@ Published on the [ESP Component Registry](https://components.espressif.com/compo
 # main/idf_component.yml
 dependencies:
   idf: ">=5.0"
-  sauloverissimo/midi2cpp: ">=0.4.1"
+  sauloverissimo/midi2cpp: ">=0.5.0"
 ```
 
 `midi2` is pulled transitively through `midi2cpp`'s manifest. `idf.py reconfigure` drops both into `managed_components/`.
@@ -230,7 +232,7 @@ Then declare `midi2` in `main/idf_component.yml`:
 ```yaml
 dependencies:
   idf: ">=5.0"
-  sauloverissimo/midi2: ">=0.4.0"
+  sauloverissimo/midi2: ">=0.5.0"
 ```
 
 `main/CMakeLists.txt` lists `midi2cpp` in its `idf_component_register(... REQUIRES midi2cpp ...)` block. The seven ESP-IDF recipes under [`examples/`](examples/) ship working templates for device, host and bridge roles.
@@ -242,12 +244,12 @@ include(FetchContent)
 FetchContent_Declare(
     midi2cpp
     GIT_REPOSITORY https://github.com/sauloverissimo/midi2cpp.git
-    GIT_TAG        v0.4.1
+    GIT_TAG        v0.5.0
 )
 FetchContent_MakeAvailable(midi2cpp)
 ```
 
-`midi2cpp` cascades the dependency on `midi2` to the parent project: `find_package(midi2 0.4.0 CONFIG)` is tried first, falling back to `FetchContent_Declare(midi2 GIT_TAG v0.4.0)` if no install is found.
+`midi2cpp` cascades the dependency on `midi2` to the parent project: `find_package(midi2 0.5.0 CONFIG)` is tried first, falling back to `FetchContent_Declare(midi2 GIT_TAG v0.5.0)` if no install is found.
 
 ### Git submodule
 

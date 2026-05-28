@@ -20,12 +20,6 @@ cmake_install.cmake
 Makefile
 compile_commands.json
 
-# Internal-only material that does not ship to the Arduino Library
-# Manager / PlatformIO Registry. Kept untracked here so contributors
-# do not accidentally push design notes, decision logs, or roadmap
-# drafts to the public repo.
-.intern/
-
 # ESP-IDF generated artifacts and on-demand component clones.
 # fetch_tinyusb.sh drops the TinyUSB PR #3571 fork into idf/external/tinyusb;
 # the fork is huge (~36 MB working tree) and pinned by SHA, so keep it out of

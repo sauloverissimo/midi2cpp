@@ -5,6 +5,27 @@ All notable changes to `midi2cpp` are recorded here. Format follows
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
+## [0.5.0]
+
+Tracks midi2 0.5.0 (NULL-safe public entry points, `midi2_msg_word_count`
+across all 16 message types). Adds the first Arduino IDE and libDaisy
+recipes.
+
+### Added
+
+- Teensy 4.1 recipes `teensy41-midi2` (device showcase) and
+  `teensy41-control-surface` (hardware-driven pots + switches), built
+  against the `sauloverissimo/cores` USB MIDI 2.0 descriptor fork. First
+  Arduino IDE / arduino-cli recipes in the tree.
+- Daisy Seed recipe `daisyseed-midi2`, built against the
+  `sauloverissimo/libDaisy` USB MIDI 2.0 transport fork (STM32 HAL stack).
+
+### Changed
+
+- Dependency on `midi2` raised to `>=0.5.0`.
+- Examples: midi2 pin bumped to v0.5.0 across the Pico SDK, ESP-IDF,
+  PlatformIO, and TinyUSB native CMake recipes.
+
 ## [0.4.1]
 
 TinyUSB upstream. Recipes that pulled the MIDI 2.0 driver from the
