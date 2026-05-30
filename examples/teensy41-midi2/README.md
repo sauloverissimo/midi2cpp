@@ -26,7 +26,7 @@ Forking into a real product requires replacing both VID and PID per USB-IF rules
 
 ## Build
 
-Requires Arduino IDE 2.x with Teensyduino 1.60+, the cores fork overlaid (see note above), and the `midi2cpp` + `midi2` Arduino libraries on your sketchbook (`depends=midi2 (>=0.4.0)` pulls midi2 automatically).
+Requires Arduino IDE 2.x with Teensyduino 1.60+, the cores fork overlaid (see note above), and the `midi2cpp` Arduino library on your sketchbook (the midi2 core is bundled).
 
 ```bash
 arduino-cli compile -b teensy:avr:teensy41:usb=midi2 .

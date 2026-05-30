@@ -42,7 +42,7 @@ arduino-cli compile -b teensy:avr:teensy41:usb=midi2 .
 arduino-cli upload  -b teensy:avr:teensy41:usb=midi2 -p <port> .
 ```
 
-In the Arduino IDE: Tools > USB Type > **MIDI2** before Upload. Requires Teensyduino 1.60+, the cores fork overlaid, and `midi2cpp` + `midi2` Arduino libraries on the sketchbook.
+In the Arduino IDE: Tools > USB Type > **MIDI2** before Upload. Requires Teensyduino 1.60+, the cores fork overlaid, and the `midi2cpp` Arduino library on the sketchbook (the midi2 core is bundled).
 
 Hardware validated 2026-05-27 on Linux ALSA (`/dev/snd/umpC*D0`): all 4 pots emitting CC1/74/71/91 with 32-bit values, all 4 switches emitting NoteOn/Off on notes 60..63, JR Timestamp heartbeat at 500 ms, decoded natively as MIDI 2.0.
 
