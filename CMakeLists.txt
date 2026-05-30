@@ -9,12 +9,12 @@ cmake_minimum_required(VERSION 3.14)
 if(ESP_PLATFORM)
     idf_component_register(
         SRCS
+            src/midi2.c
             src/midi2_device.cpp
             src/midi2_ci.cpp
             src/midi2_host.cpp
             src/midi2_bridge.cpp
         INCLUDE_DIRS src
-        REQUIRES midi2
     )
     target_compile_features(${COMPONENT_LIB} PUBLIC cxx_std_17)
     return()
@@ -27,38 +27,18 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# midi2 C99 core, resolved as an external dependency.
-#
-# Three-layer fallback: parent project's target -> system install
-# (vcpkg / conan / system package) -> FetchContent from GitHub.
-# This is the same pattern the midi2 README documents for downstream
-# consumers, applied to midi2cpp itself.
-if(NOT TARGET midi2)
-    find_package(midi2 0.5.0 QUIET CONFIG)
-    if(NOT midi2_FOUND)
-        include(FetchContent)
-        FetchContent_Declare(midi2
-            GIT_REPOSITORY https://github.com/sauloverissimo/midi2.git
-            GIT_TAG        v0.5.0
-        )
-        FetchContent_MakeAvailable(midi2)
-    endif()
-endif()
-
 # Library target.
 #
-# midi2cpp ships the C++ wrapper sources only; the C99 core lives in
-# the external midi2 target this CMakeLists pulls above. Consumers
-# linking midi2cpp transitively see midi2::midi2 because of the
-# PUBLIC link below.
+# midi2cpp bundles the midi2 C99 core: src/midi2.c is the single
+# implementation translation unit (it defines MIDI2_IMPLEMENTATION and
+# includes the vendored src/midi2.h amalgam). No external midi2 dependency.
 add_library(midi2cpp
+    src/midi2.c
     src/midi2_device.cpp
     src/midi2_ci.cpp
     src/midi2_host.cpp
     src/midi2_bridge.cpp
 )
-
-target_link_libraries(midi2cpp PUBLIC midi2::midi2)
 
 target_include_directories(midi2cpp
     PUBLIC
