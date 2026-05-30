@@ -4,7 +4,7 @@
 
 ![midi2cpp](https://raw.githubusercontent.com/sauloverissimo/midi2cpp/main/logo_midi2cpp.png)
 
-*C++17, callback-first, static-by-default, depends on midi2, MIT.* From DIY to professional products.
+*C++17, callback-first, static-by-default, bundles midi2, MIT.* From DIY to professional products.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C.svg)](https://en.cppreference.com/cpp/compiler_support)
@@ -178,7 +178,7 @@ By role: 14 device, 4 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB P
 
 ### Arduino IDE
 
-Listed on the Arduino Library Manager. The IDE install path: search the manager, click Install. The dependency on `midi2` is resolved automatically.
+Listed on the Arduino Library Manager. The IDE install path: search the manager, click Install. That is the only library you install; the midi2 core is bundled.
 
 Manual install (mirror, or while the manager index is propagating):
 
@@ -186,24 +186,22 @@ Manual install (mirror, or while the manager index is propagating):
 git clone https://github.com/sauloverissimo/midi2cpp.git ~/Arduino/libraries/midi2cpp
 ```
 
-Then install `midi2` via Library Manager (search `midi2`, click Install).
-
 ### PlatformIO
 
 Published on the [PlatformIO Registry](https://registry.platformio.org/libraries/sauloverissimo/midi2cpp):
 
 ```ini
-lib_deps = sauloverissimo/midi2cpp @ ^0.5.0
+lib_deps = sauloverissimo/midi2cpp @ ^0.6.0
 ```
 
 Or pin by git tag:
 
 ```ini
 lib_deps =
-  https://github.com/sauloverissimo/midi2cpp.git#v0.5.0
+  https://github.com/sauloverissimo/midi2cpp.git#v0.6.0
 ```
 
-Either way, `midi2` is resolved transitively via the manifest declaration in `library.json`.
+That is all you need: midi2cpp bundles the midi2 C99 core, so there is no separate `midi2` dependency to install.
 
 ### ESP-IDF component
 
@@ -215,24 +213,16 @@ Published on the [ESP Component Registry](https://components.espressif.com/compo
 # main/idf_component.yml
 dependencies:
   idf: ">=5.0"
-  sauloverissimo/midi2cpp: ">=0.5.0"
+  sauloverissimo/midi2cpp: ">=0.6.0"
 ```
 
-`midi2` is pulled transitively through `midi2cpp`'s manifest. `idf.py reconfigure` drops both into `managed_components/`.
+The midi2 core is bundled inside midi2cpp, so nothing else is declared. `idf.py reconfigure` drops midi2cpp into `managed_components/`.
 
-**As a local component** (vendoring pattern, useful when iterating on the wrapper):
+**As a local component** (useful when iterating on the wrapper):
 
 ```bash
 # from your IDF project root
 git clone https://github.com/sauloverissimo/midi2cpp.git components/midi2cpp
-```
-
-Then declare `midi2` in `main/idf_component.yml`:
-
-```yaml
-dependencies:
-  idf: ">=5.0"
-  sauloverissimo/midi2: ">=0.5.0"
 ```
 
 `main/CMakeLists.txt` lists `midi2cpp` in its `idf_component_register(... REQUIRES midi2cpp ...)` block. The seven ESP-IDF recipes under [`examples/`](examples/) ship working templates for device, host and bridge roles.
@@ -244,12 +234,12 @@ include(FetchContent)
 FetchContent_Declare(
     midi2cpp
     GIT_REPOSITORY https://github.com/sauloverissimo/midi2cpp.git
-    GIT_TAG        v0.5.0
+    GIT_TAG        v0.6.0
 )
 FetchContent_MakeAvailable(midi2cpp)
 ```
 
-`midi2cpp` cascades the dependency on `midi2` to the parent project: `find_package(midi2 0.5.0 CONFIG)` is tried first, falling back to `FetchContent_Declare(midi2 GIT_TAG v0.5.0)` if no install is found.
+`midi2cpp` is self-contained: the midi2 C99 core is vendored in its `src/`, so there is no second `FetchContent` or `find_package` to wire. A standalone midi2 install (for direct C use or other wrappers) coexists with it: a sketch or target that includes only `<midi2cpp.h>` uses the bundled core, and the linker does not pull a separate midi2 copy. If you deliberately link both a bundled and a different-version standalone midi2 in one binary, the linker resolves the core from one of them by link order (a consistent version, not a per-function mix).
 
 ### Git submodule
 

@@ -5,6 +5,13 @@ All notable changes to `midi2cpp` are recorded here. Format follows
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
+## [0.6.0]
+
+midi2cpp now bundles the midi2 C99 core (vendored amalgam in `src/`), so a
+consumer imports one library. The external midi2 dependency is removed from
+`library.properties`, `library.json`, `idf_component.yml`, and `CMakeLists.txt`.
+Bundles midi2 0.6.0. A standalone midi2 install coexists.
+
 ## [0.5.0]
 
 Tracks midi2 0.5.0 (NULL-safe public entry points, `midi2_msg_word_count`
