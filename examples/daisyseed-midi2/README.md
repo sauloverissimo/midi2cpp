@@ -17,10 +17,10 @@ Full-spec USB MIDI 2.0 device on the **Daisy Seed** (STM32H750, Cortex-M7 @ 480 
 
 ## Build
 
-Requires `arm-none-eabi-gcc`, a libDaisy checkout on branch `feat/usb-midi2-transport` (USB MIDI 2.0 descriptors Alt 0 + Alt 1, raw UMP RX/TX on `MidiUsbTransport`, STM32 HAL stack, no TinyUSB), and a midi2 checkout. `MIDI2CPP_DIR` defaults to `../..`.
+Requires `arm-none-eabi-gcc`, a libDaisy checkout on branch `feat/usb-midi2-transport` (USB MIDI 2.0 descriptors Alt 0 + Alt 1, raw UMP RX/TX on `MidiUsbTransport`, STM32 HAL stack, no TinyUSB). `MIDI2CPP_DIR` defaults to `../..`.
 
 ```bash
-make LIBDAISY_DIR=/path/to/libDaisy MIDI2_DIR=/path/to/midi2
+make LIBDAISY_DIR=/path/to/libDaisy
 ```
 
 The libDaisy core makefile defaults to `gnu++14`; this recipe overrides `CPP_STANDARD` to `gnu++17` (midi2cpp floor). `libdaisy.a` must be prebuilt in the fork's `build/`.
@@ -30,7 +30,7 @@ The libDaisy core makefile defaults to `gnu++14`; this recipe overrides `CPP_STA
 Hold BOOT on the Daisy Seed, tap RESET to enter DFU, then:
 
 ```bash
-make LIBDAISY_DIR=/path/to/libDaisy MIDI2_DIR=/path/to/midi2 program-dfu
+make LIBDAISY_DIR=/path/to/libDaisy program-dfu
 ```
 
 Writes `build/daisyseed-midi2.bin` to internal flash at `0x08000000`. The Daisy web programmer or `dfu-util` work too.
