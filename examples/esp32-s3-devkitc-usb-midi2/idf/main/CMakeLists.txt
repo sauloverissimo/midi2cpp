@@ -12,13 +12,13 @@ idf_component_register(
     SRCS
         "main.cpp"
         "esp32_s3_devkitc_midi2.cpp"
+        "${MIDI2CPP_ROOT}/midi2.c"
         "${MIDI2CPP_ROOT}/midi2_device.cpp"
         "${MIDI2CPP_ROOT}/midi2_ci.cpp"
     INCLUDE_DIRS
         "."
         "${MIDI2CPP_ROOT}"
     REQUIRES
-        midi2
         tinyusb
         led_strip
         driver

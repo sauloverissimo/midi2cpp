@@ -12,12 +12,12 @@ idf_component_register(
     SRCS
         "main.cpp"
         "esp32_p4_devkit_host.cpp"
+        "${MIDI2CPP_ROOT}/midi2.c"
         "${MIDI2CPP_ROOT}/midi2_host.cpp"
     INCLUDE_DIRS
         "."
         "${MIDI2CPP_ROOT}"
     REQUIRES
-        midi2
         tinyusb
         driver
         esp_timer

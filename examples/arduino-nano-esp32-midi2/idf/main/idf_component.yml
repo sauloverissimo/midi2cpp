@@ -5,6 +5,3 @@
 ## ./scripts/fetch_tinyusb.sh once to clone the fork at the pinned SHA.
 dependencies:
   idf: ">=5.4"
-  midi2:
-    git: https://github.com/sauloverissimo/midi2.git
-    version: "v0.5.0"

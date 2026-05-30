@@ -9,6 +9,3 @@
 ## indicator is a no-op (see esp32_p4_devkit_midi2.cpp).
 dependencies:
   idf: ">=5.4"
-  midi2:
-    git: https://github.com/sauloverissimo/midi2.git
-    version: "v0.5.0"
