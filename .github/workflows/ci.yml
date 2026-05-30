@@ -130,18 +130,6 @@ jobs:
           mkdir -p ~/Arduino/libraries
           ln -s "$GITHUB_WORKSPACE" ~/Arduino/libraries/midi2cpp
 
-      - name: Install midi2 dependency from Library Manager
-        # midi2cpp depends on midi2 (>=0.4.0) but arduino-cli does not
-        # walk depends= entries automatically. Install it explicitly.
-        # Falls back to the GitHub git URL if the registry index has
-        # not propagated yet (Library Manager indexes within 24h of a
-        # registry merge).
-        run: |
-          arduino-cli lib update-index
-          arduino-cli lib install midi2 || \
-            (arduino-cli config set library.enable_unsafe_install true && \
-             arduino-cli lib install --git-url https://github.com/sauloverissimo/midi2.git#v0.4.0)
-
       - name: Compile Arduino sketches (skip non-sketch dirs)
         run: |
           shopt -s nullglob
