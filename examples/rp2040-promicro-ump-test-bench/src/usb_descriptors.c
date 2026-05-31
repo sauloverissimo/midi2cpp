@@ -10,10 +10,9 @@
  *   1 MIDI 2.0 class interface (Audio Control + MIDI Streaming, Alt 0 + Alt 1)
  *
  * The Manufacturer / Product strings here mirror the catalog spec
- * (docs/plans/2026-04-28-ump-test-bench-rp2040.md §3) verbatim because
- * the bench is meant to be visually identifiable in the Windows MIDI
- * Services enumeration. The Product Instance Id sent over UMP Stream
- * uses the same string as the basis.
+ * (§3) verbatim because the bench is meant to be visually identifiable
+ * in the Windows MIDI Services enumeration. The Product Instance Id
+ * sent over UMP Stream uses the same string as the basis.
  */
 #include <string.h>
 #include "bsp/board_api.h"

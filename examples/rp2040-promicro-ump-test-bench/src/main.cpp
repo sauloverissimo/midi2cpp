@@ -2,8 +2,7 @@
  * main.cpp, rp2040-promicro-ump-test-bench-showcase.
  *
  * Headless USB MIDI 2.0 device that emits a deterministic catalog of
- * 101 UMPs for the Windows MIDI Services consumer side (see
- * docs/plans/2026-04-28-ump-test-bench-rp2040.md). Three operating
+ * 101 UMPs for the Windows MIDI Services consumer side. Three operating
  * modes coexist:
  *
  *   1. Boot auto-emit (§4.1). After enumeration, the device emits

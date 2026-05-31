@@ -3,8 +3,7 @@
  *
  * The catalog is a fixed table of 101 entries (indices 0..100) covering
  * every UMP category exercised by the Windows MIDI Services consumer
- * side. Entries follow the order of section 5 of
- * docs/plans/2026-04-28-ump-test-bench-rp2040.md:
+ * side. Entries follow this fixed section order:
  *
  *   §5.1  Flex Data 0x00 (Setup and Performance)   indices  0..18
  *   §5.2  Flex Data 0x01 (Metadata Text)           indices 19..29
