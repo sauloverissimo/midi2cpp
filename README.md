@@ -1,6 +1,6 @@
 # midi2cpp
 
-### MIDI 2.0 engine for embedded systems
+## C++ MIDI 2.0 platform. An idiomatic wrapper over the midi2 core. Build MIDI 2.0 devices, hosts, and bridges.
 
 ![midi2cpp](https://raw.githubusercontent.com/sauloverissimo/midi2cpp/main/logo_midi2cpp.png)
 
@@ -21,7 +21,7 @@ midi2cpp is the layer where a sketch meets the protocol. Plug a board into the l
 
 Underneath, [midi2](https://github.com/sauloverissimo/midi2) (the portable C99 core) handles parsing, dispatch, and reassembly. midi2cpp adds the C++ ergonomics: callbacks, board glue, ready-made USB descriptors. The board does the talking; the sketch tells it what to say.
 
-Single declared dependency: midi2. Transport, clock, and RNG are caller-supplied; no submodules.
+No external library dependency: the midi2 core is bundled. Transport, clock, and RNG are caller-supplied; no submodules.
 
 ## Contents
 

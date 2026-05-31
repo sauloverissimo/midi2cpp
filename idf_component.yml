@@ -14,7 +14,7 @@
 ## the file. midi2 (the C99 core) is pulled transitively because it
 ## is declared in the dependencies block below.
 
-description: "C++17 callback-first wrapper for MIDI 2.0 on embedded devices, layered over the portable midi2 C99 library. Covers UMP transport (M2-104), MIDI-CI with Appendix E (M2-101), Property Exchange Subscribe/Notify, Profile Configuration, Process Inquiry, Flex Data, and Bit Scaling (M2-115)."
+description: "C++ MIDI 2.0 platform: a C++17 callback-first wrapper that bundles the portable midi2 C99 core. Covers UMP transport (M2-104), MIDI-CI with Appendix E (M2-101), Property Exchange Subscribe/Notify, Profile Configuration, Process Inquiry, Flex Data, and Bit Scaling (M2-115)."
 version: "0.6.0"
 url: "https://github.com/sauloverissimo/midi2cpp"
 documentation: "https://github.com/sauloverissimo/midi2cpp#readme"
