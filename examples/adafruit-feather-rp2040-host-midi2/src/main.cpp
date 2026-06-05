@@ -199,6 +199,10 @@ static void install_callbacks(m2host& midi) {
 // ----------------------------------------------------------------------------
 int main() {
     stdio_init_all();
+#if HOST_STRESS
+    sleep_ms(50);
+    std::printf("\r\n[host-stress] ready. UART 115200. Waiting for the flood.\r\n");
+#endif
 
     // Power up the USB-A 5V gate FIRST so the upstream device has time
     // to boot and pull up before tusb_init starts polling for it. The
@@ -231,13 +235,22 @@ int main() {
         // Nothing is printed mid-burst; the display is skipped entirely so the
         // RX path stays short. recv = packets received; gaps = sequence holes
         // (lost packets); rxDropped = m2host ring overflow. All zero = no loss.
-        if (g_st_started && !g_st_reported && (now - g_st_last_rx_ms) > 300) {
-            g_st_reported = true;
-            const uint32_t dropped = midi.rxDropped();
-            const bool ok = (g_st_gaps == 0) && (dropped == 0);
-            std::printf("RESULT recv=%lu gaps=%lu rxDropped=%lu => %s\r\n",
-                        (unsigned long)g_st_recv, (unsigned long)g_st_gaps,
-                        (unsigned long)dropped, ok ? "100% OK" : "FAILED");
+        static uint32_t hb_ms = 0;
+        if (g_st_started) {
+            if (!g_st_reported && (now - g_st_last_rx_ms) > 300) {
+                g_st_reported = true;
+                const uint32_t dropped = midi.rxDropped();
+                const bool ok = (g_st_gaps == 0) && (dropped == 0);
+                std::printf("RESULT recv=%lu gaps=%lu rxDropped=%lu => %s\r\n",
+                            (unsigned long)g_st_recv, (unsigned long)g_st_gaps,
+                            (unsigned long)dropped, ok ? "100% OK" : "FAILED");
+            }
+        } else if (now - hb_ms >= 1000) {
+            // No flood received yet. Heartbeat shows the host is alive and
+            // whether it has enumerated the device (devs>0 means it sees it).
+            hb_ms = now;
+            std::printf("[host-stress] waiting... devs=%u\r\n",
+                        (unsigned)midi.deviceCount());
         }
         continue;   // headless stress: UART verdict only, no display work
 #endif

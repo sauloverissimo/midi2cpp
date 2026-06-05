@@ -40,6 +40,9 @@
 
 #include "rp2040_midi2.h"
 #include "catalog.h"
+#if BENCH_AUTOFLOOD
+#include "gabarito_battery.h"   // gab::kBattery: the musical interpretation battery
+#endif
 
 using namespace midi2;
 
@@ -153,6 +156,55 @@ static void install_triggers(m2device& midi) {
     });
 }
 
+#if BENCH_AUTOFLOOD
+/*--------------------------------------------------------------------+
+ * Flow validation emitter (BENCH_AUTOFLOOD).
+ *
+ * Two phases, looped: (1) a max-rate throughput burst so a receiver can prove
+ * zero loss, and (2) the musical interpretation battery so the flow has real
+ * note/chord gestures to index, pair, time, and name. Every note-on carries a
+ * monotonic 16-bit sequence in its velocity.
+ *--------------------------------------------------------------------*/
+static constexpr uint8_t kBG = 1, kBCh = 0;
+static uint32_t g_seq = 0;
+
+static inline uint32_t af_now() { return (uint32_t)(time_us_64() / 1000ULL); }
+static void af_pump(midi2::m2device& m) { rp2040_midi2::task(m); }
+
+static void af_hold(midi2::m2device& m, uint32_t ms) {
+    const uint32_t t0 = af_now();
+    while (af_now() - t0 < ms) af_pump(m);
+}
+
+static void af_on(midi2::m2device& m, uint8_t n)  { m.sendNoteOn (kBG, kBCh, n, (uint16_t)g_seq); ++g_seq; }
+static void af_off(midi2::m2device& m, uint8_t n) { m.sendNoteOff(kBG, kBCh, n, 0); }
+
+// Phase 1: rapid on/off pairs at the line rate (nothing left held). The
+// receiver's note-on sequence proves zero loss under a real burst.
+static void af_throughput_burst(midi2::m2device& m, uint32_t pairs) {
+    for (uint32_t i = 0; i < pairs; ++i) {
+        const uint8_t n = (uint8_t)(48 + (i % 24));
+        af_on(m, n);
+        af_off(m, n);
+    }
+}
+
+// Phase 2: the paced musical battery (triads, 7ths, inversions, open voicing,
+// rolled chord, arpeggio, I-IV-V-I, hung note). The flow builds note/chord
+// indices, durations, and names from these - the processing test, live.
+static void af_run_battery(midi2::m2device& m) {
+    for (unsigned i = 0; i < gab::kBatteryCount; ++i) {
+        const gab::Challenge& c = gab::kBattery[i];
+        uint16_t last = 0;
+        gab::schedule(c, [&](uint16_t t, uint8_t note, bool on) {
+            if (t > last) { af_hold(m, (uint32_t)(t - last)); last = t; }
+            if (on) af_on(m, note); else af_off(m, note);
+        });
+        af_hold(m, c.gapMs);
+    }
+}
+#endif  // BENCH_AUTOFLOOD
+
 /*--------------------------------------------------------------------+
  * Main
  *--------------------------------------------------------------------*/
@@ -190,26 +242,16 @@ int main() {
         const uint32_t now   = (uint32_t)(time_us_64() / 1000ULL);
 
 #if BENCH_AUTOFLOOD
-        // Stress mode: max-rate sequence flood. Emits MIDI 2.0 note-ons back
-        // to back (seq in the 16-bit velocity, group 1) at the USB line rate
-        // so the host can prove it receives every packet under a real burst.
-        // The catalog cycle is skipped to keep the on-wire sequence pure.
-        static uint16_t flood_seq      = 0;
-        static uint32_t flood_total    = 0;
-        static uint32_t flood_report_ms = 0;
+        (void)now;
+        // Loop both phases with a gap between so the flow's chord cluster
+        // resets: throughput burst (zero-loss proof) then the musical battery
+        // (note/chord index + duration + naming validation).
         if (ready) {
-            uint32_t sent = rp2040_midi2::floodBurst(/*group*/ 1, /*channel*/ 0,
-                                                     /*note*/ 60, flood_seq,
-                                                     /*maxPerIter*/ 128);
-            flood_seq    = (uint16_t)(flood_seq + sent);
-            flood_total += sent;
-            // Device-side prints throttle the device, not the host, so a
-            // periodic line is safe here (unlike on the receiver).
-            if (now - flood_report_ms >= 1000) {
-                flood_report_ms = now;
-                std::printf("[flood] total=%lu seq=%u\r\n",
-                            (unsigned long)flood_total, (unsigned)flood_seq);
-            }
+            af_throughput_burst(midi, 2000);
+            af_hold(midi, 400);
+            af_run_battery(midi);
+            af_hold(midi, 400);
+            std::printf("[bench] cycle done, seq=%lu\r\n", (unsigned long)g_seq);
         }
 #else
         // §4.1 continuous catalog cycle. Default mode: 0..100..0..,
