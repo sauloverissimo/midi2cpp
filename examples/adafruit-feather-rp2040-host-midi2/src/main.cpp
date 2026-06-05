@@ -46,6 +46,20 @@ static void note_name(uint8_t pitch, char* buf, size_t len) {
 // ----------------------------------------------------------------------------
 static uint32_t g_notes_pressed[Host::MAX_DEVICES] = {0};
 
+#if HOST_STRESS
+// Stress verdict state. The flood device emits MIDI 2.0 note-ons whose 16-bit
+// velocity is a monotonic sequence, contiguous on the wire. Any gap in the
+// received sequence is a lost packet, anywhere between the device and the
+// host's dispatch. We accumulate during the burst and print only at idle (a
+// print mid-burst would stall the RX path and fake a loss).
+static uint32_t g_st_recv       = 0;
+static uint32_t g_st_gaps       = 0;
+static uint16_t g_st_expected   = 0;
+static bool     g_st_started    = false;
+static bool     g_st_reported   = false;
+static uint32_t g_st_last_rx_ms = 0;
+#endif
+
 // ----------------------------------------------------------------------------
 // Display colors (16-bit RGB565). The SSD1306 is monochrome, non-zero
 // is "lit". The colour value is preserved in the API as a hint for any
@@ -108,6 +122,20 @@ static void install_callbacks(m2host& midi) {
     });
 
     // MIDI 2.0 Channel Voice
+#if HOST_STRESS
+    // Stress mode: the only inbound traffic is the flood. Check the sequence
+    // (velocity) for contiguity; never touch the display here (it would stall
+    // the RX path mid-burst). The verdict is printed at idle in the loop.
+    midi.onNoteOn([](uint8_t /*idx*/, uint8_t /*ch*/, uint8_t /*note*/, uint16_t vel) {
+        const uint16_t seq = vel;
+        if (!g_st_started) { g_st_started = true; g_st_expected = seq; }
+        if (seq != g_st_expected) g_st_gaps += (uint16_t)(seq - g_st_expected);
+        g_st_expected   = (uint16_t)(seq + 1);
+        g_st_reported   = false;
+        g_st_last_rx_ms = (uint32_t)(time_us_64() / 1000ULL);
+        ++g_st_recv;
+    });
+#else
     midi.onNoteOn([](uint8_t idx, uint8_t ch, uint8_t note, uint16_t vel) {
         char nn[8]; note_name(note, nn, sizeof(nn));
         char line[32];
@@ -116,6 +144,7 @@ static void install_callbacks(m2host& midi) {
         display_log(line, COLOR_NOTE_ON);
         if (idx < Host::MAX_DEVICES) ++g_notes_pressed[idx];
     });
+#endif
     midi.onNoteOff([](uint8_t idx, uint8_t ch, uint8_t note, uint16_t /*vel*/) {
         char nn[8]; note_name(note, nn, sizeof(nn));
         char line[32];
@@ -196,6 +225,23 @@ int main() {
         feather_host::task(midi);
 
         uint32_t now = (uint32_t)(time_us_64() / 1000ULL);
+
+#if HOST_STRESS
+        // Print the verdict once the flood goes quiet (>300 ms without RX).
+        // Nothing is printed mid-burst; the display is skipped entirely so the
+        // RX path stays short. recv = packets received; gaps = sequence holes
+        // (lost packets); rxDropped = m2host ring overflow. All zero = no loss.
+        if (g_st_started && !g_st_reported && (now - g_st_last_rx_ms) > 300) {
+            g_st_reported = true;
+            const uint32_t dropped = midi.rxDropped();
+            const bool ok = (g_st_gaps == 0) && (dropped == 0);
+            std::printf("RESULT recv=%lu gaps=%lu rxDropped=%lu => %s\r\n",
+                        (unsigned long)g_st_recv, (unsigned long)g_st_gaps,
+                        (unsigned long)dropped, ok ? "100% OK" : "FAILED");
+        }
+        continue;   // headless stress: UART verdict only, no display work
+#endif
+
         bool any_mounted = (midi.deviceCount() > 0);
 
         if (!any_mounted) {

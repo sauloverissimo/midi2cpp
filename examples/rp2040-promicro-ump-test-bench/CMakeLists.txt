@@ -85,6 +85,14 @@ add_executable(rp2040-promicro-ump-test-bench-showcase
 )
 target_link_libraries(rp2040-promicro-ump-test-bench-showcase PRIVATE rp2040-promicro-ump-test-bench)
 
+# Stress flood build: emit a max-rate MIDI 2.0 sequence flood (seq in the
+# velocity) instead of the catalog cycle, for the host-side zero-loss test.
+# Configure with -DBENCH_AUTOFLOOD=ON; default OFF keeps the catalog emitter.
+option(BENCH_AUTOFLOOD "Build the max-rate sequence flood emitter (stress) instead of the catalog cycle" OFF)
+if(BENCH_AUTOFLOOD)
+    target_compile_definitions(rp2040-promicro-ump-test-bench-showcase PRIVATE BENCH_AUTOFLOOD=1)
+endif()
+
 # Disable USB CDC stdio (USB is dedicated to MIDI 2.0). Use UART on
 # default GP0/GP1 @ 115200 for the EMIT log lines.
 pico_enable_stdio_usb(rp2040-promicro-ump-test-bench-showcase 0)

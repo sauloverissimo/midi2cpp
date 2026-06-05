@@ -189,6 +189,29 @@ int main() {
         const bool     ready = midi.isMounted() && midi.altSetting() == 1;
         const uint32_t now   = (uint32_t)(time_us_64() / 1000ULL);
 
+#if BENCH_AUTOFLOOD
+        // Stress mode: max-rate sequence flood. Emits MIDI 2.0 note-ons back
+        // to back (seq in the 16-bit velocity, group 1) at the USB line rate
+        // so the host can prove it receives every packet under a real burst.
+        // The catalog cycle is skipped to keep the on-wire sequence pure.
+        static uint16_t flood_seq      = 0;
+        static uint32_t flood_total    = 0;
+        static uint32_t flood_report_ms = 0;
+        if (ready) {
+            uint32_t sent = rp2040_midi2::floodBurst(/*group*/ 1, /*channel*/ 0,
+                                                     /*note*/ 60, flood_seq,
+                                                     /*maxPerIter*/ 128);
+            flood_seq    = (uint16_t)(flood_seq + sent);
+            flood_total += sent;
+            // Device-side prints throttle the device, not the host, so a
+            // periodic line is safe here (unlike on the receiver).
+            if (now - flood_report_ms >= 1000) {
+                flood_report_ms = now;
+                std::printf("[flood] total=%lu seq=%u\r\n",
+                            (unsigned long)flood_total, (unsigned)flood_seq);
+            }
+        }
+#else
         // §4.1 continuous catalog cycle. Default mode: 0..100..0..,
         // one entry every kCycleStepMs. Paused while CC 120 loop mode
         // is active (resumed by CC 121).
@@ -220,5 +243,6 @@ int main() {
                 g_state.loop_last_ms = now;
             }
         }
+#endif  // BENCH_AUTOFLOOD
     }
 }

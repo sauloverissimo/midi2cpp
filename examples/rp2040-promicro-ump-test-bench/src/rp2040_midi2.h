@@ -34,4 +34,14 @@ void task(midi2::m2device& midi);
 // No-op when the device is not mounted or the alt setting is not 1.
 void pumpRaw(const uint32_t* words, uint32_t count);
 
+// Bench-only stress flood: emit up to maxPackets MIDI 2.0 note-ons back to
+// back at the USB line rate, each carrying a monotonic 16-bit sequence in its
+// velocity (starting at startSeq, wrapping at 65536). Stops early when the TX
+// FIFO has no room for a whole packet (the UMP write is all-or-nothing per
+// packet, so nothing tears). Returns the number actually written, so the
+// caller advances its sequence and total by the return value and the on-wire
+// sequence stays contiguous (any gap the host sees is then loss on the host).
+uint32_t floodBurst(uint8_t group, uint8_t channel, uint8_t note,
+                    uint16_t startSeq, uint32_t maxPackets);
+
 }  // namespace rp2040_midi2

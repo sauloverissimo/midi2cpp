@@ -75,6 +75,23 @@ void pumpRaw(const uint32_t* words, uint32_t count) {
     tud_midi2_n_ump_write(0, words, count);
 }
 
+uint32_t floodBurst(uint8_t group, uint8_t channel, uint8_t note,
+                    uint16_t startSeq, uint32_t maxPackets) {
+    if (!tud_midi2_n_mounted(0) || tud_midi2_n_alt_setting(0) != 1) return 0;
+    uint32_t sent = 0;
+    uint16_t seq  = startSeq;
+    while (sent < maxPackets) {
+        uint32_t w[2];
+        midi2_msg_note_on(w, group, channel, note, /*vel16*/ seq,
+                          /*attr_type*/ 0, /*attr_data*/ 0);
+        // All-or-nothing per packet: 2 = written to the TX FIFO, 0 = no room.
+        if (tud_midi2_n_ump_write(0, w, 2) != 2) break;
+        ++sent;
+        ++seq;
+    }
+    return sent;
+}
+
 void task(midi2::m2device& midi) {
     // Refresh USB lifecycle state (mount + alt setting) into the library
     // every loop iteration. tud_midi2_set_itf_cb fires on alt-setting

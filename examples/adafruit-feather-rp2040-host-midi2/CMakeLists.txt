@@ -105,6 +105,14 @@ target_link_libraries(adafruit-feather-rp2040-host-midi2-showcase
         tinyusb_board
 )
 
+# Stress build: pair with the flood emitter (rp2040-promicro-ump-test-bench
+# built -DBENCH_AUTOFLOOD=ON). Skips the display and checks the inbound
+# sequence for loss, printing a verdict on UART. Configure -DHOST_STRESS=ON.
+option(HOST_STRESS "Build the zero-loss stress receiver (sequence verdict on UART) instead of the display monitor" OFF)
+if(HOST_STRESS)
+    target_compile_definitions(adafruit-feather-rp2040-host-midi2-showcase PRIVATE HOST_STRESS=1)
+endif()
+
 # Adafruit Feather RP2040 USB Host: PIO-USB on GP16/GP17.
 # PICO_DEFAULT_PIO_USB_DP_PIN is referenced by TinyUSB BSP's family.c
 # but not defined by the Pico SDK board header. Set it here so both
