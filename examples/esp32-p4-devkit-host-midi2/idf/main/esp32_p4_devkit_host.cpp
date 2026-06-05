@@ -124,7 +124,8 @@ static const uint8_t kMtWordCount[16] = {
 };
 
 void task(midi2::m2host& midi) {
-    // RX drain happens in tuh_midi2_rx_cb below.
+    // RX is enqueued in tuh_midi2_rx_cb (fast); midi.task() drains the ring
+    // and runs the decode off the RX path.
     midi.task();
 }
 

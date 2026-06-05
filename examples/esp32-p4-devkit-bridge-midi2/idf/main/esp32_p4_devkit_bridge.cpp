@@ -269,7 +269,8 @@ void task(midi2::m2device& midi, midi2::m2host& host) {
     midi.setAltSetting(mounted ? tud_midi2_n_alt_setting(0) : 0);
     midi.task();
 
-    // Host side: RX drain happens in tuh_midi2_rx_cb below.
+    // Host side: RX is enqueued in tuh_midi2_rx_cb; the host ring is drained
+    // here in host.task().
     host.task();
 }
 
