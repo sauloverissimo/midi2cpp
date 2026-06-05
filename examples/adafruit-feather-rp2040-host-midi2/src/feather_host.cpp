@@ -151,7 +151,8 @@ void task(midi2::m2host& midi) {
     // Drain the USB host stack itself.
     tuh_task();
 
-    // RX drain happens in tuh_midi2_rx_cb below.
+    // RX is enqueued in tuh_midi2_rx_cb (fast); midi.task() below drains the
+    // ring and runs the decode/dispatch off the RX path.
 
     // Library housekeeping (CI Discovery timeout sweep).
     midi.task();

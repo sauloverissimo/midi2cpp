@@ -230,6 +230,7 @@ static void test_host_feedRx_dispatches_note_on(void) {
     midi2_msg_note_on(words, /*group*/ 0, /*channel*/ 5, /*note*/ 60,
                        /*vel*/ 0xC000, /*attr_type*/ 0, /*attr_data*/ 0);
     h.feedRx(/*idx*/ 2, words, 2);
+    h.task();   // feedRx enqueues; dispatch happens when task() drains the ring
 
     CHECK_EQ(fired, 1, "callback fired exactly once");
     CHECK_EQ(got_idx, 2u, "idx forwarded");
@@ -257,9 +258,68 @@ static void test_host_feedRx_isolates_idx(void) {
     h.feedRx(0, words, 2);
     h.feedRx(0, words, 2);
     h.feedRx(1, words, 2);
+    h.task();   // drain: dispatch all queued packets
 
     CHECK_EQ(idx0_count, 2, "idx 0 got 2 events");
     CHECK_EQ(idx1_count, 1, "idx 1 got 1 event");
+    PASS();
+}
+
+// ---------- Stream core: RX ring buffers a burst, task() drains it ----------
+
+static void test_host_rx_ring_buffers_burst_no_loss(void) {
+    TEST("a burst of feedRx before task() is fully dispatched, in order, no loss");
+    m2host h;
+    h.begin();
+    h.notifyDeviceMounted(/*idx*/ 0, 0x02, 1);
+
+    int fired = 0;
+    int last_note = -1, out_of_order = 0;
+    h.onNoteOn([&](uint8_t, uint8_t, uint8_t note, uint16_t) {
+        ++fired;
+        if (note <= last_note) ++out_of_order;
+        last_note = note;
+    });
+
+    // Feed a burst WITHOUT draining (the producer never blocks). Stays within
+    // the ring capacity, so nothing is dropped.
+    const int BURST = 40;
+    for (int n = 0; n < BURST; ++n) {
+        uint32_t words[2];
+        midi2_msg_note_on(words, 0, 0, (uint8_t)n, 0x4000, 0, 0);
+        h.feedRx(0, words, 2);
+    }
+    CHECK_EQ(fired, 0, "nothing dispatched yet (feedRx only enqueues)");
+
+    h.task();   // drain the whole burst
+
+    CHECK_EQ(fired, BURST, "every queued note-on dispatched");
+    CHECK_EQ(out_of_order, 0, "dispatched in FIFO order");
+    CHECK_EQ(h.rxDropped(), 0u, "no drops within ring capacity");
+    PASS();
+}
+
+static void test_host_rx_ring_overflow_counts_drops(void) {
+    TEST("overfilling the ring without draining counts drops, never corrupts");
+    m2host h;
+    h.begin();
+    h.notifyDeviceMounted(/*idx*/ 0, 0x02, 1);
+
+    int fired = 0;
+    h.onNoteOn([&](uint8_t, uint8_t, uint8_t, uint16_t) { ++fired; });
+
+    // Push well past capacity with no drain: excess packets are refused
+    // (drop-newest) and counted, the consumer index is never touched.
+    const int OVER = MIDI2CPP_HOST_RX_RING + 50;
+    for (int n = 0; n < OVER; ++n) {
+        uint32_t words[2];
+        midi2_msg_note_on(words, 0, 0, 60, 0x4000, 0, 0);
+        h.feedRx(0, words, 2);
+    }
+    CHECK(h.rxDropped() > 0u, "drops counted on overflow");
+
+    h.task();   // drain whatever fit
+    CHECK(fired > 0, "buffered packets still dispatched cleanly");
     PASS();
 }
 
@@ -361,6 +421,8 @@ int main(void) {
 
     test_host_feedRx_dispatches_note_on();
     test_host_feedRx_isolates_idx();
+    test_host_rx_ring_buffers_burst_no_loss();
+    test_host_rx_ring_overflow_counts_drops();
     test_host_sendNoteOn_emits_via_write_fn();
     test_host_sender_blocks_when_unmounted();
     test_host_sendDiscoveryInquiry_emits_sysex7();

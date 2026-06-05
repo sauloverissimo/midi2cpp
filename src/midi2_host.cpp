@@ -1,4 +1,5 @@
 #include "midi2_host.h"
+#include "midi2_rx_ring.h"
 
 #include <cstring>
 
@@ -64,6 +65,10 @@ struct HostState {
 
     // Auto-discover toggle (default true; set on construction)
     bool auto_discover;
+
+    // Stream core: inbound RX ring. feedRx (producer) enqueues raw UMP here
+    // off the RX path; task() (consumer) drains it and runs the decode.
+    RxRing<MIDI2CPP_HOST_RX_RING> rx;
 
     // Per-device midi2 C99 state — proc + dispatch + ci_dispatch.
     midi2_proc_state    procs[Host::MAX_DEVICES];
@@ -430,9 +435,27 @@ void Host::begin() {
 }
 
 void Host::task() {
+    auto* s = st(_state);
+
+    // Drain the RX ring: this is where inbound UMP is actually decoded and
+    // dispatched, off the platform RX path. Apply the optional inbound group
+    // remap (MT 0x2..0x5 word0) just before feeding the proc.
+    RxRing<MIDI2CPP_HOST_RX_RING>::Slot pkt;
+    while (s->rx.pop(pkt)) {
+        if (s->has_remap[pkt.idx]) {
+            uint32_t w0 = pkt.ump[0];
+            uint8_t mt = (uint8_t)((w0 >> 28) & 0xF);
+            if (mt >= 0x2 && mt <= 0x5) {
+                uint8_t old_g = (uint8_t)((w0 >> 24) & 0xF);
+                uint8_t new_g = s->remap[pkt.idx][old_g];
+                pkt.ump[0] = (w0 & 0xF0FFFFFFu) | ((uint32_t)new_g << 24);
+            }
+        }
+        midi2_proc_feed(&s->procs[pkt.idx], pkt.ump, pkt.words);
+    }
+
     // CI Discovery timeout housekeeping. If a device's inquiry has been
     // pending for > 2 seconds and the now_fn is wired, mark it timed out.
-    auto* s = st(_state);
     if (!s->now_fn) return;
     constexpr uint32_t kDiscoveryTimeoutMs = 2000;
     uint32_t now = s->now_fn();
@@ -460,30 +483,22 @@ void Host::feedRx(uint8_t idx, const uint32_t* words, size_t count) {
     if (idx >= MAX_DEVICES) return;
     if (!words || count == 0) return;
     auto* s = st(_state);
-    // midi2_proc_feed takes uint8_t word_count; chunk for safety. Apply
-    // optional inbound group remap by rewriting the group nibble of MT
-    // 0x2..0x5 word0 before feeding the proc.
-    while (count > 0) {
-        uint8_t chunk = (count > 64) ? 64 : (uint8_t)count;
-        if (s->has_remap[idx]) {
-            uint32_t rewritten[64];
-            for (uint8_t i = 0; i < chunk; ++i) {
-                uint32_t w = words[i];
-                uint8_t mt = (uint8_t)((w >> 28) & 0xF);
-                if (mt >= 0x2 && mt <= 0x5) {
-                    uint8_t old_g = (uint8_t)((w >> 24) & 0xF);
-                    uint8_t new_g = s->remap[idx][old_g];
-                    w = (w & 0xF0FFFFFFu) | ((uint32_t)new_g << 24);
-                }
-                rewritten[i] = w;
-            }
-            midi2_proc_feed(&s->procs[idx], rewritten, chunk);
-        } else {
-            midi2_proc_feed(&s->procs[idx], words, chunk);
-        }
-        words += chunk;
-        count -= chunk;
+    // Enqueue only — split the incoming words into individual UMP packets and
+    // push each into the RX ring. O(1) per packet, no decode here; the heavy
+    // work (group remap + midi2_proc_feed) runs in task() off the RX path.
+    size_t i = 0;
+    while (i < count) {
+        uint8_t mt = (uint8_t)((words[i] >> 28) & 0xF);
+        uint8_t wc = midi2_msg_word_count(mt);
+        if (wc == 0) wc = 1;                         // unknown MT: skip one word
+        if (i + wc > count) wc = (uint8_t)(count - i);// clamp a partial tail packet
+        s->rx.push(idx, &words[i], wc);              // drop-newest if the ring is full
+        i += wc;
     }
+}
+
+uint32_t Host::rxDropped() const {
+    return st(_state)->rx.dropped();
 }
 
 void Host::notifyDeviceMounted(uint8_t idx,

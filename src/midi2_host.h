@@ -9,6 +9,13 @@
 #define MIDI2CPP_HOST_MAX_DEVICES 4
 #endif
 
+// Depth of the inbound RX ring (UMP packets buffered between feedRx and task).
+// Size it for the worst burst the host must absorb without loss; override for
+// RAM-constrained hosts. ~18 bytes per slot, usable capacity is N-1.
+#ifndef MIDI2CPP_HOST_RX_RING
+#define MIDI2CPP_HOST_RX_RING 256
+#endif
+
 namespace midi2 {
 
 // ============================================================================
@@ -46,14 +53,19 @@ namespace midi2 {
 //   v0.1 ships Discovery Initiator only. Profile / PE / PI Initiator
 //   flows land in v0.2 alongside m2bridge.
 //
-// Threading model:
+// Threading model (stream core):
 //
-//   feedRx and notifyDeviceMounted/Unmounted MUST be called from task
-//   context, not from ISR. If the platform USB host driver delivers RX
-//   in interrupt context (e.g., bare-metal TinyUSB host with rx_cb in
-//   IRQ), the caller's platform layer must defer to a task via its own
-//   queue and call feedRx from there. Dispatch is single-threaded per
-//   instance; concurrent feedRx calls on the same Host are not safe.
+//   feedRx only ENQUEUES into an internal single-producer/single-consumer
+//   ring (O(1), no decode), so it is safe to call straight from the platform
+//   RX path, including a TinyUSB rx_cb. The heavy decode + dispatch happens
+//   in task(), which drains the ring on the main loop. This keeps the RX path
+//   short so a burst does not starve the USB service and overflow its FIFO.
+//
+//   Contract: call feedRx from the RX path (one producer) and task() from the
+//   main loop (one consumer). Dispatch callbacks fire from task(), not from
+//   feedRx. Concurrent feedRx calls on the same Host, or calling task() from a
+//   second thread, are not safe. Size the ring (MIDI2CPP_HOST_RX_RING) for the
+//   worst burst; rxDropped() reports packets refused on a full ring (0 = clean).
 //
 // MIDI 1.0 (alt setting 0) fallback:
 //
@@ -88,15 +100,19 @@ public:
 
     // Inbound UMP from a connected device. Caller drains the platform USB
     // host RX queue (e.g., tuh_midi2_ump_read on TinyUSB) and feeds the
-    // words here.
-    //
-    // Threading: task context only — see header preamble. The library's
-    // dispatch is single-threaded per Host instance.
+    // words here. This only ENQUEUES into the RX ring (O(1), no decode), so
+    // it is safe to call straight from the RX path; dispatch happens in
+    // task(). See the threading model in the header preamble.
     //
     // MIDI 1.0 fallback: if the device exposes alt 0 (legacy USB-MIDI 1.0),
     // the platform layer must convert 4-byte cable events to UMP MT 0x2
     // before calling. The library only handles UMP (32-bit words).
     void feedRx(uint8_t idx, const uint32_t* words, size_t count);
+
+    // Packets refused because the RX ring was full, cumulative since begin().
+    // A clean run keeps this at 0; a non-zero value means the burst exceeded
+    // MIDI2CPP_HOST_RX_RING or task() was not drained often enough.
+    uint32_t rxDropped() const;
 
     using NowFn = std::function<uint32_t()>;
     void setNowFn(NowFn fn);

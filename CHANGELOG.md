@@ -12,6 +12,31 @@ consumer imports one library. The external midi2 dependency is removed from
 `library.properties`, `library.json`, `idf_component.yml`, and `CMakeLists.txt`.
 Bundles midi2 0.6.0. A standalone midi2 install coexists.
 
+### Fixed
+
+- Host no longer drops inbound messages under a burst. `Host::feedRx` ran the
+  full UMP decode + dispatch synchronously, so calling it from a platform RX
+  callback starved the USB service and the non-overwritable RX FIFO truncated
+  under high message rates. The host recipes hit this on machine-gun inputs.
+
+### Added
+
+- `midi2_rx_ring.h`: an SPSC ring (the "stream core") that decouples the USB
+  receive path from message processing, mirroring the queue/drain split proven
+  on the ESP32 host transport. Header-only, drop-newest, lock-free for one
+  producer and one consumer.
+- `Host::rxDropped()` reports packets refused on a full RX ring (0 = clean);
+  size the ring with `MIDI2CPP_HOST_RX_RING` (default 256).
+
+### Changed
+
+- `Host::feedRx` now only enqueues the inbound UMP (O(1), no decode) into the
+  RX ring, so it is safe to call straight from a TinyUSB `rx_cb`. The decode +
+  dispatch moved into `Host::task()`, which drains the ring on the main loop.
+  Callbacks fire from `task()`, not from `feedRx`; recipes that already call
+  `task()` each loop iteration need no change. `Bridge` inherits the fix through
+  `Host::feedRx` / `Host::task()`.
+
 ## [0.5.0]
 
 Tracks midi2 0.5.0 (NULL-safe public entry points, `midi2_msg_word_count`
