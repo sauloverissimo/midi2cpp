@@ -140,7 +140,7 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 | **LilyGo T-Display S3** | ESP32-S3 | ✅ | - | - | TinyUSB | Tier A receiver, on-board ST7789 piano roll. Recipe in [`t-display-s3-midi2`](examples/t-display-s3-midi2). Hardware validated 2026-05-01: enumerates `cafe:4094` as `TDisplayS3`, `Group 1 (Main)` visible to ALSA, NoteOn/Off lights piano keys live |
 | T-Display S3 AMOLED | ESP32-S3 | ✅ | ✅ | - | TinyUSB | direct consumer |
 | **Teensy 4.1** | i.MX RT1062 | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) Teensyduino native | Cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0, AS0 + AS1 alt settings). Recipes in [`teensy41-midi2`](examples/teensy41-midi2) (device showcase) and [`teensy41-control-surface`](examples/teensy41-control-surface) (hardware-driven pots + switches). Hardware validated 2026-05-25 (showcase) and 2026-05-27 (control surface) on Linux ALSA and Windows MIDI Services Console RC4 |
-| **Daisy Seed** | STM32H750 | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) libDaisy fork | libDaisy fork [`sauloverissimo/libDaisy`](https://github.com/sauloverissimo/libDaisy/tree/feat/usb-midi2-transport) branch `feat/usb-midi2-transport` (USB MIDI 2.0 descriptors Alt 0 + Alt 1, raw UMP RX/TX on `MidiUsbTransport`, STM32 HAL stack not TinyUSB). Recipe in [`daisyseed-midi2`](examples/daisyseed-midi2) |
+| **Daisy Seed** | STM32H750 | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) libDaisy native | libDaisy fork [`sauloverissimo/libDaisy`](https://github.com/sauloverissimo/libDaisy/tree/feat/usb-midi2-transport) branch `feat/usb-midi2-transport` (USB MIDI 2.0 descriptors Alt 0 + Alt 1, raw UMP RX/TX on `MidiUsbTransport`, STM32 HAL stack not TinyUSB). Recipe in [`daisyseed-midi2`](examples/daisyseed-midi2) |
 | **Raspberry Pi Pico** | RP2040 | ✅ | - | - | TinyUSB | recipe in [`examples/rp2040-midi2`](examples/rp2040-midi2) |
 | **Waveshare RP2040 Pi Zero** | RP2040 | ✅ | - | - | TinyUSB | recipe in [`examples/waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2) |
 | **Adafruit Feather RP2040 USB Host** | RP2040 | ✅ | ✅ | ✅ | TinyUSB, PIO-USB | Pico-PIO-USB pinned at SHA `675543b` (PR #186 "reduce handshake delay" not yet tagged). Recipes in [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2) and [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2) |
@@ -172,7 +172,7 @@ By role: 14 device, 4 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB P
 
 ### Coming soon
 
-- Xiao Renesas RA4M1 (TinyUSB device, board on the bench)
+- ![WIP](https://img.shields.io/badge/-WIP-orange.svg) WeAct RA4M1 (TinyUSB device, board on the bench)
 
 ## Install
 
