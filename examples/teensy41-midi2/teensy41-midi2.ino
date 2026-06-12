@@ -5,9 +5,8 @@
 //   - Teensyduino with the cores fork sauloverissimo/cores
 //     branch feature/usb-midi2-descriptors applied to teensy4/.
 //   - Arduino IDE > Tools > USB Type > MIDI2
-//   - midi2cpp Arduino library (sauloverissimo/midi2cpp).
-//   - midi2 Arduino library (sauloverissimo/midi2), pulled in by
-//     midi2cpp.
+//   - midi2cpp Arduino library (sauloverissimo/midi2cpp); the midi2
+//     core is bundled, no separate midi2 library needed.
 //
 // USB identity: VID 0x16C0, PID 0x0485 (PJRC's USB_TYPE = MIDI2 slot,
 // kept intact); Manufacturer "github.com/sauloverissimo" and Product
