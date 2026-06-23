@@ -56,6 +56,8 @@ ls /dev/snd/umpC*D0            # raw UMP endpoint
 
 Hardware validated 2026-05-28 on Linux ALSA: enumerates `0483:5740` as `Daisy Seed MIDI 2.0`, `/dev/snd/umpC*D0` present, `Group 1` visible to ALSA, the showcase voice messages confirmed via downscaled `amidi` capture (NoteOn/Off, CC 1 / CC 74, Pitch Bend, Channel Pressure, Program). Windows MIDI Services Console shows native data format `Universal MIDI Packet`, `MIDI 2.0 Protocol = True`.
 
+Pair with the sibling host recipe [`daisyseed-host-midi2`](../daisyseed-host-midi2/) on a second Daisy Seed: plug this device into the host's USB-A jack and the host decodes the full showcase stream over `m2host`.
+
 ## Spec coverage
 
 **Tier A** (Cortex-M7 @ 480 MHz, ample SRAM + SDRAM, full UMP + MIDI-CI surface in budget).
