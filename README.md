@@ -33,7 +33,6 @@ No external library dependency: the midi2 core is bundled. Transport, clock, and
   - [What you get](#what-you-get)
   - [Three shapes](#three-shapes)
   - [Boards](#boards)
-    - [Coming soon](#coming-soon)
   - [Install](#install)
     - [Arduino IDE](#arduino-ide)
     - [PlatformIO](#platformio)
@@ -152,27 +151,24 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 | **nRF52840 Pro Micro (Nice!Nano class)** | nRF52840 | ✅ | - | - | TinyUSB | TinyUSB native CMake build (FetchContent + `hw/bsp/family_support.cmake`, BSP `feather_nrf52840_express` upstream), recipe in [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2) (Tier B). Hardware validated 2026-04-30 on Nice!Nano: enumerates `cafe:40F1`, `Group 1 (Main)` visible to ALSA, Per-Note PB vibrato + chromatic walk + RPN/NRPN streaming live |
 | **Seeed XIAO SAMD21** | SAMD21 | ✅ | - | - | TinyUSB | TinyUSB native CMake build (FetchContent + `hw/bsp/family_support.cmake`, BSP `seeeduino_xiao` upstream), recipe in [`xiao-samd21-midi2`](examples/xiao-samd21-midi2) (Tier C). Hardware validated 2026-04-30: enumerates `cafe:40F0`, `Group 1 (Main)` visible to ALSA, chromatic walk + CC sweep streaming live |
 | **T-PicoC3** (RP2040 side) | RP2040 + ESP32-C3 | ✅ | - | - | TinyUSB | recipe in [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2) with on-board LCD scene_display visualizer (LovyanGFX). Hardware validated on Linux (`Group 1 (Main)` visible to ALSA) and Windows MIDI Services SDK RC4 (`Native data format = Universal MIDI Packet`, `MIDI 2.0 Protocol = True`): enumerates `cafe:4079` as `TPicoC3` |
+| **WeAct RA4M1 64-Pin Core Board** | RA4M1 | ✅ | - | - | TinyUSB | TinyUSB native CMake build (FetchContent + `hw/bsp/family_support.cmake`, in-recipe board overlay `weact_ra4m1` for the bootloader-less 0x0 flash layout), recipe in [`ra4m1-weact-device-midi2`](examples/ra4m1-weact-device-midi2) (Tier C). Hardware validated 2026-06-22: enumerates `cafe:40F2` as `WeAct RA4M1 MIDI 2.0`, bidirectional Function Block visible to ALSA, MIDI 2.0 feature tour (per-note pitch bend chord + RPN/NRPN + poly pressure) live |
 
 Three dependencies pinned outside their upstream release: [Pico-PIO-USB](https://github.com/sekigon-gonnoc/Pico-PIO-USB) at SHA `675543b` (PR #186 "reduce handshake delay" not yet tagged, required for MIDI 2.0 host enumeration over PIO-USB), the Teensy cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0 with AS0 + AS1 alt settings, not yet submitted upstream) and the USBHost_t36 fork [`sauloverissimo/USBHost_t36`](https://github.com/sauloverissimo/USBHost_t36/tree/feature/midi2-host-base) branch `feature/midi2-host-base` (USB MIDI 2.0 host side, not yet submitted upstream). Each retires when the upstream release ships.
 
 ### Recipes by build system
 
-25 recipes ship under [`examples/`](examples/), grouped by build path:
+26 recipes ship under [`examples/`](examples/), grouped by build path:
 
 | Build system | Count | Recipes |
 |---|:-:|---|
 | **Pico SDK** | 9 | [`rp2040-midi2`](examples/rp2040-midi2), [`waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2), [`sparkfun-promicro-rp2350-midi2`](examples/sparkfun-promicro-rp2350-midi2), [`waveshare-rp2350-usb-a-midi2`](examples/waveshare-rp2350-usb-a-midi2), [`waveshare-rp2350-usb-a-bridge-midi2`](examples/waveshare-rp2350-usb-a-bridge-midi2), [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2), [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2), [`rp2040-promicro-ump-test-bench`](examples/rp2040-promicro-ump-test-bench), [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2) |
 | **ESP-IDF** | 7 | [`arduino-nano-esp32-midi2`](examples/arduino-nano-esp32-midi2), [`esp32-s3-devkitc-usb-midi2`](examples/esp32-s3-devkitc-usb-midi2), [`esp32-p4-devkit-usb-midi2`](examples/esp32-p4-devkit-usb-midi2), [`esp32-p4-devkit-host-midi2`](examples/esp32-p4-devkit-host-midi2), [`esp32-p4-devkit-bridge-midi2`](examples/esp32-p4-devkit-bridge-midi2), [`esp32-p4-devkit-bridge2-midi2`](examples/esp32-p4-devkit-bridge2-midi2), [`t-display-s3-midi2`](examples/t-display-s3-midi2) |
 | **PlatformIO + ESP32_Host_MIDI** | 3 | [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2), [`esp32-s3-devkitc-host-midi2`](examples/esp32-s3-devkitc-host-midi2), [`t-display-s3-shield-host-midi2`](examples/t-display-s3-shield-host-midi2) |
-| **TinyUSB native CMake** | 2 | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2), [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2) |
+| **TinyUSB native CMake** | 3 | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2), [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2), [`ra4m1-weact-device-midi2`](examples/ra4m1-weact-device-midi2) |
 | **Arduino IDE / arduino-cli** | 3 | [`teensy41-midi2`](examples/teensy41-midi2), [`teensy41-control-surface`](examples/teensy41-control-surface), [`teensy41-host-midi2`](examples/teensy41-host-midi2) |
 | **libDaisy / Makefile** | 1 | [`daisyseed-midi2`](examples/daisyseed-midi2) |
 
-By role: 14 device, 5 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench.
-
-### Coming soon
-
-- ![WIP](https://img.shields.io/badge/-WIP-orange.svg) WeAct RA4M1 (TinyUSB device, board on the bench)
+By role: 15 device, 5 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench.
 
 ## Install
 

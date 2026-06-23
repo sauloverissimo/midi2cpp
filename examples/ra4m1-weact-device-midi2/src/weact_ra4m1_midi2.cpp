@@ -1,0 +1,139 @@
+/*
+ * weact_ra4m1_midi2.cpp, board core implementation for the WeAct Studio
+ * RA4M1 64-Pin Core Board (Renesas R7FA4M1AB3CFM).
+ *
+ * Owns: board_init (RA4M1 clocks via the uno_r4 BSP, IOPORT, USBFS
+ * pins), TinyUSB device stack init (with MIDI 2.0 class driver), the
+ * RA4M1 on-chip USB LDO regulator enable, the wiring between TinyUSB
+ * and midi2cpp via the public hooks, and the activity LED.
+ *
+ * RA4M1 USB note: the RA4M1 USBFS transceiver is powered by an on-chip
+ * LDO regulator gated by the VDCEN bit in USBMC. The uno_r4 BSP sets it
+ * in board_init_after_tusb(), so that call MUST follow tusb_init() or
+ * the device never pulls D+ high and the host sees nothing. The
+ * upstream TinyUSB midi2_device example uses the same
+ * board_init -> tusb_init -> board_init_after_tusb sequence.
+ */
+#include "weact_ra4m1_midi2.h"
+
+#include <cstdlib>
+
+#include "bsp/board_api.h"
+#include "bsp_api.h"   // R_USB_FS0 (RA4M1 USBFS registers, for VDCEN)
+#include "tusb.h"
+
+namespace weact_ra4m1_midi2 {
+
+midi2::m2device* g_midi = nullptr;
+
+namespace {
+
+// Outbound UMP, invoked by the library for every sendXxx and the JR
+// heartbeat. Forwards to TinyUSB MIDI 2.0 stream write.
+void platform_write_fn(const uint32_t* words, size_t count) {
+    if (!tud_midi2_n_mounted(0)) return;
+    if (tud_midi2_n_alt_setting(0) != 1) return;  // 1 = UMP MIDI 2.0
+    tud_midi2_n_ump_write(0, words, (uint32_t)count);
+}
+
+// Monotonic millisecond clock for the JR heartbeat. The TinyUSB BSP
+// provides tusb_time_millis_api() backed by SysTick on the RA4M1.
+uint32_t platform_now_fn() {
+    return (uint32_t)tusb_time_millis_api();
+}
+
+// Entropy source for MUID. The RA4M1 has a TRNG (SCE) but the BSP does
+// not expose it, so we use libc rand() seeded from tusb_time_millis_api()
+// at init. Quality is poor but adequate for the educational MUID use
+// case; production firmware should swap in a stronger entropy source.
+uint32_t platform_rng_fn() {
+    return ((uint32_t)rand() << 16) ^ (uint32_t)rand();
+}
+
+}  // namespace
+
+void init(midi2::m2device& midi, midi2::m2ci& ci) {
+    board_init();
+
+    g_midi = &midi;
+
+    tusb_rhport_init_t dev_init = {};
+    dev_init.role  = TUSB_ROLE_DEVICE;
+    dev_init.speed = TUSB_SPEED_AUTO;
+    tusb_init(BOARD_TUD_RHPORT, &dev_init);
+
+    // RA4M1 USBFS transceiver runs off the on-chip USB LDO regulator,
+    // gated by the VDCEN bit in USBMC. The TinyUSB RA family.c enables
+    // it only for BOARD_UNO_R4, so this board enables it here, after
+    // tusb_init() (the USB module is now clocked). Without this the
+    // device never pulls D+ high and the host sees nothing.
+    board_init_after_tusb();
+    R_USB_FS0->USBMC |= R_USB_FS0_USBMC_VDCEN_Msk;
+
+    // Seed the libc PRNG from the board millisecond counter at boot.
+    // First call to platform_rng_fn happens on first MUID generation.
+    srand(tusb_time_millis_api() ^ 0xA5A5A5A5u);
+
+    // Wire the five midi2cpp platform hooks. Mounted + alt setting
+    // are kept in sync with TinyUSB by the polling loop in task(); the
+    // initial values here are bootstrap defaults.
+    midi.setWriteFn(platform_write_fn);
+    midi.setNowFn(platform_now_fn);
+    midi.setMounted(false);
+    midi.setAltSetting(0);
+    ci.setRngFn(platform_rng_fn);
+}
+
+void task(midi2::m2device& midi) {
+    // Pump TinyUSB events.
+    tud_task();
+
+    // Refresh USB lifecycle state into the library every iteration.
+    bool mounted = tud_midi2_n_mounted(0);
+    midi.setMounted(mounted);
+    midi.setAltSetting(mounted ? tud_midi2_n_alt_setting(0) : 0);
+
+    // RX drain happens in tud_midi2_rx_cb below.
+
+    // Library housekeeping (heartbeat, deferred sends).
+    midi.task();
+}
+
+void led(bool on) {
+    board_led_write(on);
+}
+
+}  // namespace weact_ra4m1_midi2
+
+/*--------------------------------------------------------------------+
+ * TinyUSB MIDI 2.0 callbacks, required hooks per midi2_device.h API.
+ *
+ * The driver references these as caller-supplied with no weak default
+ * upstream. Polling done in weact_ra4m1_midi2::task() handles state
+ * propagation, so these stubs do nothing.
+ *--------------------------------------------------------------------*/
+extern "C" {
+
+void tud_midi2_rx_cb(uint8_t itf) {
+    if (!weact_ra4m1_midi2::g_midi) return;
+    uint32_t buf[8];
+    for (;;) {
+        uint32_t n = tud_midi2_n_ump_read(itf, buf, 8);
+        if (n == 0) break;
+        weact_ra4m1_midi2::g_midi->feedRx(buf, n);
+    }
+}
+
+void tud_midi2_set_itf_cb(uint8_t itf, uint8_t alt) {
+    (void)itf;
+    (void)alt;
+}
+
+bool tud_midi2_get_req_itf_cb(uint8_t rhport,
+                              const tusb_control_request_t* request) {
+    (void)rhport;
+    (void)request;
+    return false;
+}
+
+}  // extern "C"
