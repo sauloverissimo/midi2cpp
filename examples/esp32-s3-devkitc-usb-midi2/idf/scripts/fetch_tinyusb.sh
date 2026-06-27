@@ -16,14 +16,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IDF_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET="${IDF_DIR}/external/tinyusb"
 
-# Pinned to the same SHA as the Pico SDK recipes. Update in lockstep.
+# Pinned to the same ref as the Pico SDK recipes. Update in lockstep.
 TINYUSB_REPO="https://github.com/sauloverissimo/tinyusb.git"
-TINYUSB_SHA="0ed10cf6df04167b72cb0e1c7b41c8edcf5c6d9a"
+TINYUSB_SHA="fix/midi2-fb-direction"
 
 mkdir -p "${IDF_DIR}/external"
 
 if [[ -d "${TARGET}/.git" ]]; then
-    echo "[fetch_tinyusb] external/tinyusb already cloned, fetching pinned SHA"
+    echo "[fetch_tinyusb] external/tinyusb already cloned, fetching pinned ref"
     git -C "${TARGET}" fetch --depth=1 origin "${TINYUSB_SHA}" 2>/dev/null || \
         git -C "${TARGET}" fetch origin
     git -C "${TARGET}" checkout -q "${TINYUSB_SHA}"
@@ -34,5 +34,5 @@ else
     git -C "${TARGET}" checkout -q "${TINYUSB_SHA}"
 fi
 
-echo "[fetch_tinyusb] external/tinyusb is at SHA ${TINYUSB_SHA}"
+echo "[fetch_tinyusb] external/tinyusb is at ref ${TINYUSB_SHA}"
 echo "[fetch_tinyusb] done"

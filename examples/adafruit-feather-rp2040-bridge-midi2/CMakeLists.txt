@@ -16,7 +16,7 @@ if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     FetchContent_Declare(
         tinyusb
         GIT_REPOSITORY https://github.com/sauloverissimo/tinyusb.git
-        GIT_TAG        0ed10cf6df04167b72cb0e1c7b41c8edcf5c6d9a
+        GIT_TAG        fix/midi2-fb-direction
         GIT_SHALLOW    TRUE
     )
     FetchContent_MakeAvailable(tinyusb)
