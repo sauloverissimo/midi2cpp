@@ -65,14 +65,8 @@ extern "C" {
 #define CFG_TUD_MIDI2_NUM_GROUPS           1
 #define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS  1
 
-/* Let midi2cpp answer UMP Stream Discovery from the app (the stream
- * responder in main.cpp) instead of the TinyUSB built-in auto-responder.
- * With this on, the host reads the app-supplied Endpoint Name
- * (kEndpointName), Product Instance Id, and Function Block info,
- * including the bidirectional FB direction the app sends. Without it,
- * the host sees the library defaults and the auto-responder's fixed FB
- * direction. */
-#define CFG_TUD_MIDI2_USER_RESPONDER  1
+/* UMP Endpoint Name shown by the host. */
+#define CFG_TUD_MIDI2_EP_NAME              "WeAct RA4M1 MIDI 2.0"
 
 /* TX/RX buffers stay at the library default, tuned for the RA4M1's
  * 32 KB SRAM. The library handles bursts via its own

@@ -62,6 +62,9 @@ extern "C" {
 #define CFG_TUD_MIDI2_NUM_GROUPS           1
 #define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS  1
 
+/* UMP Endpoint Name shown by the host. */
+#define CFG_TUD_MIDI2_EP_NAME              "T-PicoC3 MIDI 2.0"
+
 /* TX buffer sized for short bursts of UMP words during playback. */
 
 #ifdef __cplusplus

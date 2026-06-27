@@ -68,6 +68,9 @@ extern "C" {
 #define CFG_TUD_MIDI2_NUM_GROUPS           1
 #define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS  1
 
+/* UMP Endpoint Name shown by the host. */
+#define CFG_TUD_MIDI2_EP_NAME              "nRF52840 Pro Micro MIDI 2.0"
+
 /* TX/RX buffers tuned for the nRF52840 SRAM headroom. The library
  * still uses retry-on-backpressure, so the larger buffers just give
  * more burst tolerance for SysEx / Property Exchange flows that the

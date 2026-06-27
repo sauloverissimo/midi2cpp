@@ -22,9 +22,7 @@ cmake_minimum_required(VERSION 3.20)
 # at configure time below, so no upstream TinyUSB source file is
 # modified. The internal HOCO 48 MHz clock (crystal independent) is kept.
 # The on-chip USB LDO (VDCEN) is enabled in the board glue
-# (src/weact_ra4m1_midi2.cpp), and CFG_TUD_MIDI2_USER_RESPONDER=1 in
-# tusb_config.h lets midi2cpp answer UMP Stream Discovery directly (so
-# the host sees the app's identity strings and bidirectional FB).
+# (src/weact_ra4m1_midi2.cpp).
 
 # Pull TinyUSB upstream BEFORE family_support.cmake processes
 # BOARD/FAMILY, so the include path of family_support resolves to the

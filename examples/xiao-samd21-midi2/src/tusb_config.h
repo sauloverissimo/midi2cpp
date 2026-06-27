@@ -65,6 +65,9 @@ extern "C" {
 #define CFG_TUD_MIDI2_NUM_GROUPS           1
 #define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS  1
 
+/* UMP Endpoint Name shown by the host. */
+#define CFG_TUD_MIDI2_EP_NAME              "XIAO SAMD21 MIDI 2.0"
+
 /* TX/RX buffers tuned smaller for SAMD21 (32 KB SRAM). The library
  * still handles bursts via its own retry-on-backpressure pattern; the
  * smaller buffer just means more frequent USB transactions, which is
