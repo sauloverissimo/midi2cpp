@@ -81,7 +81,7 @@ Drive notes from any MIDI 2.0 host and watch the on-board piano roll mirror them
 
 ## Spec coverage
 
-**Tier A** receiver. The recipe decodes the full inbound UMP surface and responds to host Discovery; the Showcase section describes how each decoded category lands on the display.
+Full UMP receiver. The recipe decodes the full inbound UMP surface and responds to host Discovery; the Showcase section describes how each decoded category lands on the display.
 
 | UMP MT | Direction | Spec | Showcase reaction |
 |---|---|---|---|

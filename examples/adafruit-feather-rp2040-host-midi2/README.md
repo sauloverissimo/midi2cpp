@@ -54,7 +54,7 @@ Plug any USB MIDI 2.0 device (full-spec showcase, Daisy Seed with MIDI 2.0 firmw
 
 ## Spec coverage
 
-**Tier A** host. The RP2040's 264 KB SRAM affords up to `MIDI2CPP_HOST_MAX_DEVICES` (default 4) connected MIDI 2.0 devices simultaneously, addressed by `idx`.
+Full UMP host. The RP2040's 264 KB SRAM affords up to `MIDI2CPP_HOST_MAX_DEVICES` (default 4) connected MIDI 2.0 devices simultaneously, addressed by `idx`.
 
 | UMP MT | Direction | Spec | Notes |
 |---|---|---|---|

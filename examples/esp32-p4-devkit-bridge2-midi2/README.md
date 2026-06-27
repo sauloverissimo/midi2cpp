@@ -112,7 +112,7 @@ The CH334F hub allows up to 4 MIDI 2.0 devices simultaneously (one direct + a 3-
 
 ## Spec coverage
 
-**Tier A** (bridge). The bridge does not constrain the UMP surface: any message type emitted by an upstream device is forwarded to the PC verbatim except for MT 0x0 (utility / JR), MT 0xE (reserved) and MT 0xF (Stream), which are owned locally per the design contract.
+Bridge. The bridge does not constrain the UMP surface: any message type emitted by an upstream device is forwarded to the PC verbatim except for MT 0x0 (utility / JR), MT 0xE (reserved) and MT 0xF (Stream), which are owned locally per the design contract.
 
 | UMP MT | Spec | Bridge behaviour |
 |---|---|---|

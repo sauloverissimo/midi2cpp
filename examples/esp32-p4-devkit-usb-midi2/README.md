@@ -55,7 +55,7 @@ Microsoft MIDI Services Console (Windows) shows `ESP32P4DevKit` with Native data
 
 ## Spec coverage
 
-**Tier A** (full spec). The ESP32-P4's 768 KB SRAM affords the complete UMP + MIDI-CI surface.
+Full spec. The ESP32-P4's 768 KB SRAM affords the complete UMP + MIDI-CI surface.
 
 | UMP MT | Spec | Notes |
 |---|---|---|

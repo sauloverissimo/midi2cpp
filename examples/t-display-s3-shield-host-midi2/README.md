@@ -110,7 +110,7 @@ The on-board piano roll lights keys as the device emits Note On / Off (cyan for 
 
 ## Spec coverage
 
-**Tier A** host (full UMP host showcase) with visible piano UI on the on-board ST7789.
+Full UMP host showcase with visible piano UI on the on-board ST7789.
 
 | UMP MT | Direction | Spec | Display reaction |
 |---|---|---|---|

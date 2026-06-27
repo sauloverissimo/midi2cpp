@@ -99,7 +99,7 @@ The CH334F hub allows up to 4 MIDI 2.0 devices simultaneously (one direct + a 3-
 
 ## Spec coverage
 
-**Tier A** bridge.
+Full UMP pass-through bridge.
 
 | UMP MT | Direction | Spec | Notes |
 |---|---|---|---|

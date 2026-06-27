@@ -2,7 +2,7 @@
  * tusb_config.h, TinyUSB configuration for xiao-samd21-midi2.
  *
  * Device-only MIDI 2.0 class. Full speed (SAMD21 USB peripheral, FS only).
- * Tier C scope: minimal core suitable for the SAMD21's 32 KB SRAM.
+ * Minimal-core scope suitable for the SAMD21's 32 KB SRAM.
  */
 #ifndef _TUSB_CONFIG_H_
 #define _TUSB_CONFIG_H_

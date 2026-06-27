@@ -1,7 +1,7 @@
 /*
  * main.cpp, ra4m1-weact-device-midi2 showcase.
  *
- * Tier C minimal-core USB MIDI 2.0 device showcase on the WeAct Studio
+ * Minimal-core USB MIDI 2.0 device showcase on the WeAct Studio
  * RA4M1 64-Pin Core Board (Renesas R7FA4M1AB3CFM, 32 KB SRAM, 256 KB
  * flash). Same scope as the rp2040 reference's small sibling
  * xiao-samd21-midi2 because of the RA4M1's tight SRAM.
@@ -12,7 +12,7 @@
  *     Info, FB Name)
  *   - MIDI-CI Discovery auto-replied via m2ci's Appendix E convenience
  *     responder. No Profile Configuration, no Property Exchange storage,
- *     no Process Inquiry advertising (Tier C drops these).
+ *     no Process Inquiry advertising (out of scope for this showcase).
  *
  * Always-on:
  *   - JR Timestamp heartbeat every 500 ms (MT 0x0 status 0x2)

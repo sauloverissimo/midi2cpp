@@ -52,7 +52,7 @@ Plug any USB MIDI 2.0 device into either USB-A jack. The UART console should pri
 
 ## Spec coverage
 
-**Tier A** host. The ESP32-P4's 768 KB SRAM and high-speed UTMI PHY support multi-device hub topology end to end.
+Full UMP host. The ESP32-P4's 768 KB SRAM and high-speed UTMI PHY support multi-device hub topology end to end.
 
 | UMP MT | Direction | Spec | Notes |
 |---|---|---|---|

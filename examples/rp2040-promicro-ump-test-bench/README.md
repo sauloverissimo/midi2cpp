@@ -62,7 +62,7 @@ amidi -l                        # IO  hw:N,1,0  Group 1 (Test Bench Group 0)
 
 ## Spec coverage
 
-**Tier A** (full UMP catalog). 101 of 101 entries implemented.
+Full UMP catalog. 101 of 101 entries implemented.
 
 | UMP MT | Spec | Indices | Source-of-truth API |
 |---|---|---|---|

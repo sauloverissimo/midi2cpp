@@ -1,7 +1,7 @@
 /*
  * main.cpp, nrf52840-promicro-midi2-showcase.
  *
- * Tier B standard-subset USB MIDI 2.0 device showcase on Pro Micro
+ * Standard-subset USB MIDI 2.0 device showcase on Pro Micro
  * nRF52840 class boards (Nice!Nano, BlueMicro840, FYSETC nRF52840 Pro
  * Micro, generic clones). nRF52840 Cortex-M4F at 64 MHz, 256 KB SRAM,
  * 1 MB flash, native USB FS.
@@ -12,7 +12,7 @@
  *     Info, FB Name)
  *   - MIDI-CI Discovery auto-replied via m2ci's Appendix E convenience
  *     responder. No Profile Configuration, no Property Exchange storage,
- *     no Process Inquiry advertising (Tier B drops these).
+ *     no Process Inquiry advertising (out of scope for this showcase).
  *
  * Always-on:
  *   - JR Timestamp heartbeat every 500 ms (MT 0x0 status 0x2)
@@ -79,7 +79,7 @@ static void install_stream_responder(m2device& midi) {
 }
 
 /*--------------------------------------------------------------------+
- * Tier B demo cycle, state machine.
+ * Demo cycle, state machine.
  *
  * The cycle has four phases that fire in sequence and then pause for
  * kCycleGapMs before restarting. Phases are gated on tusb_time_millis_api(),

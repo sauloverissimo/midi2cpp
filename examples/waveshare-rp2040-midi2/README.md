@@ -53,7 +53,7 @@ Plug straight into a laptop running Microsoft MIDI Services Console for end-to-e
 
 ## Spec coverage
 
-**Tier A** (full spec). The RP2040's 264 KB SRAM affords the complete UMP + MIDI-CI surface.
+Full spec. The RP2040's 264 KB SRAM affords the complete UMP + MIDI-CI surface.
 
 | UMP MT | Spec | Notes |
 |---|---|---|

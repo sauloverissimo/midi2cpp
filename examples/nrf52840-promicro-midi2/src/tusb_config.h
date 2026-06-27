@@ -2,7 +2,7 @@
  * tusb_config.h, TinyUSB configuration for nrf52840-promicro-midi2.
  *
  * Device-only MIDI 2.0 class. Full speed (nRF52840 USB peripheral, FS only).
- * Tier B scope: standard subset suitable for the nRF52840 (256 KB SRAM,
+ * Standard-subset scope suitable for the nRF52840 (256 KB SRAM,
  * 1 MB flash). Buffers larger than the SAMD21 sibling because the chip
  * has the headroom and the TinyUSB BSP for nRF52 places its DMA buffers
  * in dedicated RAM regions.
@@ -74,7 +74,7 @@ extern "C" {
 /* TX/RX buffers tuned for the nRF52840 SRAM headroom. The library
  * still uses retry-on-backpressure, so the larger buffers just give
  * more burst tolerance for SysEx / Property Exchange flows that the
- * Tier C XIAO sibling could not absorb.
+ * tighter XIAO sibling could not absorb.
  */
 
 #ifdef __cplusplus

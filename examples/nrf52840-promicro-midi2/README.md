@@ -1,7 +1,7 @@
 # [midi2cpp](../..) | Device MIDI 2.0
 ## Pro Micro nRF52840 (Nice!Nano class)
 
-Tier B USB MIDI 2.0 device on **Pro Micro nRF52840** class boards (Nice!Nano, BlueMicro840, FYSETC nRF52840 Pro Micro, generic clones). Cortex-M4F at 64 MHz, 256 KB SRAM. Native CMake build via TinyUSB's `family_support.cmake`, ARM GNU toolchain, no Arduino IDE.
+USB MIDI 2.0 device on **Pro Micro nRF52840** class boards (Nice!Nano, BlueMicro840, FYSETC nRF52840 Pro Micro, generic clones). Cortex-M4F at 64 MHz, 256 KB SRAM. Native CMake build via TinyUSB's `family_support.cmake`, ARM GNU toolchain, no Arduino IDE.
 
 ![nrf52840-promicro-midi2 banner](monitor/banner.png)
 
@@ -71,7 +71,7 @@ timeout 15 aseqdump -p ${PORT}
 
 ## Spec coverage
 
-**Tier B** (standard subset). 256 KB SRAM and 1 MB flash easily fit the full UMP + MIDI-CI surface, but this recipe is intentionally scoped to a Tier B feature set focused on Channel Voice + Stream Discovery. No SysEx, no Profile Configuration, no Property Exchange, no Process Inquiry. Future variants (`nrf52840-sysex-bench`, `nice-nano-ble-midi2`) can extend the surface.
+256 KB SRAM and 1 MB flash easily fit the full UMP + MIDI-CI surface, but this recipe is intentionally scoped to Channel Voice + Stream Discovery. No SysEx, no Profile Configuration, no Property Exchange, no Process Inquiry. Future variants (`nrf52840-sysex-bench`, `nice-nano-ble-midi2`) can extend the surface.
 
 | UMP MT | Spec | Notes |
 |---|---|---|

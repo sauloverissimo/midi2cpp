@@ -47,7 +47,7 @@ timeout 30 aseqdump -p ${PORT}
 
 ## Spec coverage
 
-**Tier A** (full spec). The RP2040's 264 KB SRAM affords the complete UMP + MIDI-CI surface.
+Full spec. The RP2040's 264 KB SRAM affords the complete UMP + MIDI-CI surface.
 
 | UMP MT | Spec | Notes |
 |---|---|---|

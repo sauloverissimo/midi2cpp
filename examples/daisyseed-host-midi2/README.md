@@ -67,7 +67,7 @@ Daisy Seed pinout and datasheet: <https://electro-smith.com/products/daisy-seed>
 
 ## Spec coverage
 
-**Tier A** (Cortex-M7 @ 480 MHz, ample SRAM + SDRAM, full host decode + MIDI-CI Initiator surface in budget).
+Full host decode + MIDI-CI Initiator surface (Cortex-M7 @ 480 MHz, ample SRAM + SDRAM, in budget).
 
 | UMP MT | Spec | Decoded to a typed callback |
 |---|---|---|

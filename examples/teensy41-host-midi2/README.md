@@ -37,7 +37,7 @@ USB Host cable: 5-pin header (GND, D+, D-, 5V, GND) to USB-A receptacle. PJRC se
 
 ## Spec coverage
 
-**Tier A** (full UMP surface in budget for the host role).
+Full UMP surface in budget for the host role.
 
 | UMP MT | Spec | Role | Notes |
 |---|---|---|---|

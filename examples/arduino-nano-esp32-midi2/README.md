@@ -57,7 +57,7 @@ timeout 30 aseqdump -p ${PORT}
 
 ## Spec coverage
 
-**Tier A** (full spec). The ESP32-S3's 512 KB SRAM (plus 8 MB PSRAM) affords the complete UMP + MIDI-CI surface.
+Full spec. The ESP32-S3's 512 KB SRAM (plus 8 MB PSRAM) affords the complete UMP + MIDI-CI surface.
 
 | UMP MT | Spec | Notes |
 |---|---|---|

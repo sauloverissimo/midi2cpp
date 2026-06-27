@@ -18,7 +18,7 @@ USB MIDI 2.0 device on the [**WeAct RA4M1 64-Pin Core Board**](https://github.co
 | Product Instance ID | `WeActRA4M1-showcase-0001` |
 | MIDI-CI Manufacturer | `7D 00 00` (educational prefix) |
 
-The host display name (ALSA client, Windows MIDI device) is the UMP Endpoint Name, sent by the app from `kEndpointName` in `main.cpp`. The recipe sets `CFG_TUD_MIDI2_USER_RESPONDER 1` in `tusb_config.h` so midi2cpp answers UMP Stream Discovery (name, product id, and bidirectional Function Block) instead of TinyUSB's built-in auto-responder. `cafe:40F2` is development-only; a product fork MUST replace `idVendor` + `idProduct` with its own allocation.
+The host display name (ALSA client, Windows MIDI device) is the UMP Endpoint Name, sent by the app stream responder in `main.cpp` from `kEndpointName` (with Product Instance Id and a bidirectional Function Block). On upstream TinyUSB this is the active path, so the host reads the recipe identity. `cafe:40F2` is development-only; a product fork MUST replace `idVendor` + `idProduct` with its own allocation.
 
 ## Build
 
@@ -66,7 +66,7 @@ The RA4M1 USBFS transceiver runs off an on-chip LDO gated by `USBMC.VDCEN`, enab
 
 ## Spec coverage
 
-**Tier C** (minimal core). No SysEx, no Profile Configuration, no Property Exchange, no Process Inquiry, due to the RA4M1's 32 KB SRAM budget. Same bracket as the SAMD21 sibling [`xiao-samd21-midi2`](../xiao-samd21-midi2/).
+Minimal core. No SysEx, no Profile Configuration, no Property Exchange, no Process Inquiry, due to the RA4M1's 32 KB SRAM budget. Same scope as the SAMD21 sibling [`xiao-samd21-midi2`](../xiao-samd21-midi2/).
 
 | UMP MT | Spec | Notes |
 |---|---|---|
@@ -74,7 +74,7 @@ The RA4M1 USBFS transceiver runs off an on-chip LDO gated by `USBMC.VDCEN`, enab
 | 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | NoteOn/Off (16-bit velocity + attribute), per-note pitch bend, per-note controller, 32-bit CC, channel pitch bend, RPN/NRPN, Program + Bank, poly pressure |
 | 0xF UMP Stream | M2-104-UM §10 | Endpoint Discovery, Device Identity, Endpoint Name, Product Instance ID, Stream Config Notify, FB Info, FB Name |
 
-MIDI-CI: Discovery responder only. Not covered: SysEx7/8 (no reassembly buffers), Profile Configuration / Property Exchange / Process Inquiry (Tier C), MIDI 1.0 emission (Alt 0 present in the descriptor for compatibility but unused).
+MIDI-CI: Discovery responder only. Not covered: SysEx7/8 (no reassembly buffers), Profile Configuration / Property Exchange / Process Inquiry (out of scope for this recipe), MIDI 1.0 emission (Alt 0 present in the descriptor for compatibility but unused).
 
 ## Showcase
 
@@ -113,10 +113,10 @@ ra4m1-weact-device-midi2/
 ├── bsp/
 │   └── weact_ra4m1/               board overlay (uno_r4 minus the bootloader offset), copied into TinyUSB at build time
 └── src/
-    ├── main.cpp                   showcase entry, Tier C cycle, LED blink
+    ├── main.cpp                   showcase entry, demo cycle, LED blink
     ├── weact_ra4m1_midi2.{h,cpp}  board glue: board_init + tusb_init + VDCEN + hooks
     ├── usb_descriptors.c          VID + project PID + identity strings
-    └── tusb_config.h              CFG_TUD_MIDI2 + CFG_TUD_MIDI2_USER_RESPONDER (app answers Discovery)
+    └── tusb_config.h              CFG_TUD_MIDI2 device class config
 ```
 
 ## License

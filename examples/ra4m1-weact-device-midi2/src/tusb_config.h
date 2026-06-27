@@ -2,7 +2,7 @@
  * tusb_config.h, TinyUSB configuration for ra4m1-weact-device-midi2.
  *
  * Device-only MIDI 2.0 class. Full speed (RA4M1 USBFS peripheral, FS
- * only). Tier C scope: minimal core suitable for the RA4M1's 32 KB SRAM.
+ * only). Minimal-core scope suitable for the RA4M1's 32 KB SRAM.
  */
 #ifndef _TUSB_CONFIG_H_
 #define _TUSB_CONFIG_H_

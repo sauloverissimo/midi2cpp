@@ -60,7 +60,7 @@ Hardware validated 2026-05-25 on Linux ALSA (rawmidi UMP capture, MT 0x4 / 0xD /
 
 ## Spec coverage
 
-**Tier A** (Cortex-M7 @ 600 MHz, 1 MB SRAM, full UMP surface in budget).
+Full UMP surface (Cortex-M7 @ 600 MHz, 1 MB SRAM, in budget).
 
 | UMP MT | Spec | Notes |
 |---|---|---|

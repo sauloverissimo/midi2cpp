@@ -79,7 +79,7 @@ Plug any USB MIDI 2.0 device into the USB-A jack, plug the USB-C into a PC. The 
 
 ## Spec coverage
 
-**Tier A** bridge.
+Full UMP pass-through bridge.
 
 | UMP MT | Direction | Spec | Notes |
 |---|---|---|---|

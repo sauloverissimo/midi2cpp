@@ -56,7 +56,7 @@ Plug straight into a laptop and inspect with Microsoft MIDI Services Console. Ex
 
 ## Spec coverage
 
-**Tier A** (full spec). The RP2350's 520 KB SRAM affords the complete UMP + MIDI-CI surface.
+Full spec. The RP2350's 520 KB SRAM affords the complete UMP + MIDI-CI surface.
 
 | UMP MT | Spec | Notes |
 |---|---|---|

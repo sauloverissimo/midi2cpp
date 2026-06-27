@@ -86,7 +86,7 @@ Sample expected output:
 
 ## Spec coverage
 
-**Tier A** host (full UMP host showcase).
+Full UMP host showcase.
 
 | UMP MT | Direction | Spec | Notes |
 |---|---|---|---|

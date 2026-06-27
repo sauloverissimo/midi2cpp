@@ -58,7 +58,7 @@ timeout 8 aseqdump -p ${PORT}   # chromatic walk C4..G#4
 
 ## Spec coverage
 
-**Tier C** (minimal core). No SysEx, no Profile Configuration, no Property Exchange, no Process Inquiry, due to SAMD21 SRAM budget. Full Tier A coverage on a SAMD21-class chip belongs to the upcoming `xiao-samd51-midi2` (4× the SRAM).
+Minimal core. No SysEx, no Profile Configuration, no Property Exchange, no Process Inquiry, due to SAMD21 SRAM budget. The full UMP + MIDI-CI surface on a SAMD21-class chip belongs to the upcoming `xiao-samd51-midi2` (4× the SRAM).
 
 | UMP MT | Spec | Notes |
 |---|---|---|

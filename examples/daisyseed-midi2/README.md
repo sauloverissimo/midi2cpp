@@ -60,7 +60,7 @@ Pair with the sibling host recipe [`daisyseed-host-midi2`](../daisyseed-host-mid
 
 ## Spec coverage
 
-**Tier A** (Cortex-M7 @ 480 MHz, ample SRAM + SDRAM, full UMP + MIDI-CI surface in budget).
+Full UMP + MIDI-CI surface (Cortex-M7 @ 480 MHz, ample SRAM + SDRAM, in budget).
 
 | UMP MT | Spec | Notes |
 |---|---|---|

@@ -9,7 +9,7 @@
  * Configuration:
  *   1 MIDI 2.0 class interface (Audio Control + MIDI Streaming, Alt 0
  *   MIDI 1.0 fallback + Alt 1 UMP). No CDC, no other classes. The
- *   nRF52840 has SRAM headroom for more, but the Tier B showcase scope
+ *   nRF52840 has SRAM headroom for more, but the showcase scope
  *   does not require any extra interface.
  */
 #include <string.h>

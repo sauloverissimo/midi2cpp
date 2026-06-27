@@ -89,7 +89,7 @@ Sending notes back from either transport prints `[NoteOn  ] BLE   ...` or `[Note
 
 ## Spec coverage
 
-**Tier B** (MIDI 1.0 wire, UMP MT 0x2 surface). The C6 is RAM-rich (512 KB SRAM) but the wire transports cap at MIDI 1.0 byte payloads.
+MIDI 1.0 wire, UMP MT 0x2 surface. The C6 is RAM-rich (512 KB SRAM) but the wire transports cap at MIDI 1.0 byte payloads.
 
 | UMP MT | Direction | Spec | Notes |
 |---|---|---|---|
@@ -97,7 +97,7 @@ Sending notes back from either transport prints `[NoteOn  ] BLE   ...` or `[Note
 | 0x4 MIDI 2.0 Channel Voice | TX only | M2-104-UM §7 | the `setWriteFn` fan-out detects MT 0x4 and downgrades to MT 0x2 via `Device::downgradeMt4ToMt2` before serialising. RX not exercised, neither wire carries 32-bit values |
 | 0x1 System Real-Time / Common | TX | M2-104-UM §4 | one byte per System UMP word; not exercised by the showcase |
 
-SysEx7 (multi-packet across BLE 20-byte / ESP-NOW 4-byte frames), SysEx8, Flex Data, UMP Stream are dropped. Reassembly across packets requires per-transport state not in v0.1 scope. Promoting this recipe to Tier A would require a UMP-over-BLE custom service or UMP-over-ESP-NOW packing scheme, neither in scope.
+SysEx7 (multi-packet across BLE 20-byte / ESP-NOW 4-byte frames), SysEx8, Flex Data, UMP Stream are dropped. Reassembly across packets requires per-transport state not in v0.1 scope. Carrying the full UMP surface would require a UMP-over-BLE custom service or UMP-over-ESP-NOW packing scheme, neither in scope.
 
 MIDI-CI: not applicable (no MIDI-CI traffic on the wire because both transports are MIDI 1.0 byte streams, and SysEx-based MIDI-CI requires the missing reassembly path).
 
