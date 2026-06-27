@@ -25,8 +25,8 @@ include(FetchContent)
 if(NOT DEFINED TINYUSB_PATH AND NOT DEFINED ENV{TINYUSB_PATH})
     FetchContent_Declare(
         tinyusb
-        GIT_REPOSITORY https://github.com/hathach/tinyusb.git
-        GIT_TAG        4c87db341e4af7d53ce9cbbdf693593a520dc538
+        GIT_REPOSITORY https://github.com/sauloverissimo/tinyusb.git
+        GIT_TAG        0ed10cf6df04167b72cb0e1c7b41c8edcf5c6d9a
         GIT_SHALLOW    TRUE
     )
     FetchContent_MakeAvailable(tinyusb)

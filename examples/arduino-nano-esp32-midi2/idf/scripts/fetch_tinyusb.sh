@@ -17,8 +17,8 @@ IDF_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET="${IDF_DIR}/external/tinyusb"
 
 # Pinned to the same SHA as the Pico SDK recipes. Update in lockstep.
-TINYUSB_REPO="https://github.com/hathach/tinyusb.git"
-TINYUSB_SHA="4c87db341e4af7d53ce9cbbdf693593a520dc538"
+TINYUSB_REPO="https://github.com/sauloverissimo/tinyusb.git"
+TINYUSB_SHA="0ed10cf6df04167b72cb0e1c7b41c8edcf5c6d9a"
 
 mkdir -p "${IDF_DIR}/external"
 
