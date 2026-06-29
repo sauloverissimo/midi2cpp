@@ -13,7 +13,7 @@ cmake_minimum_required(VERSION 3.14)  # FetchContent_MakeAvailable
 
 set(PICO_BOARD pico CACHE STRING "Board type")
 
-# Pull TinyUSB upstream, pinned by SHA.
+# Pull TinyUSB from the fork's MIDI 2.0 branch (PR #3738).
 include(FetchContent)
 if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     FetchContent_Declare(
@@ -24,7 +24,7 @@ if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     )
     FetchContent_MakeAvailable(tinyusb)
     set(PICO_TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
-        CACHE PATH "TinyUSB upstream")
+        CACHE PATH "TinyUSB source")
 endif()
 
 include(pico_sdk_import.cmake)

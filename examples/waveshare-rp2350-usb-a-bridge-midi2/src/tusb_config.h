@@ -80,8 +80,9 @@ extern "C" {
 #define CFG_TUD_MIDI                        0
 #define CFG_TUD_MIDI2                       1
 
+/* Function Block topology is derived from the GTB descriptor upstream
+ * (TinyUSB #3738); no NUM_FUNCTION_BLOCKS macro needed. */
 #define CFG_TUD_MIDI2_NUM_GROUPS            16
-#define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS   1
 
 #define CFG_TUD_MIDI2_EP_NAME               "waveshare-RP2350-USB-A bridge"
 #define CFG_TUD_MIDI2_PRODUCT_ID            "feather-bridge"

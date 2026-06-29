@@ -6,8 +6,8 @@ cmake_minimum_required(VERSION 3.20)
 # consumes the parent library directly from ../../src.
 #
 # Build system: TinyUSB native CMake (family_support.cmake) + ARM GNU
-# toolchain (arm-none-eabi-gcc). TinyUSB upstream is pulled via
-# FetchContent, pinned by SHA.
+# toolchain (arm-none-eabi-gcc). TinyUSB is pulled via FetchContent
+# from the fork's MIDI 2.0 branch (PR #3738).
 #
 # BSP choice: weact_ra4m1, a board derived from uno_r4 inside the
 # TinyUSB fork (hw/bsp/ra/boards/weact_ra4m1). The Arduino UNO R4 uses
@@ -24,9 +24,8 @@ cmake_minimum_required(VERSION 3.20)
 # The on-chip USB LDO (VDCEN) is enabled in the board glue
 # (src/weact_ra4m1_midi2.cpp).
 
-# Pull TinyUSB upstream BEFORE family_support.cmake processes
-# BOARD/FAMILY, so the include path of family_support resolves to the
-# fetched hw/bsp. Pinned by SHA.
+# Pull TinyUSB BEFORE family_support.cmake processes BOARD/FAMILY, so
+# the include path of family_support resolves to the fetched hw/bsp.
 include(FetchContent)
 if(NOT DEFINED TINYUSB_PATH AND NOT DEFINED ENV{TINYUSB_PATH})
     FetchContent_Declare(
@@ -37,7 +36,7 @@ if(NOT DEFINED TINYUSB_PATH AND NOT DEFINED ENV{TINYUSB_PATH})
     )
     FetchContent_MakeAvailable(tinyusb)
     set(TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
-        CACHE PATH "TinyUSB upstream")
+        CACHE PATH "TinyUSB source")
 endif()
 
 # TinyUSB RA BSPs depend on per-MCU SDK submodules: the Renesas FSP

@@ -21,7 +21,7 @@ Requires ESP-IDF v5.4+ with `. $IDF_PATH/export.sh` sourced and the RISC-V toolc
 
 ```bash
 cd idf
-./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of TinyUSB upstream
+./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of the TinyUSB fork
 . $IDF_PATH/export.sh
 idf.py set-target esp32p4
 idf.py build

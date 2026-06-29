@@ -64,9 +64,9 @@ extern "C" {
  */
 #define CFG_TUD_MIDI2           1
 
-/* MIDI 2.0 config: 1 Function Block covering 1 Group. */
+/* MIDI 2.0 config: 1 Group. The single Function Block is derived from the
+ * GTB descriptor upstream (TinyUSB #3738), so it needs no config macro. */
 #define CFG_TUD_MIDI2_NUM_GROUPS           1
-#define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS  1
 
 /* UMP Endpoint Name shown by the host. */
 #define CFG_TUD_MIDI2_EP_NAME              "nRF52840 Pro Micro MIDI 2.0"

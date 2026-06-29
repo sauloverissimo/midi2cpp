@@ -5,7 +5,7 @@ USB MIDI 2.0 device on the [**WeAct RA4M1 64-Pin Core Board**](https://github.co
 
 ![ra4m1-weact-device-midi2 banner](board/properties.png)
 
-> This recipe uses the upstream TinyUSB MIDI 2.0 device class, pulled by SHA from `hathach/tinyusb` via FetchContent. The host enumerates a native UMP endpoint with the MIDI 2.0 Protocol.
+> This recipe uses the TinyUSB MIDI 2.0 device class, pulled via FetchContent from the fork's MIDI 2.0 branch (PR #3738). The host enumerates a native UMP endpoint with the MIDI 2.0 Protocol.
 
 ## USB identity
 
@@ -107,7 +107,7 @@ On Windows, the device shows as `WeAct RA4M1 MIDI 2.0` in the Microsoft MIDI Ser
 
 ```
 ra4m1-weact-device-midi2/
-├── CMakeLists.txt                 FetchContent TinyUSB upstream + get_deps ra + family_support (BOARD=weact_ra4m1)
+├── CMakeLists.txt                 FetchContent TinyUSB (PR #3738) + get_deps ra + family_support (BOARD=weact_ra4m1)
 ├── README.md
 ├── board/                         product photos, host screenshots, vendor schematic
 ├── bsp/

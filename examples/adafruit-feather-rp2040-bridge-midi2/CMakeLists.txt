@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.14)  # FetchContent_MakeAvailable
 
 set(PICO_BOARD adafruit_feather_rp2040_usb_host CACHE STRING "Board type")
 
-# Pull TinyUSB upstream, pinned by SHA.
+# Pull TinyUSB from the fork's MIDI 2.0 branch (PR #3738).
 include(FetchContent)
 if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     FetchContent_Declare(
@@ -21,7 +21,7 @@ if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     )
     FetchContent_MakeAvailable(tinyusb)
     set(PICO_TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
-        CACHE PATH "TinyUSB upstream")
+        CACHE PATH "TinyUSB source")
 endif()
 
 # Pico-PIO-USB drives the second USB port on GP16/GP17 via PIO state
@@ -30,7 +30,7 @@ endif()
 # Pico SDK consumes the library by source path via PICO_PIO_USB_PATH,
 # not as a CMake target).
 if(NOT DEFINED PICO_PIO_USB_PATH AND NOT DEFINED ENV{PICO_PIO_USB_PATH})
-    # Pin to the SHA TinyUSB upstream ships in
+    # Pin Pico-PIO-USB to the revision TinyUSB vendors in
     # hw/mcu/raspberry_pi/Pico-PIO-USB. Released tag 0.7.1 is too old:
     # it predates Pico-PIO-USB PR #186 ("reduce handshake delay") and
     # without that fix the SET_INTERFACE control transfer that switches

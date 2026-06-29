@@ -5,12 +5,11 @@ cmake_minimum_required(VERSION 3.20)
 # library directly from ../../src.
 #
 # Build system: TinyUSB native CMake (family_support.cmake) + ARM GNU
-# toolchain (arm-none-eabi-gcc). TinyUSB upstream is pulled via
-# FetchContent, pinned by SHA.
+# toolchain (arm-none-eabi-gcc). TinyUSB is pulled via FetchContent
+# from the fork's MIDI 2.0 branch (PR #3738).
 
-# Pull TinyUSB upstream BEFORE family_support.cmake processes
-# BOARD/FAMILY, so the include path of family_support resolves to the
-# fetched hw/bsp.
+# Pull TinyUSB BEFORE family_support.cmake processes BOARD/FAMILY, so
+# the include path of family_support resolves to the fetched hw/bsp.
 include(FetchContent)
 if(NOT DEFINED TINYUSB_PATH AND NOT DEFINED ENV{TINYUSB_PATH})
     FetchContent_Declare(
@@ -21,7 +20,7 @@ if(NOT DEFINED TINYUSB_PATH AND NOT DEFINED ENV{TINYUSB_PATH})
     )
     FetchContent_MakeAvailable(tinyusb)
     set(TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
-        CACHE PATH "TinyUSB upstream")
+        CACHE PATH "TinyUSB source")
 endif()
 
 # TinyUSB BSPs depend on per-MCU SDK submodules (CMSIS_5 for ARM core

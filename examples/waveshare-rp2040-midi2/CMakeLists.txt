@@ -14,8 +14,8 @@ cmake_minimum_required(VERSION 3.14)  # FetchContent_MakeAvailable
 
 set(PICO_BOARD waveshare_rp2040_zero CACHE STRING "Board type")
 
-# Pull TinyUSB upstream, pinned by SHA. The fetched tree lives in
-# build/_deps/tinyusb-src and is consumed by Pico SDK via
+# Pull TinyUSB from the fork's MIDI 2.0 branch (PR #3738). The fetched
+# tree lives in build/_deps/tinyusb-src and is consumed by Pico SDK via
 # PICO_TINYUSB_PATH.
 include(FetchContent)
 if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
@@ -27,7 +27,7 @@ if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     )
     FetchContent_MakeAvailable(tinyusb)
     set(PICO_TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
-        CACHE PATH "TinyUSB upstream")
+        CACHE PATH "TinyUSB source")
 endif()
 
 include(pico_sdk_import.cmake)

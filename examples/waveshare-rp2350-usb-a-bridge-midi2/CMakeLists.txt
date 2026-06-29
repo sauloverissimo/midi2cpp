@@ -16,7 +16,7 @@ cmake_minimum_required(VERSION 3.14)  # FetchContent_MakeAvailable
 # PIO_USB_DP_PIN_DEFAULT to GP12 below.
 set(PICO_BOARD pico2 CACHE STRING "Board type")
 
-# Pull TinyUSB upstream, pinned by SHA.
+# Pull TinyUSB from the fork's MIDI 2.0 branch (PR #3738).
 include(FetchContent)
 if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     FetchContent_Declare(
@@ -27,14 +27,14 @@ if(NOT DEFINED PICO_TINYUSB_PATH AND NOT DEFINED ENV{PICO_TINYUSB_PATH})
     )
     FetchContent_MakeAvailable(tinyusb)
     set(PICO_TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
-        CACHE PATH "TinyUSB upstream")
+        CACHE PATH "TinyUSB source")
 endif()
 
 # Pico-PIO-USB drives the second USB port on GP12/GP13 via PIO state
 # machines. SOURCE_SUBDIR pointing to a path with no CMakeLists.txt so
 # FetchContent_MakeAvailable populates without add_subdirectory.
 if(NOT DEFINED PICO_PIO_USB_PATH AND NOT DEFINED ENV{PICO_PIO_USB_PATH})
-    # Pin to the SHA TinyUSB upstream ships in
+    # Pin Pico-PIO-USB to the revision TinyUSB vendors in
     # hw/mcu/raspberry_pi/Pico-PIO-USB. Released tag 0.7.1 is too old:
     # it predates Pico-PIO-USB PR #186 ("reduce handshake delay") and
     # without that fix the SET_INTERFACE control transfer that switches

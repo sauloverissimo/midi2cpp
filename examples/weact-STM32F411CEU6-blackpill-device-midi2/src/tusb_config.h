@@ -63,16 +63,17 @@ extern "C" {
  */
 #define CFG_TUD_MIDI2           1
 
-/* MIDI 2.0 config: 1 Function Block covering 1 Group. */
+/* MIDI 2.0 config: 1 Group. The single Function Block is derived from the
+ * GTB descriptor upstream (TinyUSB #3738), so it needs no config macro. */
 #define CFG_TUD_MIDI2_NUM_GROUPS           1
-#define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS  1
 
-/* The app stream responder in main.cpp answers UMP Stream Discovery with
- * the recipe name, FB name "Main", and a bidirectional FB. On this board
- * (and SAMD21) the upstream auto-responder would otherwise win a timing
- * race and report "TinyUSB MIDI 2.0" + Message-Source (confirmed on
- * hardware), so the fork's opt-in gate is enabled to turn it off. */
-#define CFG_TUD_MIDI2_USER_RESPONDER       1
+/* Endpoint and Product Instance names reported by the upstream
+ * auto-responder. PR #3738 derives the Function Block (direction, name)
+ * from the GTB descriptor and answers CFG_TUD_MIDI2_EP_NAME, so the
+ * fork-only CFG_TUD_MIDI2_USER_RESPONDER gate is no longer needed: the app
+ * stream responder in main.cpp only adds Device Identity on top. */
+#define CFG_TUD_MIDI2_EP_NAME              "STM32F411 MIDI 2.0"
+#define CFG_TUD_MIDI2_PRODUCT_ID           "STM32F411-MIDI2-showcase-0001"
 
 /* TX/RX buffers stay at the BSP defaults. The STM32F411 has 128 KB SRAM
  * headroom, and the library uses retry-on-backpressure, so the showcase

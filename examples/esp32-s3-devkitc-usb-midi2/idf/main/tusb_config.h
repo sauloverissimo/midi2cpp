@@ -57,9 +57,10 @@ extern "C" {
 /* Enable MIDI 2.0 Device class driver. */
 #define CFG_TUD_MIDI2           1
 
-/* MIDI 2.0 config: 1 Function Block covering all groups. */
+/* MIDI 2.0 config: 1 Group. The single Function Block covering all groups
+ * is derived from the GTB descriptor upstream (TinyUSB #3738), so it needs
+ * no config macro. */
 #define CFG_TUD_MIDI2_NUM_GROUPS           1
-#define CFG_TUD_MIDI2_NUM_FUNCTION_BLOCKS  1
 
 /* UMP Endpoint Name shown by the host. */
 #define CFG_TUD_MIDI2_EP_NAME              "ESP32-S3 MIDI 2.0"
