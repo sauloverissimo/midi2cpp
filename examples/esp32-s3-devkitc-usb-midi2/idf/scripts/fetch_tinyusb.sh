@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # fetch_tinyusb.sh, one-off bootstrap.
 #
-# Clones TinyUSB (fork MIDI 2.0 branch, PR #3738) into idf/external/tinyusb.
+# Clones TinyUSB upstream (PR #3738, merged) into idf/external/tinyusb.
 # The shim component at idf/components/tinyusb registers a subset of
 # the source files as an ESP-IDF component, kept outside components/
 # to avoid name collisions with the component manager.
@@ -17,8 +17,8 @@ IDF_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET="${IDF_DIR}/external/tinyusb"
 
 # Tracks the same ref as the Pico SDK recipes. Update in lockstep.
-TINYUSB_REPO="https://github.com/sauloverissimo/tinyusb.git"
-TINYUSB_REF="fix/midi2-fb-direction"
+TINYUSB_REPO="https://github.com/hathach/tinyusb.git"
+TINYUSB_REF="536157cb98fbc40329c9695281506fe7f04e526f"
 
 mkdir -p "${IDF_DIR}/external"
 

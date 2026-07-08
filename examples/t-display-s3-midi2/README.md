@@ -21,7 +21,7 @@ Requires ESP-IDF v5.4+ with `. $IDF_PATH/export.sh` sourced, a LilyGo T-Display 
 
 ```bash
 cd idf
-./scripts/fetch_tinyusb.sh         # one-off, clones TinyUSB (fork MIDI 2.0 branch, PR #3738)
+./scripts/fetch_tinyusb.sh         # one-off, clones TinyUSB upstream (PR #3738, merged)
 . $IDF_PATH/export.sh
 idf.py set-target esp32s3
 idf.py build

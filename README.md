@@ -136,9 +136,9 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 | **Arduino Nano ESP32** | ESP32-S3 | ✅ | - | - | TinyUSB | recipe in [`arduino-nano-esp32-midi2`](examples/arduino-nano-esp32-midi2) |
 | **Waveshare ESP32-P4-WIFI6-DEV-KIT** (device) | ESP32-P4 | ✅ | - | - | TinyUSB | Mandatory `LP_SYS.usb_ctrl` PHY swap on the device side. Recipe in [`esp32-p4-devkit-usb-midi2`](examples/esp32-p4-devkit-usb-midi2) (INT PHY, OTG_FS) |
 | **Waveshare ESP32-P4-WIFI6-DEV-KIT** (host / bridge) | ESP32-P4 | - | ✅ | ✅ | ![experimental](https://img.shields.io/badge/-experimental-yellow.svg) TinyUSB | TinyUSB [`experiment/midi-coexistence`](https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence) branch on top of upstream (alt-walk `bcdMSC` defer for MIDI 1.0 + 2.0 host coexistence + opt-in user responder for per-FB group windows). Recipes in [`esp32-p4-devkit-host-midi2`](examples/esp32-p4-devkit-host-midi2) (host, UTMI PHY, OTG_HS), [`esp32-p4-devkit-bridge-midi2`](examples/esp32-p4-devkit-bridge-midi2) (bridge inline glue) and [`esp32-p4-devkit-bridge2-midi2`](examples/esp32-p4-devkit-bridge2-midi2) (same role on `m2bridge`, PID 0x4095) |
-| **LilyGo T-Display S3** | ESP32-S3 | ✅ | - | - | TinyUSB | Tier A receiver, on-board ST7789 piano roll. Recipe in [`t-display-s3-midi2`](examples/t-display-s3-midi2). Hardware validated 2026-05-01: enumerates `cafe:4094` as `TDisplayS3`, `Group 1 (Main)` visible to ALSA, NoteOn/Off lights piano keys live |
+| **LilyGo T-Display S3** | ESP32-S3 | ✅ | - | - | TinyUSB | Tier A receiver, on-board ST7789 piano roll. Recipe in [`t-display-s3-midi2`](examples/t-display-s3-midi2). Hardware validated 20.6.15-01: enumerates `cafe:4094` as `TDisplayS3`, `Group 1 (Main)` visible to ALSA, NoteOn/Off lights piano keys live |
 | T-Display S3 AMOLED | ESP32-S3 | ✅ | ✅ | - | TinyUSB | direct consumer |
-| **Teensy 4.1** | i.MX RT1062 | ✅ | ✅ | - | ![override](https://img.shields.io/badge/-override-purple.svg) Teensyduino native + USBHost_t36 | Cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0, AS0 + AS1 alt settings); host side via USBHost_t36 fork [`sauloverissimo/USBHost_t36`](https://github.com/sauloverissimo/USBHost_t36/tree/feature/midi2-host-base) branch `feature/midi2-host-base`. Recipes in [`teensy41-midi2`](examples/teensy41-midi2) (device showcase), [`teensy41-control-surface`](examples/teensy41-control-surface) (hardware-driven pots + switches) and [`teensy41-host-midi2`](examples/teensy41-host-midi2) (USB host on the 5-pin host port). Hardware validated 2026-05-25 (showcase), 2026-05-27 (control surface) and 2026-06-11 (host, 144k UMP zero-loss stress) on Linux ALSA and Windows MIDI Services Console RC4 |
+| **Teensy 4.1** | i.MX RT1062 | ✅ | ✅ | - | ![override](https://img.shields.io/badge/-override-purple.svg) Teensyduino native + USBHost_t36 | Cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0, AS0 + AS1 alt settings); host side via USBHost_t36 fork [`sauloverissimo/USBHost_t36`](https://github.com/sauloverissimo/USBHost_t36/tree/feature/midi2-host-base) branch `feature/midi2-host-base`. Recipes in [`teensy41-midi2`](examples/teensy41-midi2) (device showcase), [`teensy41-control-surface`](examples/teensy41-control-surface) (hardware-driven pots + switches) and [`teensy41-host-midi2`](examples/teensy41-host-midi2) (USB host on the 5-pin host port). Hardware validated 20.6.15-25 (showcase), 20.6.15-27 (control surface) and 20.6.16-11 (host, 144k UMP zero-loss stress) on Linux ALSA and Windows MIDI Services Console RC4 |
 | **Daisy Seed** | STM32H750 | ✅ | ✅ | - | ![override](https://img.shields.io/badge/-override-purple.svg) libDaisy native | libDaisy fork [`sauloverissimo/libDaisy`](https://github.com/sauloverissimo/libDaisy/tree/feat/usb-midi2-transport) branch `feat/usb-midi2-transport` (USB MIDI 2.0 descriptors Alt 0 + Alt 1, raw UMP RX/TX on `MidiUsbTransport`, STM32 HAL stack not TinyUSB). Recipes in [`daisyseed-midi2`](examples/daisyseed-midi2) (device) and [`daisyseed-host-midi2`](examples/daisyseed-host-midi2) (host) |
 | **Raspberry Pi Pico** | RP2040 | ✅ | - | - | TinyUSB | recipe in [`examples/rp2040-midi2`](examples/rp2040-midi2) |
 | **Waveshare RP2040 Pi Zero** | RP2040 | ✅ | - | - | TinyUSB | recipe in [`examples/waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2) |
@@ -148,10 +148,10 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 | **SparkFun Pro Micro RP2350** | RP2350 | ✅ | - | - | TinyUSB | recipe in [`sparkfun-promicro-rp2350-midi2`](examples/sparkfun-promicro-rp2350-midi2) |
 | Raspberry Pi Pico 2 | RP2350 | ✅ | ✅ | - | TinyUSB | direct consumer |
 | **ESP32-C6-DevKitC-1** | ESP32-C6 | ![WIP](https://img.shields.io/badge/-WIP-orange.svg) | - | - | BLE-MIDI 1.0 + ESP-NOW | ![WIP](https://img.shields.io/badge/-work_in_progress-orange.svg) ESP32_Host_MIDI v6.0.x (BLE GATT visibility regressions still being iterated; the chip has no USB-OTG so the wireless transports are the only path here). Recipe in [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2) (Tier B wireless, no PID consumed) |
-| **nRF52840 Pro Micro (Nice!Nano class)** | nRF52840 | ✅ | - | - | TinyUSB | TinyUSB native CMake build (FetchContent + `hw/bsp/family_support.cmake`, BSP `feather_nrf52840_express` upstream), recipe in [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2) (Tier B). Hardware validated 2026-04-30 on Nice!Nano: enumerates `cafe:40F1`, `Group 1 (Main)` visible to ALSA, Per-Note PB vibrato + chromatic walk + RPN/NRPN streaming live |
-| **Seeed XIAO SAMD21** | SAMD21 | ✅ | - | - | TinyUSB | TinyUSB native CMake build (FetchContent + `hw/bsp/family_support.cmake`, BSP `seeeduino_xiao` upstream), recipe in [`xiao-samd21-midi2`](examples/xiao-samd21-midi2) (Tier C). Hardware validated 2026-04-30: enumerates `cafe:40F0`, `Group 1 (Main)` visible to ALSA, chromatic walk + CC sweep streaming live |
+| **nRF52840 Pro Micro (Nice!Nano class)** | nRF52840 | ✅ | - | - | TinyUSB | TinyUSB native CMake build (FetchContent + `hw/bsp/family_support.cmake`, BSP `feather_nrf52840_express` upstream), recipe in [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2) (Tier B). Hardware validated 20.6.14-30 on Nice!Nano: enumerates `cafe:40F1`, `Group 1 (Main)` visible to ALSA, Per-Note PB vibrato + chromatic walk + RPN/NRPN streaming live |
+| **Seeed XIAO SAMD21** | SAMD21 | ✅ | - | - | TinyUSB | TinyUSB native CMake build (FetchContent + `hw/bsp/family_support.cmake`, BSP `seeeduino_xiao` upstream), recipe in [`xiao-samd21-midi2`](examples/xiao-samd21-midi2) (Tier C). Hardware validated 20.6.14-30: enumerates `cafe:40F0`, `Group 1 (Main)` visible to ALSA, chromatic walk + CC sweep streaming live |
 | **T-PicoC3** (RP2040 side) | RP2040 + ESP32-C3 | ✅ | - | - | TinyUSB | recipe in [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2) with on-board LCD scene_display visualizer (LovyanGFX). Hardware validated on Linux (`Group 1 (Main)` visible to ALSA) and Windows MIDI Services SDK RC4 (`Native data format = Universal MIDI Packet`, `MIDI 2.0 Protocol = True`): enumerates `cafe:4079` as `TPicoC3` |
-| **WeAct RA4M1 64-Pin Core Board** | RA4M1 | ✅ | - | - | TinyUSB | TinyUSB native CMake build (FetchContent + `hw/bsp/family_support.cmake`, in-recipe board overlay `weact_ra4m1` for the bootloader-less 0x0 flash layout), recipe in [`ra4m1-weact-device-midi2`](examples/ra4m1-weact-device-midi2) (Tier C). Hardware validated 2026-06-22: enumerates `cafe:40F2` as `WeAct RA4M1 MIDI 2.0`, bidirectional Function Block visible to ALSA, MIDI 2.0 feature tour (per-note pitch bend chord + RPN/NRPN + poly pressure) live |
+| **WeAct RA4M1 64-Pin Core Board** | RA4M1 | ✅ | - | - | TinyUSB | TinyUSB native CMake build (FetchContent + `hw/bsp/family_support.cmake`, in-recipe board overlay `weact_ra4m1` for the bootloader-less 0x0 flash layout), recipe in [`ra4m1-weact-device-midi2`](examples/ra4m1-weact-device-midi2) (Tier C). Hardware validated 20.6.16-22: enumerates `cafe:40F2` as `WeAct RA4M1 MIDI 2.0`, bidirectional Function Block visible to ALSA, MIDI 2.0 feature tour (per-note pitch bend chord + RPN/NRPN + poly pressure) live |
 
 Three dependencies pinned outside their upstream release: [Pico-PIO-USB](https://github.com/sekigon-gonnoc/Pico-PIO-USB) at SHA `675543b` (PR #186 "reduce handshake delay" not yet tagged, required for MIDI 2.0 host enumeration over PIO-USB), the Teensy cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0 with AS0 + AS1 alt settings, not yet submitted upstream) and the USBHost_t36 fork [`sauloverissimo/USBHost_t36`](https://github.com/sauloverissimo/USBHost_t36/tree/feature/midi2-host-base) branch `feature/midi2-host-base` (USB MIDI 2.0 host side, not yet submitted upstream). Each retires when the upstream release ships.
 
@@ -187,14 +187,14 @@ git clone https://github.com/sauloverissimo/midi2cpp.git ~/Arduino/libraries/mid
 Published on the [PlatformIO Registry](https://registry.platformio.org/libraries/sauloverissimo/midi2cpp):
 
 ```ini
-lib_deps = sauloverissimo/midi2cpp @ ^0.6.0
+lib_deps = sauloverissimo/midi2cpp @ ^0.6.1
 ```
 
 Or pin by git tag:
 
 ```ini
 lib_deps =
-  https://github.com/sauloverissimo/midi2cpp.git#v0.6.0
+  https://github.com/sauloverissimo/midi2cpp.git#v0.6.1
 ```
 
 That is all you need: midi2cpp bundles the midi2 C99 core, so there is no separate `midi2` dependency to install.
@@ -209,7 +209,7 @@ Published on the [ESP Component Registry](https://components.espressif.com/compo
 # main/idf_component.yml
 dependencies:
   idf: ">=5.0"
-  sauloverissimo/midi2cpp: ">=0.6.0"
+  sauloverissimo/midi2cpp: ">=0.6.1"
 ```
 
 The midi2 core is bundled inside midi2cpp, so nothing else is declared. `idf.py reconfigure` drops midi2cpp into `managed_components/`.
@@ -230,7 +230,7 @@ include(FetchContent)
 FetchContent_Declare(
     midi2cpp
     GIT_REPOSITORY https://github.com/sauloverissimo/midi2cpp.git
-    GIT_TAG        v0.6.0
+    GIT_TAG        v0.6.1
 )
 FetchContent_MakeAvailable(midi2cpp)
 ```

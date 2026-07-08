@@ -5,6 +5,30 @@ All notable changes to `midi2cpp` are recorded here. Format follows
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
+## [0.6.1]
+
+Recipe TinyUSB pins follow the merge of PR #3738 (Function Blocks derived
+from the GTB descriptor) into TinyUSB upstream on 2026-07-05. Device and
+bridge recipes that tracked the `fix/midi2-fb-direction` PR branch now pull
+`hathach/tinyusb` at the merge commit; the fork is no longer required for
+them.
+
+### Changed
+
+- Examples: 16 recipes moved from the `sauloverissimo/tinyusb`
+  `fix/midi2-fb-direction` branch to `hathach/tinyusb` at the PR #3738
+  merge commit.
+- Examples: `adafruit-feather-rp2040-host-midi2` advanced its upstream pin
+  from the PR #3571 merge commit to the PR #3738 merge commit.
+- Examples: TinyUSB FetchContent recipes set `GIT_SHALLOW FALSE`, since an
+  exact upstream commit (unlike a branch) is not reliably shallow-fetchable.
+- Examples: the 3 ESP32-P4 coexistence recipes
+  (`esp32-p4-devkit-host-midi2`, `esp32-p4-devkit-bridge-midi2`,
+  `esp32-p4-devkit-bridge2-midi2`) stay on the `experiment/midi-coexistence`
+  fork branch, staged as a follow-up PR upstream.
+- Docs: recipe comments and READMEs now describe TinyUSB as upstream
+  (PR #3738, merged) rather than the PR branch.
+
 ## [0.6.0]
 
 midi2cpp now bundles the midi2 C99 core (vendored amalgam in `src/`), so a

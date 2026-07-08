@@ -20,7 +20,7 @@ if(ESP_PLATFORM)
     return()
 endif()
 
-project(midi2cpp VERSION 0.6.0
+project(midi2cpp VERSION 0.6.1
         DESCRIPTION "C++ MIDI 2.0 platform: a wrapper that bundles the midi2 core"
         LANGUAGES C CXX)
 

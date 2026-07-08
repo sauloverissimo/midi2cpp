@@ -69,8 +69,8 @@ extern "C" {
 
 /* Endpoint and Product Instance names reported by the upstream
  * auto-responder. PR #3738 derives the Function Block (direction, name)
- * from the GTB descriptor and answers CFG_TUD_MIDI2_EP_NAME, so the
- * fork-only CFG_TUD_MIDI2_USER_RESPONDER gate is no longer needed: the app
+ * from the GTB descriptor and answers CFG_TUD_MIDI2_EP_NAME, so an
+ * earlier CFG_TUD_MIDI2_USER_RESPONDER gate is no longer needed: the app
  * stream responder in main.cpp only adds Device Identity on top. */
 #define CFG_TUD_MIDI2_EP_NAME              "STM32F411 MIDI 2.0"
 #define CFG_TUD_MIDI2_PRODUCT_ID           "STM32F411-MIDI2-showcase-0001"

@@ -19,7 +19,7 @@ Requires ESP-IDF v5.4+ with `. $IDF_PATH/export.sh` sourced, an Arduino Nano ESP
 
 ```bash
 cd idf
-./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of the TinyUSB fork
+./scripts/fetch_tinyusb.sh         # one-off, ~36 MB clone of TinyUSB upstream
 . $IDF_PATH/export.sh
 idf.py set-target esp32s3
 idf.py build

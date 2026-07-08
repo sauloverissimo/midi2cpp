@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.20)
 #
 # Build system: TinyUSB native CMake (family_support.cmake) + ARM GNU
 # toolchain (arm-none-eabi-gcc). TinyUSB is pulled via FetchContent
-# from the fork's MIDI 2.0 branch (PR #3738).
+# from upstream (PR #3738, merged).
 #
 # BSP choice: feather_nrf52840_express. The TinyUSB upstream does not
 # carry a Pro Micro nRF52840 / Nice!Nano BSP, but Feather Express uses
@@ -24,9 +24,9 @@ include(FetchContent)
 if(NOT DEFINED TINYUSB_PATH AND NOT DEFINED ENV{TINYUSB_PATH})
     FetchContent_Declare(
         tinyusb
-        GIT_REPOSITORY https://github.com/sauloverissimo/tinyusb.git
-        GIT_TAG        fix/midi2-fb-direction
-        GIT_SHALLOW    TRUE
+        GIT_REPOSITORY https://github.com/hathach/tinyusb.git
+        GIT_TAG        536157cb98fbc40329c9695281506fe7f04e526f
+        GIT_SHALLOW    FALSE
     )
     FetchContent_MakeAvailable(tinyusb)
     set(TINYUSB_PATH "${tinyusb_SOURCE_DIR}"

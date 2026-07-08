@@ -1,6 +1,6 @@
 ## Managed dependencies for esp32-p4-devkit-bridge-midi2.
 ##
-## TinyUSB PR #3571 fork is NOT listed here because ESP-IDF's built-in
+## TinyUSB (coexistence fork) is NOT listed here because ESP-IDF's built-in
 ## tinyusb is overridden by a local copy in ../components/tinyusb. Run
 ## ./scripts/fetch_tinyusb.sh once to clone the fork at the pinned SHA.
 dependencies:

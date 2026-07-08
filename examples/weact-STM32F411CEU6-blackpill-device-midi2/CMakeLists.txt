@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.20)
 #
 # Build system: TinyUSB native CMake (family_support.cmake) + ARM GNU
 # toolchain (arm-none-eabi-gcc). TinyUSB is pulled via FetchContent,
-# tracking the fork's fix/midi2-fb-direction branch (PR #3738).
+# pinned to the PR #3738 merge commit in TinyUSB upstream.
 #
 # BSP choice: stm32f411blackpill (in TinyUSB upstream). The BSP targets
 # the WeAct Black Pill V2.0 directly (LED PC13 active-low, KEY PA0,
@@ -18,25 +18,25 @@ cmake_minimum_required(VERSION 3.20)
 # Pull TinyUSB BEFORE family_support.cmake processes BOARD/FAMILY, so the
 # include path of family_support resolves to the fetched hw/bsp.
 #
-# Tracks the fork's fix/midi2-fb-direction branch (PR #3738). That PR
-# derives the Function Block (direction, name) from the GTB descriptor and
-# reports CFG_TUD_MIDI2_EP_NAME from the built-in auto-responder, which
-# fixes the cross-platform name race the old fork pin worked around: SAMD21
-# and STM32 used to LOSE the race and report "TinyUSB MIDI 2.0", so the
-# fork-only CFG_TUD_MIDI2_USER_RESPONDER gate turned the auto-responder OFF.
-# With #3738 the gate is gone; the app responder in main.cpp only adds
-# Device Identity on top. Re-point to the upstream ref once #3738 lands.
+# Pinned to the PR #3738 merge commit (upstream). That PR derives the
+# Function Block (direction, name) from the GTB descriptor and reports
+# CFG_TUD_MIDI2_EP_NAME from the built-in auto-responder, which fixes the
+# cross-platform name race an earlier pin worked around: SAMD21 and STM32
+# used to LOSE the race and report "TinyUSB MIDI 2.0", so an earlier
+# CFG_TUD_MIDI2_USER_RESPONDER gate turned the auto-responder OFF. With
+# #3738 the gate is gone; the app responder in main.cpp only adds Device
+# Identity on top.
 include(FetchContent)
 if(NOT DEFINED TINYUSB_PATH AND NOT DEFINED ENV{TINYUSB_PATH})
     FetchContent_Declare(
         tinyusb
-        GIT_REPOSITORY https://github.com/sauloverissimo/tinyusb.git
-        GIT_TAG        fix/midi2-fb-direction
-        GIT_SHALLOW    TRUE
+        GIT_REPOSITORY https://github.com/hathach/tinyusb.git
+        GIT_TAG        536157cb98fbc40329c9695281506fe7f04e526f
+        GIT_SHALLOW    FALSE
     )
     FetchContent_MakeAvailable(tinyusb)
     set(TINYUSB_PATH "${tinyusb_SOURCE_DIR}"
-        CACHE PATH "TinyUSB fork (PR #3738, fix/midi2-fb-direction)")
+        CACHE PATH "TinyUSB upstream (PR #3738 merge commit)")
 endif()
 
 # TinyUSB BSPs depend on per-MCU SDK submodules (CMSIS_5 for ARM core

@@ -1,7 +1,7 @@
 ## Managed dependencies for arduino-nano-esp32-midi2.
 ##
-## TinyUSB PR #3571 fork is NOT listed here because ESP-IDF's built-in
+## TinyUSB (PR #3738, merged upstream) is NOT listed here because ESP-IDF's built-in
 ## tinyusb is overridden by a local copy in ../components/tinyusb. Run
-## ./scripts/fetch_tinyusb.sh once to clone the fork's MIDI 2.0 branch.
+## ./scripts/fetch_tinyusb.sh once to clone TinyUSB upstream (PR #3738).
 dependencies:
   idf: ">=5.4"
