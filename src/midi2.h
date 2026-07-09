@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-/* Auto-generated from midi2 v0.6.0 (reproducible: no timestamp)
+/* Auto-generated from midi2 v0.6.1 (reproducible: no timestamp)
  * https://github.com/sauloverissimo/midi2
  *
  * Portable MIDI 2.0 library (C99, zero dependencies)
@@ -2966,6 +2966,12 @@ typedef struct {
   uint16_t model_id;
   uint32_t version_id;
 
+  /* Capability Inquiry Categories the convenience responder advertises in its
+   * Discovery Reply (bitmask of MIDI2_CI_CAT_*). Defaults at init to Profile
+   * Config | Property Exchange | Process Inquiry (0x1C). Configure via
+   * midi2_ci_set_capabilities. (v0.6.1+) */
+  uint8_t ci_cat;
+
   /* MUID (set at init) */
   uint32_t muid;
 
@@ -3041,6 +3047,13 @@ void midi2_ci_init_ex(midi2_ci_state *state, uint32_t muid_seed,
 void midi2_ci_set_identity(midi2_ci_state *state,
                              uint32_t manufacturer_id, uint16_t family_id,
                              uint16_t model_id, uint32_t version_id);
+
+/** Configure the Capability Inquiry Categories advertised in the Discovery
+ *  Reply (bitmask of MIDI2_CI_CAT_*). Overrides the init default of
+ *  Profile Config | Property Exchange | Process Inquiry (0x1C). The declared
+ *  MIDI-CI Message Version is derived from the lib's 1.2 support and is not
+ *  affected by this call. Safe to call with NULL state (no-op). (v0.6.1+) */
+void midi2_ci_set_capabilities(midi2_ci_state *state, uint8_t ci_cat);
 
 /** Set the write function (how CI sends SysEx responses).
  *  Safe to call with NULL state (no-op). */
@@ -4782,6 +4795,22 @@ bool midi2_ci_dispatch_feed(midi2_ci_dispatch *dp, uint8_t group,
  */
 
 
+/* Message Version declared on every reply this convenience Responder emits.
+ *
+ * The responder implements MIDI-CI 1.2 in full: it advertises Process Inquiry
+ * and Property Exchange (both 1.2 categories) and its replies carry the v2
+ * message fields (Discovery Reply Output Path Id + Function Block, PE
+ * Capability major/minor, NAK details). It therefore declares version 0x02
+ * uniformly. Keeping a single constant guarantees two invariants:
+ *   1. Advertising a 1.2 category (Process Inquiry 0x10) while claiming
+ *      version 0x01 is unrepresentable (the bug the Workbench flagged with
+ *      "Process Inquiry not allowed on Message Format Version 0x01 Devices").
+ *   2. All replies share one version, so an Initiator never sees
+ *      "MIDI-CI Message Format Version has Changed" between messages.
+ * ci_cat stays configurable (midi2_ci_set_capabilities); the declared version
+ * does not, because the lib always speaks the 1.2 message format. */
+#define CI_RESPONDER_VERSION  MIDI2_CI_VERSION_2
+
 /*--------------------------------------------------------------------+
  * Init
  *--------------------------------------------------------------------*/
@@ -4805,6 +4834,11 @@ void midi2_ci_init_ex(midi2_ci_state *state, uint32_t muid_seed,
     memset(subscribers, 0, sizeof(midi2_ci_subscriber) * max_subscribers);
   }
   state->auto_invalidate_on_collision = true; /* v0.3.0+ default on */
+  /* Advertise every CI Category the convenience responder actually handles:
+   * Profile Config, Property Exchange, Process Inquiry (0x1C). (v0.6.1+) */
+  state->ci_cat = MIDI2_CI_CAT_PROFILE_CONFIG
+                | MIDI2_CI_CAT_PROPERTY_EXCHANGE
+                | MIDI2_CI_CAT_PROCESS_INQUIRY;
 }
 
 void midi2_ci_init(midi2_ci_state *state, uint32_t muid_seed,
@@ -4824,6 +4858,11 @@ void midi2_ci_set_identity(midi2_ci_state *state,
   state->family_id = family_id;
   state->model_id = model_id;
   state->version_id = version_id;
+}
+
+void midi2_ci_set_capabilities(midi2_ci_state *state, uint8_t ci_cat) {
+  if (state == NULL) return;
+  state->ci_cat = ci_cat;
 }
 
 void midi2_ci_set_write_fn(midi2_ci_state *state,
@@ -5097,7 +5136,7 @@ int midi2_ci_notify_property_changed(midi2_ci_state *state,
     hdr_n = (uint16_t)(hdr_n + (sizeof HDR_SUFFIX - 1u));
 
     uint16_t frame_n = midi2_ci_build_pe_notify(
-        frame, MIDI2_CI_VERSION_1,
+        frame, CI_RESPONDER_VERSION,
         state->muid,
         state->subscribers[i].caller_muid,
         0 /* request_id */,
@@ -5118,20 +5157,12 @@ static bool ci_handle_discovery(midi2_ci_state *state, uint8_t group,
   if (length < 13 || state->manufacturer_id == 0) return false;
 
   uint32_t src_muid = midi2_ci_get_src_muid(data);
-  /* Declare every CI Category the convenience responder actually handles.
-   * The handlers for Profile Inquiry, PE, and PI Capability all live here;
-   * Discovery must advertise them so Initiators know to send the related
-   * inquiries. Bug present through v0.2.3: Process Inquiry was handled but
-   * not announced. */
-  uint8_t ci_cat = MIDI2_CI_CAT_PROFILE_CONFIG
-                 | MIDI2_CI_CAT_PROPERTY_EXCHANGE
-                 | MIDI2_CI_CAT_PROCESS_INQUIRY;
 
   uint8_t reply[32];
   uint16_t reply_len = midi2_ci_build_discovery_reply(
-      reply, MIDI2_CI_VERSION_1, state->muid, src_muid,
+      reply, CI_RESPONDER_VERSION, state->muid, src_muid,
       state->manufacturer_id, state->family_id, state->model_id,
-      state->version_id, ci_cat, 512, 0, 0x7F);
+      state->version_id, state->ci_cat, 512, 0, 0x7F);
 
   ci_send(state, group, reply, reply_len);
   return true;
@@ -5148,7 +5179,7 @@ static void ci_handle_profile_inquiry(midi2_ci_state *state, uint8_t group,
 
   uint8_t reply[256];
   uint16_t reply_len = midi2_ci_build_profile_inquiry_reply(
-      reply, MIDI2_CI_VERSION_1, state->muid, src_muid,
+      reply, CI_RESPONDER_VERSION, state->muid, src_muid,
       midi2_ci_get_device_id(data),
       (const uint8_t (*)[5])state->profiles, state->profile_count,
       NULL, 0);
@@ -5171,7 +5202,7 @@ static void ci_handle_pe_capability(midi2_ci_state *state, uint8_t group,
 
   uint8_t reply[24];
   uint16_t reply_len = midi2_ci_build_pe_capability_reply(
-      reply, MIDI2_CI_VERSION_2, state->muid, src_muid,
+      reply, CI_RESPONDER_VERSION, state->muid, src_muid,
       /*max_simultaneous*/ 1,
       /*pe_ver_major*/     1,
       /*pe_ver_minor*/     0);
@@ -5180,64 +5211,217 @@ static void ci_handle_pe_capability(midi2_ci_state *state, uint8_t group,
 }
 
 /*--------------------------------------------------------------------+
+ * Property Exchange reply helpers (M2-105-UM)
+ *
+ * Every PE reply header is a JSON object carrying at least a "status".
+ * An empty header makes an Initiator (e.g. the MIDI 2.0 Workbench) NAK with
+ * "the first header property is not resource, status or command".
+ *--------------------------------------------------------------------*/
+static const char PE_HDR_OK[]  = "{\"status\":200}";
+static const char PE_HDR_400[] = "{\"status\":400}";
+static const char PE_HDR_404[] = "{\"status\":404}";
+
+/* Assembled PE reply and body bounds, sized to the 512-byte Receivable Max
+ * SysEx the responder advertises so a full DeviceInfo (manufacturer/family/
+ * model/version plus the four ID arrays, ~200 bytes) round-trips without
+ * truncation. REPLY_MAX must exceed BODY_MAX by the ~36-byte CI+PE framing. */
+#define CI_PE_REPLY_MAX 512
+#define CI_PE_BODY_MAX  448
+
+/* Extract the "resource" string value from a PE inquiry header JSON. Returns a
+ * pointer into hdr with *out_len set, or NULL if absent. Minimal scanner: no
+ * escape handling (PE resource names are plain identifiers per M2-105). */
+static const char *ci_pe_resource(const uint8_t *hdr, uint16_t hdr_len,
+                                     uint16_t *out_len) {
+  static const char KEY[] = "\"resource\"";
+  const uint16_t klen = (uint16_t)(sizeof(KEY) - 1);
+  uint16_t i;
+  *out_len = 0;
+  if (hdr == NULL || hdr_len < klen) return NULL;
+  for (i = 0; (uint16_t)(i + klen) <= hdr_len; i++) {
+    if (memcmp(hdr + i, KEY, klen) != 0) continue;
+    i = (uint16_t)(i + klen);
+    while (i < hdr_len && (hdr[i] == ' ' || hdr[i] == ':')) i++;
+    if (i >= hdr_len || hdr[i] != '"') return NULL;
+    i++;  /* opening quote */
+    {
+      uint16_t start = i;
+      while (i < hdr_len && hdr[i] != '"') i++;
+      *out_len = (uint16_t)(i - start);
+      return (const char *)(hdr + start);
+    }
+  }
+  return NULL;
+}
+
+/* Build the built-in ResourceList body: a JSON array of {"resource":"NAME"}
+ * for every registered property. Emits only entries that fit whole, always
+ * closing the array, so the result is valid JSON even when it overflows (a
+ * truncated but well-formed list rather than an empty or half-written body).
+ * Returns bytes written (>= 2, i.e. at least "[]"), or 0 if max < 2. */
+static uint16_t ci_pe_build_resource_list(const midi2_ci_state *state,
+                                            uint8_t *out, uint16_t max) {
+  static const char PRE[] = "{\"resource\":\"";
+  const uint16_t prelen = (uint16_t)(sizeof(PRE) - 1);
+  uint16_t p = 0;
+  uint8_t emitted = 0;
+  uint8_t i;
+  if (max < 2) return 0;  /* no room even for "[]" */
+  out[p++] = '[';
+  for (i = 0; i < state->property_count; i++) {
+    const char *name = state->properties[i].name;
+    uint16_t namelen, need, k;
+    if (name == NULL) continue;
+    namelen = (uint16_t)strlen(name);
+    /* comma? + {"resource":" + name + "} , plus 1 reserved for closing ']'. */
+    need = (uint16_t)((emitted > 0 ? 1u : 0u) + prelen + namelen + 2u + 1u);
+    if ((uint16_t)(p + need) > max) break;  /* stop at the last whole entry */
+    if (emitted > 0) out[p++] = ',';
+    for (k = 0; k < prelen; k++)   out[p++] = (uint8_t)PRE[k];
+    for (k = 0; k < namelen; k++)  out[p++] = (uint8_t)name[k];
+    out[p++] = '"'; out[p++] = '}';
+    emitted++;
+  }
+  out[p++] = ']';
+  return p;
+}
+
+/*--------------------------------------------------------------------+
  * PE Get handler -- uses midi2_ci_build_pe_get_reply
+ *
+ * Matches the requested resource by name. Built-in "ResourceList" enumerates
+ * the registered resources. Unknown resource -> {"status":404}. Every reply
+ * carries a non-empty header.
  *--------------------------------------------------------------------*/
 static void ci_handle_pe_get(midi2_ci_state *state, uint8_t group,
                                const uint8_t *data, uint16_t length) {
-  if (length < 14 || state->property_count == 0) return;
+  /* Respond even with zero registered properties: a ResourceList Get still
+   * gets an empty array, a named Get gets 404. The responder advertises PE,
+   * so it must always answer. */
+  if (length < 16) return;
 
-  uint32_t src_muid = midi2_ci_get_src_muid(data);
-  uint8_t request_id = midi2_ci_get_pe_request_id(data);
+  uint32_t src_muid   = midi2_ci_get_src_muid(data);
+  uint8_t  request_id = midi2_ci_get_pe_request_id(data);
+  uint16_t hdr_len    = midi2_ci_get_pe_header_len(data);
+  const uint8_t *inq  = (length >= (uint16_t)(16 + hdr_len)) ? (data + 16) : NULL;
 
-  uint8_t i;
-  for (i = 0; i < state->property_count; i++) {
-    const char *value = NULL;
-    if (state->properties[i].getter) {
-      value = state->properties[i].getter(state->properties[i].name, state->context);
-    } else {
-      value = state->properties[i].static_value;
-    }
+  uint16_t res_len = 0;
+  const char *res = ci_pe_resource(inq, hdr_len, &res_len);
 
-    if (value != NULL) {
-      uint16_t val_len = 0;
-      while (value[val_len] && val_len < 30) val_len++;
+  uint8_t reply[CI_PE_REPLY_MAX];
+  uint16_t reply_len;
 
-      uint8_t reply[64];
-      uint16_t reply_len = midi2_ci_build_pe_get_reply(
-          reply, MIDI2_CI_VERSION_1, state->muid, src_muid,
-          request_id, NULL, 0, 1, 1,
-          (const uint8_t *)value, val_len);
+  /* Built-in ResourceList: enumerate the registered resources. */
+  if (res != NULL && res_len == 12 && memcmp(res, "ResourceList", 12) == 0) {
+    uint8_t body[CI_PE_BODY_MAX];
+    uint16_t body_len = ci_pe_build_resource_list(state, body, sizeof(body));
+    reply_len = midi2_ci_build_pe_get_reply(
+        reply, CI_RESPONDER_VERSION, state->muid, src_muid, request_id,
+        (const uint8_t *)PE_HDR_OK, (uint16_t)(sizeof(PE_HDR_OK) - 1),
+        1, 1, body, body_len);
+    ci_send(state, group, reply, reply_len);
+    return;
+  }
 
+  /* Named resource lookup. */
+  if (res != NULL) {
+    uint8_t i;
+    for (i = 0; i < state->property_count; i++) {
+      const char *name = state->properties[i].name;
+      const char *value;
+      uint16_t val_len;
+      if (name == NULL || (uint16_t)strlen(name) != res_len
+          || memcmp(name, res, res_len) != 0) continue;
+
+      value = state->properties[i].getter
+          ? state->properties[i].getter(name, state->context)
+          : state->properties[i].static_value;
+      if (value == NULL) break;  /* resource exists but has no value -> 404 */
+
+      val_len = (uint16_t)strlen(value);
+      if (val_len > CI_PE_BODY_MAX) val_len = CI_PE_BODY_MAX;
+
+      reply_len = midi2_ci_build_pe_get_reply(
+          reply, CI_RESPONDER_VERSION, state->muid, src_muid, request_id,
+          (const uint8_t *)PE_HDR_OK, (uint16_t)(sizeof(PE_HDR_OK) - 1),
+          1, 1, (const uint8_t *)value, val_len);
       ci_send(state, group, reply, reply_len);
       return;
     }
   }
+
+  /* Unknown or unspecified resource -> status 404. */
+  reply_len = midi2_ci_build_pe_get_reply(
+      reply, CI_RESPONDER_VERSION, state->muid, src_muid, request_id,
+      (const uint8_t *)PE_HDR_404, (uint16_t)(sizeof(PE_HDR_404) - 1),
+      1, 1, NULL, 0);
+  ci_send(state, group, reply, reply_len);
 }
 
 /*--------------------------------------------------------------------+
  * PE Set handler -- uses midi2_ci_build_pe_set_reply
+ *
+ * Matches the requested resource by name and passes the request body to that
+ * resource's setter. Status reflects reality: 200 on success, 404 for an
+ * unknown or non-settable resource, 400 when the setter rejects the value.
  *--------------------------------------------------------------------*/
 static void ci_handle_pe_set(midi2_ci_state *state, uint8_t group,
                                const uint8_t *data, uint16_t length) {
-  if (length < 14 || state->property_count == 0) return;
+  if (length < 16) return;
 
-  uint32_t src_muid = midi2_ci_get_src_muid(data);
-  uint8_t request_id = midi2_ci_get_pe_request_id(data);
-  uint8_t i;
+  uint32_t src_muid   = midi2_ci_get_src_muid(data);
+  uint8_t  request_id = midi2_ci_get_pe_request_id(data);
+  uint16_t hdr_len    = midi2_ci_get_pe_header_len(data);
+  const uint8_t *inq  = (length >= (uint16_t)(16 + hdr_len)) ? (data + 16) : NULL;
 
-  for (i = 0; i < state->property_count; i++) {
-    if (state->properties[i].setter) {
-      bool ok = state->properties[i].setter(state->properties[i].name, "", state->context);
+  uint16_t res_len = 0;
+  const char *res = ci_pe_resource(inq, hdr_len, &res_len);
 
-      uint8_t reply[32];
-      uint16_t reply_len = midi2_ci_build_pe_set_reply(
-          reply, MIDI2_CI_VERSION_1, state->muid, src_muid,
-          request_id, NULL, 0);
-      (void)ok; /* simplified: always send reply */
+  const char *status  = PE_HDR_404;  /* default: no matching settable resource */
+  uint16_t    status_len = (uint16_t)(sizeof(PE_HDR_404) - 1);
 
-      ci_send(state, group, reply, reply_len);
-      return;
+  if (res != NULL) {
+    uint8_t i;
+    for (i = 0; i < state->property_count; i++) {
+      const char *name = state->properties[i].name;
+      if (name == NULL || (uint16_t)strlen(name) != res_len
+          || memcmp(name, res, res_len) != 0) continue;
+
+      if (state->properties[i].setter == NULL) break;  /* exists, read-only -> 404 */
+
+      /* Extract the (single-chunk) request body and pass it to the setter as a
+       * NUL-terminated string. Body follows header + num_chunks + this_chunk +
+       * body_len (M2-105 PE data layout). */
+      {
+        uint16_t off = (uint16_t)(16 + hdr_len);
+        char valbuf[CI_PE_BODY_MAX + 1];
+        uint16_t body_len = 0;
+        const uint8_t *body = NULL;
+        bool ok;
+
+        if (length >= (uint16_t)(off + 6)) {
+          body_len = midi2_ci_read_14(&data[off + 4]);
+          body = &data[off + 6];
+          if (length < (uint16_t)(off + 6 + body_len)) body_len = 0;
+        }
+        if (body_len > CI_PE_BODY_MAX) body_len = CI_PE_BODY_MAX;
+        if (body_len > 0) memcpy(valbuf, body, body_len);
+        valbuf[body_len] = '\0';
+
+        ok = state->properties[i].setter(name, valbuf, state->context);
+        if (ok) { status = PE_HDR_OK;  status_len = (uint16_t)(sizeof(PE_HDR_OK)  - 1); }
+        else    { status = PE_HDR_400; status_len = (uint16_t)(sizeof(PE_HDR_400) - 1); }
+      }
+      break;
     }
+  }
+
+  {
+    uint8_t reply[64];
+    uint16_t reply_len = midi2_ci_build_pe_set_reply(
+        reply, CI_RESPONDER_VERSION, state->muid, src_muid,
+        request_id, (const uint8_t *)status, status_len);
+    ci_send(state, group, reply, reply_len);
   }
 }
 
@@ -5275,7 +5459,7 @@ static void ci_check_muid_collision(midi2_ci_state *state, uint8_t group,
   if (!state->auto_invalidate_on_collision) return;
   uint8_t buf[24];
   uint16_t len = midi2_ci_build_invalidate_muid(
-      buf, MIDI2_CI_VERSION_1, state->muid, old);
+      buf, CI_RESPONDER_VERSION, state->muid, old);
   ci_send(state, group, buf, len);
 }
 
@@ -5293,7 +5477,7 @@ static void ci_send_nak_not_supported(midi2_ci_state *state, uint8_t group,
   uint8_t device_id = midi2_ci_get_device_id(data);
   uint8_t buf[32];
   uint16_t len = midi2_ci_build_nak(
-      buf, MIDI2_CI_VERSION_2, state->muid, src_muid, device_id,
+      buf, CI_RESPONDER_VERSION, state->muid, src_muid, device_id,
       orig_sub_id, MIDI2_CI_NAK_NOT_SUPPORTED, 0,
       NULL, 0, NULL);
   ci_send(state, group, buf, len);
@@ -5310,7 +5494,7 @@ static void ci_handle_process_inquiry(midi2_ci_state *state, uint8_t group,
 
   uint8_t reply[16];
   uint16_t reply_len = midi2_ci_build_pi_capability_reply(
-      reply, MIDI2_CI_VERSION_1, state->muid, src_muid, 0x01);
+      reply, CI_RESPONDER_VERSION, state->muid, src_muid, 0x01);
 
   ci_send(state, group, reply, reply_len);
 }
