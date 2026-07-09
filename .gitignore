@@ -29,3 +29,6 @@ compile_commands.json
 **/idf/dependencies.lock
 **/idf/sdkconfig
 **/idf/sdkconfig.old
+
+# Build logs
+*.log
