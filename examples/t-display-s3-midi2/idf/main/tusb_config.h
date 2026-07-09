@@ -66,6 +66,9 @@ extern "C" {
 /* UMP Endpoint Name shown by the host. */
 #define CFG_TUD_MIDI2_EP_NAME              "T-Display S3 MIDI 2.0"
 
+/* Product Instance Id reported by the #3738 built-in Stream responder. */
+#define CFG_TUD_MIDI2_PRODUCT_ID           "TDisplayS3-receiver-0001"
+
 /* TX buffer sized for short bursts of UMP words during the showcase. */
 
 #ifdef __cplusplus

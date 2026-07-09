@@ -3,7 +3,7 @@
  *
  * Identification:
  *   USB VID:PID         0xCAFE:0x40F1   (TinyUSB educational VID + project PID)
- *   Manufacturer string github.com/sauloverissimo
+ *   Manufacturer string midi2.diy
  *   Product string      Nrf52840ProMicro
  *
  * Configuration:
@@ -79,7 +79,7 @@ enum {
 
 static char const *string_desc_arr[] = {
     (const char[]){0x09, 0x04},   /* 0: English (0x0409)               */
-    "github.com/sauloverissimo",  /* 1: Manufacturer                   */
+    "midi2.diy",  /* 1: Manufacturer                   */
     "Nrf52840ProMicro",           /* 2: Product                        */
     "Nrf52840ProMicro-0001",      /* 3: Serial (static fallback)       */
 };

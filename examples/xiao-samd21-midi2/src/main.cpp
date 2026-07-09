@@ -35,42 +35,14 @@ static const uint8_t  kMfrId[3]        = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId        = 0x0001;
 static const uint16_t kModelId         = 0x0001;
 static const uint32_t kVersion         = 0x00010000;
-static const char     kEndpointName[]  = "XiaoSAMD21";
-static const char     kProductInstId[] = "XiaoSAMD21-showcase-0001";
-static const char     kFbName[]        = "Main";
 
 /*--------------------------------------------------------------------+
- * UMP Stream Discovery responder
+ * UMP Stream Discovery is answered by the TinyUSB built-in responder
+ * (PR #3738): Endpoint Name from CFG_TUD_MIDI2_EP_NAME, FB direction +
+ * group span from tud_midi2_gtb_desc_cb, FB name from tud_midi2_fb_name_cb
+ * (all in xiao_samd21_midi2.cpp). No app-side stream responder is
+ * installed; Device Identity is carried by MIDI-CI Discovery via ci.begin.
  *--------------------------------------------------------------------*/
-static void install_stream_responder(m2device& midi) {
-    midi.onEndpointDiscovery([&midi](uint8_t filter) {
-        if (filter & 0x01) {
-            midi.sendEndpointInfo(/*ump_ver*/ 1, 1,
-                                  /*static_fb*/ true, /*num_fb*/ 1,
-                                  /*midi2*/ true, /*midi1*/ true,
-                                  /*rx_jr*/ false, /*tx_jr*/ true);
-        }
-        if (filter & 0x02) midi.sendDeviceIdentity(kMfrId, kFamilyId, kModelId, kVersion);
-        if (filter & 0x04) midi.sendEndpointNameUpdate(kEndpointName);
-        if (filter & 0x08) midi.sendProductInstanceIdUpdate(kProductInstId);
-        if (filter & 0x10) midi.sendStreamConfigNotify(/*protocol*/ 0x02);
-    });
-    midi.onFbDiscovery([&midi](uint8_t fbNum, uint8_t filter) {
-        uint8_t target = (fbNum == 0xFF) ? 0 : fbNum;
-        if (target != 0) return;
-        if (filter & 0x01) {
-            midi.sendFbInfo(/*active*/ true, /*fb_num*/ 0,
-                            /*direction*/ 0x03, /*ui_hint*/ 0x03,
-                            /*first_group*/ 0, /*num_groups*/ 1,
-                            /*midi_ci_ver*/ 0x02, /*sysex8*/ false,
-                            /*protocol*/ 0x02);
-        }
-        if (filter & 0x02) midi.sendFbNameUpdate(0, kFbName);
-    });
-    midi.onStreamConfigRequest([&midi](uint8_t protocol) {
-        midi.sendStreamConfigNotify(protocol);
-    });
-}
 
 /*--------------------------------------------------------------------+
  * Demo cycle
@@ -133,8 +105,6 @@ int main() {
     midi.begin();
     midi.enableJRHeartbeat(500);
     ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
-
-    install_stream_responder(midi);
 
     static Showcase showcase{};
     bool prev_mounted = false;

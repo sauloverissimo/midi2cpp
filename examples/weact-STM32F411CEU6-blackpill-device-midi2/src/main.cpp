@@ -13,10 +13,10 @@
  * never depends on FPU enable state.
  *
  *   Boot (once):
- *     - UMP Stream Discovery responder (Endpoint Info, Device Identity,
- *       Endpoint Name, Product Instance ID, Stream Config, FB Info,
- *       FB Name), so the host reads this recipe's identity and a
- *       bidirectional Function Block.
+ *     - UMP Stream Discovery is answered by the TinyUSB built-in responder
+ *       (PR #3738): Endpoint Name from CFG_TUD_MIDI2_EP_NAME, Function Block
+ *       direction from the GTB descriptor (board glue), FB name "Main" from
+ *       tud_midi2_fb_name_cb. The app installs no stream responder.
  *     - MIDI-CI Discovery + PE Capability + PE Get auto-replied via
  *       m2ci's Appendix E convenience responder
  *     - 1 Custom Profile registered (id 7D 00 00 01 00)
@@ -63,47 +63,17 @@ static const uint8_t  kMfrId[3]      = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId      = 0x0001;
 static const uint16_t kModelId       = 0x0001;
 static const uint32_t kVersion       = 0x00010000;
-static const char     kEndpointName[]   = "STM32F411 MIDI 2.0";
-static const char     kProductInstId[]  = "STM32F411-MIDI2-showcase-0001";
-static const char     kFbName[]         = "Main";
 static const uint8_t  kProfileId[5]     = {0x7D, 0x00, 0x00, 0x01, 0x00};
+// Endpoint Name = CFG_TUD_MIDI2_EP_NAME, Product Instance Id =
+// CFG_TUD_MIDI2_PRODUCT_ID (tusb_config.h), FB name "Main" =
+// tud_midi2_fb_name_cb, FB direction = GTB descriptor (board glue). The
+// TinyUSB built-in responder (PR #3738) answers UMP Stream Discovery from
+// those; the app no longer installs a stream responder.
 
 // Subscribable property value. Updated every cycle so subscribers see
 // PE Notify deltas.
 static char g_overlay_rate[32] = "{\"rateHz\":50}";
 
-/*--------------------------------------------------------------------+
- * UMP Stream responder
- *--------------------------------------------------------------------*/
-static void install_stream_responder(m2device& midi) {
-    midi.onEndpointDiscovery([&midi](uint8_t filter) {
-        if (filter & 0x01) {
-            midi.sendEndpointInfo(/*ump_ver*/ 1, 1,
-                                  /*static_fb*/ true, /*num_fb*/ 1,
-                                  /*midi2*/ true, /*midi1*/ true,
-                                  /*rx_jr*/ false, /*tx_jr*/ true);
-        }
-        if (filter & 0x02) midi.sendDeviceIdentity(kMfrId, kFamilyId, kModelId, kVersion);
-        if (filter & 0x04) midi.sendEndpointNameUpdate(kEndpointName);
-        if (filter & 0x08) midi.sendProductInstanceIdUpdate(kProductInstId);
-        if (filter & 0x10) midi.sendStreamConfigNotify(/*protocol*/ 0x02);
-    });
-    midi.onFbDiscovery([&midi](uint8_t fbNum, uint8_t filter) {
-        uint8_t target = (fbNum == 0xFF) ? 0 : fbNum;
-        if (target != 0) return;
-        if (filter & 0x01) {
-            midi.sendFbInfo(/*active*/ true, /*fb_num*/ 0,
-                            /*direction*/ 0x03, /*ui_hint*/ 0x03,
-                            /*first_group*/ 0, /*num_groups*/ 1,
-                            /*midi_ci_ver*/ 0x02, /*sysex8*/ false,
-                            /*protocol*/ 0x02);
-        }
-        if (filter & 0x02) midi.sendFbNameUpdate(0, kFbName);
-    });
-    midi.onStreamConfigRequest([&midi](uint8_t protocol) {
-        midi.sendStreamConfigNotify(protocol);
-    });
-}
 
 /*--------------------------------------------------------------------+
  * MIDI-CI bootstrap: profile + 3 properties + process inquiry
@@ -116,15 +86,17 @@ static void install_ci_bootstrap(m2ci& ci) {
 
     // Property Exchange
     ci.addPropertyStatic("DeviceInfo",
-        "{\"manufacturer\":\"github.com/sauloverissimo\","
-         "\"family\":\"WeActBlackPillF411\","
-         "\"model\":\"showcase\","
-         "\"version\":\"0.1.0\"}");
+        "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[1,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
+         "\"family\":\"STM32F411\","
+         "\"model\":\"WeAct BlackPill F411 MIDI 2.0\","
+         "\"version\":\"0.0.1\"}");
 
     ci.addProperty("ChannelList",
-        []() -> const char* { return "{\"channels\":[0,1,2,3]}"; },
+        []() -> const char* { return "[{\"title\":\"Channel 1\",\"channel\":1},{\"title\":\"Channel 2\",\"channel\":2},{\"title\":\"Channel 3\",\"channel\":3},{\"title\":\"Channel 4\",\"channel\":4}]"; },
         nullptr  // read-only
     );
+
+    ci.addPropertyStatic("ProgramList", "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
 
     ci.addProperty("OverlayRate",
         []() -> const char* { return g_overlay_rate; },
@@ -477,7 +449,6 @@ int main() {
     midi.enableJRHeartbeat(500);
     ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
 
-    install_stream_responder(midi);
     install_ci_bootstrap(ci);
 
     static Showcase showcase{};

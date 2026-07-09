@@ -65,6 +65,9 @@ extern "C" {
 /* UMP Endpoint Name shown by the host. */
 #define CFG_TUD_MIDI2_EP_NAME              "RP2040 Pi Zero MIDI 2.0"
 
+/* Product Instance Id reported by the #3738 built-in Stream responder. */
+#define CFG_TUD_MIDI2_PRODUCT_ID           "RP2040PiZero-showcase-0001"
+
 /* TX buffer sized for short bursts of UMP words during playback. */
 
 #ifdef __cplusplus

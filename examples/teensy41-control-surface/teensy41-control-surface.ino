@@ -16,7 +16,7 @@
 //     Services, macOS Audio MIDI Setup)
 //
 // USB identity inherits VID/PID 0x16C0:0x0485 from the cores fork;
-// Manufacturer "github.com/sauloverissimo" and Product "Teensy41 CS"
+// Manufacturer "midi2.diy" and Product "Teensy41 CS"
 // come from src/usb_names_override.c via the cores' weak-alias hook.
 // UMP Stream identity programmed below.
 

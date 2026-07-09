@@ -62,9 +62,6 @@ static const uint8_t  kMfrId[3]      = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId      = 0x0001;
 static const uint16_t kModelId       = 0x0001;
 static const uint32_t kVersion       = 0x00010000;
-static const char     kEndpointName[]   = "TPicoC3";
-static const char     kProductInstId[]  = "TPicoC3-showcase-0001";
-static const char     kFbName[]         = "Main";
 static const uint8_t  kProfileId[5]     = {0x7D, 0x00, 0x00, 0x01, 0x00};
 
 // Subscribable property value. Updated every cycle so subscribers see
@@ -72,41 +69,12 @@ static const uint8_t  kProfileId[5]     = {0x7D, 0x00, 0x00, 0x01, 0x00};
 static char g_overlay_rate[32] = "{\"rateHz\":50}";
 
 /*--------------------------------------------------------------------+
- * UMP Stream responder
+ * UMP Stream Discovery is answered by the TinyUSB built-in responder
+ * (PR #3738): Endpoint Name from CFG_TUD_MIDI2_EP_NAME, FB direction +
+ * group span from tud_midi2_gtb_desc_cb, FB name from tud_midi2_fb_name_cb
+ * (in the board glue). No app-side stream responder is installed; Device
+ * Identity is carried by MIDI-CI Discovery (SysEx) via ci.begin.
  *--------------------------------------------------------------------*/
-static void install_stream_responder(m2device& midi) {
-    midi.onEndpointDiscovery([&midi](uint8_t filter) {
-        std::printf("[stream] Endpoint Discovery filter=0x%02X\r\n", filter);
-        if (filter & 0x01) {
-            midi.sendEndpointInfo(/*ump_ver*/ 1, 1,
-                                  /*static_fb*/ true, /*num_fb*/ 1,
-                                  /*midi2*/ true, /*midi1*/ true,
-                                  /*rx_jr*/ false, /*tx_jr*/ true);
-        }
-        if (filter & 0x02) midi.sendDeviceIdentity(kMfrId, kFamilyId, kModelId, kVersion);
-        if (filter & 0x04) midi.sendEndpointNameUpdate(kEndpointName);
-        if (filter & 0x08) midi.sendProductInstanceIdUpdate(kProductInstId);
-        if (filter & 0x10) midi.sendStreamConfigNotify(/*protocol*/ 0x02);
-    });
-    midi.onFbDiscovery([&midi](uint8_t fbNum, uint8_t filter) {
-        std::printf("[stream] FB Discovery fb=%u filter=0x%02X\r\n",
-                    (unsigned)fbNum, (unsigned)filter);
-        uint8_t target = (fbNum == 0xFF) ? 0 : fbNum;
-        if (target != 0) return;
-        if (filter & 0x01) {
-            midi.sendFbInfo(/*active*/ true, /*fb_num*/ 0,
-                            /*direction*/ 0x03, /*ui_hint*/ 0x03,
-                            /*first_group*/ 0, /*num_groups*/ 1,
-                            /*midi_ci_ver*/ 0x02, /*sysex8*/ false,
-                            /*protocol*/ 0x02);
-        }
-        if (filter & 0x02) midi.sendFbNameUpdate(0, kFbName);
-    });
-    midi.onStreamConfigRequest([&midi](uint8_t protocol) {
-        std::printf("[stream] Config Request protocol=0x%02X\r\n", (unsigned)protocol);
-        midi.sendStreamConfigNotify(protocol);
-    });
-}
 
 /*--------------------------------------------------------------------+
  * MIDI-CI bootstrap: profile + 3 properties + process inquiry
@@ -127,17 +95,20 @@ static void install_ci_bootstrap(m2ci& ci) {
 
     // Property Exchange
     rc = ci.addPropertyStatic("DeviceInfo",
-        "{\"manufacturer\":\"github.com/sauloverissimo\","
-         "\"family\":\"t-picoc3-device-midi2\","
-         "\"model\":\"showcase\","
-         "\"version\":\"0.1.0\"}");
+        "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[1,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
+         "\"family\":\"RP2040\","
+         "\"model\":\"LILYGO T-PicoC3 MIDI 2.0\","
+         "\"version\":\"0.0.1\"}");
     std::printf("[ci] addPropertyStatic(DeviceInfo) rc=%d\r\n", rc);
 
     rc = ci.addProperty("ChannelList",
-        []() -> const char* { return "{\"channels\":[0,1,2,3]}"; },
+        []() -> const char* { return "[{\"title\":\"Channel 1\",\"channel\":1},{\"title\":\"Channel 2\",\"channel\":2},{\"title\":\"Channel 3\",\"channel\":3},{\"title\":\"Channel 4\",\"channel\":4}]"; },
         nullptr  // read-only
     );
     std::printf("[ci] addProperty(ChannelList) rc=%d\r\n", rc);
+
+    rc = ci.addPropertyStatic("ProgramList", "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
+    std::printf("[ci] addPropertyStatic(ProgramList) rc=%d\r\n", rc);
 
     rc = ci.addProperty("OverlayRate",
         []() -> const char* { return g_overlay_rate; },
@@ -574,7 +545,6 @@ int main() {
     midi.enableJRHeartbeat(500);
     ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
 
-    install_stream_responder(midi);
     install_ci_bootstrap(ci);
 
     midi.onNoteOn([](uint8_t ch, uint8_t note, uint16_t vel) {

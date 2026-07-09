@@ -128,4 +128,23 @@ bool tud_midi2_get_req_itf_cb(uint8_t rhport,
     return false;
 }
 
+// One bidirectional Function Block over Group 1. The #3738 built-in Stream
+// responder derives the FB Info (direction + group span) from this GTB.
+static const uint8_t k_gtb_desc[] = {
+    TUD_MIDI2_GTB_HEADER(1),
+    TUD_MIDI2_GTB_BLOCK(/*id*/ 1, MIDI2_GTB_BIDIRECTIONAL,
+                        /*first_group*/ 0, /*num_groups*/ 1, /*stridx*/ 0),
+};
+
+const uint8_t* tud_midi2_gtb_desc_cb(uint8_t itf, uint16_t* len) {
+    (void)itf;
+    *len = (uint16_t)sizeof(k_gtb_desc);
+    return k_gtb_desc;
+}
+
+const char* tud_midi2_fb_name_cb(uint8_t itf, uint8_t fb_idx) {
+    (void)itf;
+    return (fb_idx == 0) ? "Main" : "";
+}
+
 }  // extern "C"

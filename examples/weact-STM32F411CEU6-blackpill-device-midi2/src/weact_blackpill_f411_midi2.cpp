@@ -92,11 +92,14 @@ void led_show_mounted(bool mounted) {
 }  // namespace weact_blackpill_f411_midi2
 
 /*--------------------------------------------------------------------+
- * TinyUSB MIDI 2.0 callbacks, required hooks per midi2_device.h API.
+ * TinyUSB MIDI 2.0 callbacks.
  *
- * The driver references these as caller-supplied with no weak default
- * upstream. Polling done in weact_blackpill_f411_midi2::task() handles
- * state propagation, so these stubs do nothing.
+ * tud_midi2_rx_cb drains UMP into midi2cpp. set_itf / get_req_itf are
+ * stubs (task() polls state). tud_midi2_gtb_desc_cb + tud_midi2_fb_name_cb
+ * feed the built-in UMP Stream responder (TinyUSB PR #3738): the FB Info
+ * (direction + group span) is derived from the GTB descriptor, the FB name
+ * from the callback, and the Endpoint Name from CFG_TUD_MIDI2_EP_NAME.
+ * No app-side stream responder is needed.
  *--------------------------------------------------------------------*/
 extern "C" {
 
@@ -120,6 +123,25 @@ bool tud_midi2_get_req_itf_cb(uint8_t rhport,
     (void)rhport;
     (void)request;
     return false;
+}
+
+// One bidirectional Function Block over Group 1. The #3738 built-in
+// responder reads the FB Info (direction + group span) from this GTB.
+static const uint8_t k_gtb_desc[] = {
+    TUD_MIDI2_GTB_HEADER(1),
+    TUD_MIDI2_GTB_BLOCK(/*id*/ 1, MIDI2_GTB_BIDIRECTIONAL,
+                        /*first_group*/ 0, /*num_groups*/ 1, /*stridx*/ 0),
+};
+
+const uint8_t* tud_midi2_gtb_desc_cb(uint8_t itf, uint16_t* len) {
+    (void)itf;
+    *len = (uint16_t)sizeof(k_gtb_desc);
+    return k_gtb_desc;
+}
+
+const char* tud_midi2_fb_name_cb(uint8_t itf, uint8_t fb_idx) {
+    (void)itf;
+    return (fb_idx == 0) ? "Main" : "";
 }
 
 }  // extern "C"

@@ -9,7 +9,7 @@
 //     core is bundled, no separate midi2 library needed.
 //
 // USB identity: VID 0x16C0, PID 0x0485 (PJRC's USB_TYPE = MIDI2 slot,
-// kept intact); Manufacturer "github.com/sauloverissimo" and Product
+// kept intact); Manufacturer "midi2.diy" and Product
 // "Teensy41" come from src/usb_names_override.c via the cores' official
 // weak-alias hook. UMP Stream identity programmed below: Endpoint Name
 // "Teensy41", FB 0 "Main", Product Instance ID "Teensy41-showcase-0001".
@@ -29,12 +29,12 @@ static const uint16_t kModelId     = 0x0001;
 static const uint32_t kVersion     = 0x00010000;
 static const uint8_t  kProfileGm[5] = {0x7E, 0x00, 0x00, 0x01, 0x00};
 static const char     kDeviceInfo[] =
-    "{\"manufacturer\":\"github.com/sauloverissimo\","
-    "\"family\":\"Teensy 4.x\","
-    "\"model\":\"Teensy 4.1\","
-    "\"version\":\"1.0.0\"}";
+    "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[1,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
+    "\"family\":\"Teensy\","
+    "\"model\":\"Teensy41 MIDI 2.0\","
+    "\"version\":\"0.1\"}";
 static const char     kChannelList[] =
-    "{\"channelList\":[{\"title\":\"Main\",\"channel\":1}]}";
+    "[{\"title\":\"Main\",\"channel\":1}]";
 
 void setup()
 {
@@ -62,6 +62,7 @@ void setup()
 	ci.addPropertyStatic("DeviceInfo",  kDeviceInfo);
 	ci.addPropertyStatic("ChannelList", kChannelList);
 	ci.setPropertySubscribable("ChannelList", true);
+	ci.addPropertyStatic("ProgramList", "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
 }
 
 void loop()

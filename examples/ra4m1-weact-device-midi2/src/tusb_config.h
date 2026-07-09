@@ -68,6 +68,9 @@ extern "C" {
 /* UMP Endpoint Name shown by the host. */
 #define CFG_TUD_MIDI2_EP_NAME              "WeAct RA4M1 MIDI 2.0"
 
+/* Product Instance Id reported by the #3738 built-in Stream responder. */
+#define CFG_TUD_MIDI2_PRODUCT_ID           "WeActRA4M1-showcase-0001"
+
 /* TX/RX buffers stay at the library default, tuned for the RA4M1's
  * 32 KB SRAM. The library handles bursts via its own
  * retry-on-backpressure pattern; smaller buffers just mean more

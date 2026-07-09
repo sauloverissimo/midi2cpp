@@ -68,6 +68,9 @@ extern "C" {
 /* UMP Endpoint Name shown by the host. */
 #define CFG_TUD_MIDI2_EP_NAME              "XIAO SAMD21 MIDI 2.0"
 
+/* Product Instance Id reported by the #3738 built-in Stream responder. */
+#define CFG_TUD_MIDI2_PRODUCT_ID           "XiaoSAMD21-showcase-0001"
+
 /* TX/RX buffers tuned smaller for SAMD21 (32 KB SRAM). The library
  * still handles bursts via its own retry-on-backpressure pattern; the
  * smaller buffer just means more frequent USB transactions, which is

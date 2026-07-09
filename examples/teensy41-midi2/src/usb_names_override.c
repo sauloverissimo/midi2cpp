@@ -12,8 +12,8 @@
 
 #include "usb_names.h"
 
-#define MIDI2CPP_MANUFACTURER 'g','i','t','h','u','b','.','c','o','m','/','s','a','u','l','o','v','e','r','i','s','s','i','m','o'
-#define MIDI2CPP_MANUFACTURER_LEN 25
+#define MIDI2CPP_MANUFACTURER 'm','i','d','i','2','.','d','i','y'
+#define MIDI2CPP_MANUFACTURER_LEN 9
 
 #define MIDI2CPP_PRODUCT 'T','e','e','n','s','y','4','1'
 #define MIDI2CPP_PRODUCT_LEN 8
