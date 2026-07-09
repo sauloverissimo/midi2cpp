@@ -26,13 +26,48 @@
 #include "daisy_seed.h"
 #include "daisyseed_host_midi2.h"
 
+// Stress mode: pair of the UMP test bench flood (a device whose MIDI 2.0
+// NoteOns carry a monotonic, contiguous 16-bit sequence in the velocity).
+// Set to 1 and rebuild to turn the recipe into a zero-loss receiver: the
+// per-message prints are replaced by an O(1) count + sequence check in the
+// RX callback (a print in the hot path would stall the pipe and fake a
+// loss), and a verdict prints once the flood goes idle. Same shape as
+// HOST_STRESS in the Teensy and Feather host recipes.
+#define HOST_STRESS 0
+
 static daisy::DaisySeed        hw;
 static daisyseed_host::Backend backend;
 
+#if HOST_STRESS
+// Answer key shared with the gabarito emitter: for a running 16-bit
+// sequence seq, the emitter sends NoteOn(note, velocity=seq) then
+// NoteOff(note, 0), where note = 48 + (seq % 24) (a chromatic walk over
+// notes 48..71, so the flood carries varied tones, not one repeated
+// note). The host confronts every received NoteOn against this key:
+//   * velocity must be contiguous          -> no packet loss
+//   * note must equal 48 + (velocity % 24)  -> no payload corruption
+//   * NoteOff count must match NoteOn count -> pairs balanced, no stuck notes
+// note = 48 + (seq % 24) is derived from the same seq on both sides, so
+// it holds across the 16-bit wrap.
+static const uint8_t  kStLowNote  = 48U;
+static const uint8_t  kStNoteSpan = 24U;
+
+static uint32_t g_st_on         = 0;
+static uint32_t g_st_off        = 0;
+static uint32_t g_st_gaps       = 0;
+static uint32_t g_st_bad_note   = 0;
+static uint16_t g_st_expected   = 0;
+static bool     g_st_started    = false;
+static uint32_t g_st_start_ms   = 0;
+static bool     g_st_warmed     = false;
+static uint32_t g_st_last_rx_ms = 0;
+#else
 // Tracks whether a device is currently enumerated, so the idle liveness
 // line reflects reality instead of always printing "waiting".
 static bool s_device_present = false;
+#endif
 
+#if !HOST_STRESS
 static void printIdentity(uint8_t idx, const midi2::Host::DeviceIdentity& id)
 {
     hw.PrintLine("[id   ] dev=%u alt=%u bcdMSC=0x%04X ump=%u.%u fbs=%u",
@@ -50,8 +85,46 @@ static void printIdentity(uint8_t idx, const midi2::Host::DeviceIdentity& id)
                  id.manufacturerId[2], id.familyId, id.modelId);
 }
 
+#endif // !HOST_STRESS
+
 static void registerHandlers(midi2::Host& host)
 {
+#if HOST_STRESS
+    // Count and check the velocity sequence, never print per message (a
+    // print in the RX hot path would stall the pipe and fake a loss).
+    host.onNoteOn([](uint8_t /*idx*/, uint8_t /*g*/, uint8_t /*ch*/,
+                     uint8_t note, uint16_t v,
+                     uint8_t /*at*/, uint16_t /*ad*/) {
+        const uint16_t seq = v;
+        if(!g_st_started)
+        {
+            g_st_started  = true;
+            g_st_expected = seq;
+            g_st_start_ms = daisy::System::GetNow();
+        }
+        if(seq != g_st_expected)
+            g_st_gaps += (uint16_t)(seq - g_st_expected);
+        // Confront the tone against the answer key.
+        if(note != (uint8_t)(kStLowNote + (seq % kStNoteSpan)))
+            ++g_st_bad_note;
+        g_st_expected   = (uint16_t)(seq + 1);
+        g_st_last_rx_ms = daisy::System::GetNow();
+        ++g_st_on;
+    });
+    // Every NoteOn is paired with a NoteOff; count them to confirm the
+    // pairs stay balanced (no stuck notes) under the flood. Only count
+    // once measurement has begun (on the first NoteOn), so a trailing
+    // NoteOff caught before the first NoteOn does not skew the balance.
+    host.onNoteOff([](uint8_t /*idx*/, uint8_t /*g*/, uint8_t /*ch*/,
+                      uint8_t /*n*/, uint16_t /*v*/,
+                      uint8_t /*at*/, uint16_t /*ad*/) {
+        if(!g_st_started)
+            return;
+        g_st_last_rx_ms = daisy::System::GetNow();
+        ++g_st_off;
+    });
+}
+#else
     host.onDeviceConnected([](uint8_t idx,
                               const midi2::Host::DeviceIdentity& id) {
         s_device_present = true;
@@ -118,6 +191,7 @@ static void registerHandlers(midi2::Host& host)
                      (unsigned long)(bpm_x100 % 100));
     });
 }
+#endif // HOST_STRESS
 
 int main(void)
 {
@@ -131,13 +205,24 @@ int main(void)
     hw.PrintLine("plug a USB MIDI 2.0 device into the USB-A jack");
 
     backend.begin();
+#if HOST_STRESS
+    // Pure throughput receiver: disable auto-discovery so the CI Initiator
+    // does not fire periodic Endpoint Discovery / MIDI-CI retries. Those
+    // use a blocking send that would stall the receive path (and thus drop
+    // inbound packets) while probing a device that is only flooding.
+    backend.host().setAutoDiscover(false);
+#endif
     registerHandlers(backend.host());
     hw.PrintLine("host muid = 0x%07lX (ci initiator)",
                  (unsigned long)backend.host().hostMuid());
 
     uint32_t blink_time = 0;
-    uint32_t alive_time = 0;
     bool     led_state  = false;
+#if HOST_STRESS
+    uint32_t report_time = 0;
+#else
+    uint32_t alive_time = 0;
+#endif
 
     for(;;)
     {
@@ -150,14 +235,68 @@ int main(void)
             led_state  = !led_state;
             blink_time = now + 500U;
         }
+#if HOST_STRESS
+        // Warm-up: the first ~2 s after the flood begins overlap the host's
+        // Endpoint Discovery / MIDI-CI handshake, whose brief blocking sends
+        // can drop a few inbound packets. Clear the counters once so the
+        // measurement window is pure steady state, then re-baseline on the
+        // next NoteOn.
+        if(g_st_started && !g_st_warmed
+           && (now - g_st_start_ms) > 2000U)
+        {
+            g_st_on       = 0;
+            g_st_off      = 0;
+            g_st_gaps     = 0;
+            g_st_bad_note = 0;
+            g_st_started  = false;
+            g_st_warmed   = true;
+        }
+        // Progress line every 2 s: running tally while the flood is live,
+        // and the verdict once 1 s passes with no traffic. Pass criteria:
+        // zero sequence gaps, no corrupted tones, balanced NoteOn/NoteOff.
+        if(now >= report_time)
+        {
+            if(!g_st_started)
+            {
+                hw.PrintLine("[host-stress] waiting for flood");
+            }
+            else
+            {
+                const bool idle = (now - g_st_last_rx_ms) > 1000U;
+                const bool pass = (g_st_gaps == 0) && (g_st_bad_note == 0)
+                                  && (g_st_on == g_st_off);
+                hw.PrintLine(
+                    "[host-stress] on=%lu off=%lu gaps=%lu badnote=%lu %s",
+                    (unsigned long)g_st_on, (unsigned long)g_st_off,
+                    (unsigned long)g_st_gaps, (unsigned long)g_st_bad_note,
+                    idle ? (pass ? "=> 100%-MATCH" : "=> MISMATCH")
+                         : "(flooding)");
+            }
+            report_time = now + 2000U;
+        }
+#else
         // Liveness line every 5 s, so a log reader attaching after boot
-        // sees the host is up and whether a device is enumerated.
+        // sees the host is up and whether a device is enumerated. When a
+        // device is present, the cached identity is reprinted: the
+        // onDeviceConnected print fires at mount time, which a log reader
+        // attaching later never sees, so echoing it here keeps the
+        // endpoint name and function blocks (from Endpoint Discovery)
+        // visible.
         if(now >= alive_time)
         {
-            hw.PrintLine("[alive] %lu ms, %s", (unsigned long)now,
-                         s_device_present ? "device connected"
-                                          : "waiting for device");
+            if(backend.host().isDeviceMounted(0))
+            {
+                hw.PrintLine("[alive] %lu ms, device connected",
+                             (unsigned long)now);
+                printIdentity(0, backend.host().identity(0));
+            }
+            else
+            {
+                hw.PrintLine("[alive] %lu ms, waiting for device",
+                             (unsigned long)now);
+            }
             alive_time = now + 5000U;
         }
+#endif
     }
 }
