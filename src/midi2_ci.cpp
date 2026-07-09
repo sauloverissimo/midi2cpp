@@ -279,7 +279,7 @@ CI::~CI() {
 
 void CI::begin(const uint8_t manufacturerId[3],
                uint16_t family, uint16_t model, uint32_t version,
-               uint8_t /*ciCat — used implicitly via process_sysex*/) {
+               uint8_t ciCat) {
     auto* s = cst(_state);
 
     // Seed for the initial MUID; will be regenerated via tramp_ci_rng if
@@ -304,6 +304,12 @@ void CI::begin(const uint8_t manufacturerId[3],
                  |  (uint32_t)manufacturerId[2]
                  : 0;
     midi2_ci_set_identity(&s->ci, mfr, family, model, version);
+
+    // Advertise the requested Capability Inquiry Categories in the Discovery
+    // Reply (midi2 v0.6.1+). Default 0x1C = Profile Config | Property Exchange
+    // | Process Inquiry. The declared MIDI-CI Message Version (0x02) is fixed
+    // by the core; ciCat only selects which categories are announced.
+    midi2_ci_set_capabilities(&s->ci, ciCat);
 
     // Bridge to Device for SysEx TX.
     Device::CiWriteFn wfn = nullptr;
