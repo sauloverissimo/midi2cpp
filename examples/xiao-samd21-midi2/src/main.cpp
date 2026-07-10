@@ -11,7 +11,7 @@
  *     Info, FB Name)
  *   - MIDI-CI Discovery auto-replied via m2ci's Appendix E convenience
  *     responder. No Profile Configuration, no Property Exchange storage,
- *     no Process Inquiry advertising (out of scope for this showcase).
+ *     Process Inquiry MIDI report and GM 1 profile registered.
  *
  * Always-on:
  *   - JR Timestamp heartbeat every 500 ms (MT 0x0 status 0x2)
@@ -60,6 +60,19 @@ struct Showcase {
     uint32_t gap_until  = 0;
 };
 
+
+// MT 0x3/0x5 coverage: SysEx7 identity, then SysEx8 and one Mixed Data Set
+// chunk (single stream id, manufacturer SysEx id 0x7D).
+static void send_data_coverage(midi2::m2device& midi) {
+    static const uint8_t sx7[] = {0x7E, 0x7F, 0x06, 0x02, 0x7D, 0x01, 0x00, 0x40,
+                                  0x00, 0x04, 0x00, 0x00};
+    midi.sendSysEx7(0, sx7, sizeof sx7);
+    static const uint8_t sx8[] = {0x7D, 0x01, 0x02, 0x03, 0x04};
+    midi.sendSysEx8(0, /*streamId*/ 0, sx8, sizeof sx8);
+    static const uint8_t mdsData[] = {0x7D, 0x4D, 0x44, 0x53};
+    midi.sendMds(0, /*mdsId*/ 1, mdsData, sizeof mdsData, /*mfrId*/ 0x7D00);
+}
+
 static void showcase_step(m2device& midi, Showcase& s) {
     if (!midi.isMounted() || midi.altSetting() != 1) return;
 
@@ -88,6 +101,7 @@ static void showcase_step(m2device& midi, Showcase& s) {
 
     if (s.in_cycle && s.step == kStepCount && (now - s.last_ms) >= kStepMs) {
         midi.noteOff(kCh, (uint8_t)(kBaseNote + kStepCount - 1));
+        send_data_coverage(midi);
         s.step      = 0;
         s.in_cycle  = false;
         s.gap_until = now + kCycleGapMs;

@@ -117,6 +117,12 @@ public:
 
   // ==================== MT 0x5 SysEx8 send ====================
   bool sendSysEx8(uint8_t group, uint8_t streamId, const uint8_t* data, uint16_t len);
+  /** Send a single-chunk Mixed Data Set: one MDS Header UMP followed by
+   *  payload UMPs of up to 14 bytes each. Uses the caller's SysEx
+   *  manufacturer id (16-bit form) per M2-104 7.10. */
+  bool sendMds(uint8_t group, uint8_t mdsId, const uint8_t* data, uint16_t len,
+               uint16_t mfrId, uint16_t deviceId = 0xFFFF,
+               uint16_t subId1 = 0, uint16_t subId2 = 0);
 
   // ==================== MT 0xD Flex Data senders ====================
   bool sendTempo(uint8_t group, uint32_t tenNsPerQuarter);

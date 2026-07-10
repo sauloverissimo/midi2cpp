@@ -8,6 +8,26 @@ uint32_t g_test_now_ms = 0;
 using namespace midi2;
 
 
+
+static void test_sendMds_emits_header_and_payload(void) {
+    TEST("sendMds emits an MDS Header UMP then payload UMPs (MT 0x5)");
+    Device d;
+    d.setWriteFn(capture_write);
+    d.setMounted(true);
+    d.setAltSetting(1);
+    capture_reset();
+
+    const uint8_t data[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+    CHECK(d.sendMds(0, 2, data, sizeof data, 0x7D00), "sendMds returned false");
+    // 1 header + 2 payloads (14 + 2 bytes), 4 words each
+    CHECK_EQ(g_captured_tx_len, (size_t)12, "expected 12 words");
+    CHECK_EQ((g_captured_tx[0] >> 28) & 0xFu, 0x5u, "header MT 0x5");
+    CHECK_EQ((g_captured_tx[0] >> 16) & 0xF0u, 0x80u, "MDS Header status");
+    CHECK_EQ(g_captured_tx[0] & 0xFFFFu, 16u, "numBytes 16");
+    CHECK_EQ((g_captured_tx[4] >> 16) & 0xF0u, 0x90u, "MDS Payload status");
+    PASS();
+}
+
 static void test_feedRx_slices_multi_packet_bursts(void) {
     TEST("feedRx slices a multi-packet burst per UMP packet (regression: paginated PE GET 404)");
     // midi2_proc_feed consumes exactly one packet per call. A USB FIFO
@@ -676,6 +696,7 @@ int main(void) {
     test_cableEventToUmp_translates_note_on();
 
     // Coverage gaps + carry-over fixes
+    test_sendMds_emits_header_and_payload();
     test_feedRx_slices_multi_packet_bursts();
     test_setGroupRemap_writes_proc_table();
     test_sendDeviceIdentity_rejects_null();

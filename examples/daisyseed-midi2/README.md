@@ -68,9 +68,11 @@ Full UMP + MIDI-CI surface (Cortex-M7 @ 480 MHz, ample SRAM + SDRAM, in budget).
 | 0x0 Utility | M2-104-UM §3 | JR heartbeat 500 ms |
 | 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | NoteOn/Off (16-bit vel), 32-bit CC, 32-bit Pitch Bend, 32-bit Channel Pressure, Program, Per-Note Pitch Bend, Registered Per-Note Controller |
 | 0xD Flex Data | M2-104-UM §10 | Set Tempo (120 BPM), Set Time Signature (4/4) |
+| 0x3 SysEx7 | M2-104-UM 7.7 | Universal Identity Reply, auto-fragmented |
+| 0x5 SysEx8 + Mixed Data Set | M2-104-UM 7.8/7.10 | single stream id, single-chunk MDS |
 | 0xF UMP Stream | M2-104-UM §11 | Endpoint Info, Device Identity, Endpoint Name, Product Instance ID, FB Info, FB Name |
 
-MIDI-CI: Discovery + Endpoint Info, 1 Profile, 2 Property Exchange properties (`DeviceInfo` static, `ChannelList` static + subscribable), via the `m2ci` Appendix E convenience responder.
+MIDI-CI: Discovery + Endpoint Info, Profile GM 1, Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry MIDI report, via the `m2ci` Appendix E convenience responder.
 
 ## Showcase
 ![daisyseed-midi2 stack](board/stack.png)

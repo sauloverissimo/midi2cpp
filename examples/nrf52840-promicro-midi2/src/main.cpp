@@ -78,6 +78,7 @@ enum class Phase : uint8_t {
     VibratoStart, VibratoRun, VibratoEnd,
     WalkStep, WalkEnd,
     Rpn, Nrpn, RelRpn, RelNrpn,
+    DataCoverage,
     GapStart, Gap,
 };
 
@@ -199,9 +200,26 @@ static void showcase_step(m2device& midi, Showcase& s) {
         case Phase::RelNrpn:
             if ((now - s.phase_ms) >= kRpnPhaseMs) {
                 midi.sendRelNrpn(kGroup, kCh, 0x12, 0x34, -0x01000000);
-                s.phase    = Phase::GapStart;
+                s.phase    = Phase::DataCoverage;
             }
             break;
+
+
+        case Phase::DataCoverage: {
+            // MT 0x3/0x5 coverage: SysEx7 identity, then SysEx8 and a Mixed
+            // Data Set chunk (single stream id, manufacturer id 0x7D).
+            static const uint8_t sx7[] = {0x7E, 0x7F, 0x06, 0x02,
+                                          0x7D, 0x01, 0x00, 0x40,
+                                          0x00, 0x04, 0x00, 0x00};
+            midi.sendSysEx7(0, sx7, sizeof sx7);
+            static const uint8_t sx8[] = {0x7D, 0x01, 0x02, 0x03, 0x04};
+            midi.sendSysEx8(0, /*streamId*/ 0, sx8, sizeof sx8);
+            static const uint8_t mdsData[] = {0x7D, 0x4D, 0x44, 0x53};
+            midi.sendMds(0, /*mdsId*/ 1, mdsData, sizeof mdsData, /*mfrId*/ 0x7D00);
+            s.phase    = Phase::GapStart;
+            s.phase_ms = now;
+            break;
+        }
 
         case Phase::GapStart:
             s.phase    = Phase::Gap;

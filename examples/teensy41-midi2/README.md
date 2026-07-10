@@ -67,9 +67,11 @@ Full UMP surface (Cortex-M7 @ 600 MHz, 1 MB SRAM, in budget).
 | 0x0 JR Timestamp | M2-104-UM §3.5.2 | heartbeat 500 ms via `enableJRHeartbeat` |
 | 0x4 MIDI 2.0 CV | M2-104-UM §4.2 | NoteOn/Off (16-bit vel), CC (32-bit), PitchBend (32-bit), ChannelPressure (32-bit), Program, Per-Note PitchBend, Reg Per-Note Controller |
 | 0xD Flex Data | M2-104-UM §6 | Set Tempo (120 BPM), Set Time Signature (4/4) |
+| 0x3 SysEx7 | M2-104-UM 7.7 | Universal Identity Reply, auto-fragmented |
+| 0x5 SysEx8 + Mixed Data Set | M2-104-UM 7.8/7.10 | single stream id, single-chunk MDS |
 | 0xF UMP Stream | M2-104-UM §7 | Endpoint Info, Device Identity, Endpoint Name, Product Instance ID, FB Info, FB Name |
 
-MIDI-CI: Discovery + Endpoint Info, one Profile (`addProfile`), two Property Exchange properties (`DeviceInfo` static, `ChannelList` static + subscribable). Process Inquiry code path present, no `setMidiReport` call.
+MIDI-CI: Discovery + Endpoint Info, Profile GM 1, Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry MIDI report.
 
 ## Showcase
 

@@ -73,7 +73,7 @@ int main(void) {
                             /*direction*/ 3 /*Bidirectional*/,
                             /*uiHint*/ 3 /*Bidirectional*/,
                             /*firstGroup*/ 0, /*numGroups*/ 1,
-                            /*midiCiVer*/ 0x02, /*sysex8*/ false,
+                            /*midiCiVer*/ 0x02, /*sysex8*/ true,
                             /*protocol*/ 0x02);
         if (filter & 0x02) midi.sendFbNameUpdate(0, "Main");
     });
@@ -147,6 +147,15 @@ int main(void) {
             // Flex Data
             midi.sendTempo(0, 50000000);     // 120 BPM in 10-ns ticks per quarter
             midi.sendTimeSignature(0, 4, 2); // 4/4
+
+            // SysEx7 + SysEx8 + Mixed Data Set (single stream id, mfr 0x7D)
+            static const uint8_t sx7[] = {0x7E, 0x7F, 0x06, 0x02, 0x7D, 0x01,
+                                          0x00, 0x40, 0x00, 0x04, 0x00, 0x00};
+            midi.sendSysEx7(0, sx7, sizeof sx7);
+            static const uint8_t sx8[] = {0x7D, 0x01, 0x02, 0x03, 0x04};
+            midi.sendSysEx8(0, /*streamId*/ 0, sx8, sizeof sx8);
+            static const uint8_t mdsData[] = {0x7D, 0x4D, 0x44, 0x53};
+            midi.sendMds(0, /*mdsId*/ 1, mdsData, sizeof mdsData, /*mfrId*/ 0x7D00);
 
             demo_note = (demo_note >= 72) ? 60 : (uint8_t)(demo_note + 1);
             last_demo = now;

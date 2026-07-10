@@ -80,6 +80,7 @@ Full UMP + MIDI-CI device surface. The STM32F411CEU6 (128 KB SRAM, 512 KB flash,
 |---|---|---|
 | 0x0 Utility | M2-104-UM §3 | JR heartbeat 500 ms, Delta Clockstamp |
 | 0x3 SysEx7 | M2-104-UM §7.7 | auto-fragmented Universal Identity Reply |
+| 0x5 SysEx8 + Mixed Data Set | M2-104-UM 7.8/7.10 | single stream id, single-chunk MDS |
 | 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | 32-bit CC, Per-Note family, Note Attribute, Program+Bank, RPN/NRPN, Relative RPN/NRPN, Poly + Channel Pressure, Pitch Bend |
 | 0xD Flex Data | M2-104-UM §10 | Tempo, Time Sig, Key Sig, Metronome, Chord Name, Start/End of Clip |
 | 0xF UMP Stream | M2-104-UM §11 | full Endpoint + FB Discovery |

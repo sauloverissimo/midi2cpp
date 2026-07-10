@@ -71,15 +71,17 @@ timeout 15 aseqdump -p ${PORT}
 
 ## Spec coverage
 
-256 KB SRAM and 1 MB flash easily fit the full UMP + MIDI-CI surface, but this recipe is intentionally scoped to Channel Voice + Stream Discovery, plus the standard MIDI-CI surface (Discovery, Profile Inquiry, Property Exchange with DeviceInfo/ChannelList/ProgramList, Process Inquiry). Future variants (`nrf52840-sysex-bench`, `nice-nano-ble-midi2`) can extend the surface.
+256 KB SRAM and 1 MB flash easily fit the full UMP + MIDI-CI surface, but this recipe is intentionally scoped to Channel Voice + Stream Discovery + a data-message coverage burst (SysEx7/SysEx8/MDS), plus the standard MIDI-CI surface (Discovery, Profile GM 1, Property Exchange with DeviceInfo/ChannelList/ProgramList, Process Inquiry MIDI report). Future variants (`nrf52840-sysex-bench`, `nice-nano-ble-midi2`) can extend the surface.
 
 | UMP MT | Spec | Notes |
 |---|---|---|
 | 0x0 Utility | M2-104-UM §3 | JR heartbeat 500 ms |
 | 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | Per-Note Pitch Bend, NoteOn/Off, 32-bit CC, RPN, NRPN, Relative RPN, Relative NRPN |
+| 0x3 SysEx7 | M2-104-UM 7.7 | Universal Identity Reply, auto-fragmented |
+| 0x5 SysEx8 + Mixed Data Set | M2-104-UM 7.8/7.10 | single stream id, single-chunk MDS |
 | 0xF UMP Stream | M2-104-UM §11 | full Endpoint + FB Discovery |
 
-MIDI-CI: Discovery + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry, via the `m2ci` responder.
+MIDI-CI: Discovery + Profile Configuration (GM 1) + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry MIDI report, via the `m2ci` responder.
 
 ## Showcase
 ![nrf52840-promicro-midi2 banner](monitor/stack.png)

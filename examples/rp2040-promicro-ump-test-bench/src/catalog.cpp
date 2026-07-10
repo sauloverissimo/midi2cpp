@@ -639,6 +639,9 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
             const uint8_t data[] = {'H', 'e', 'l', 'l', 'o', ' ', 'U', 'M', 'P', ' ', '8', '!'};
             // 12 data bytes; midi.sendSysEx8 fragments if needed but 12 fits.
             midi.sendSysEx8(kCatalogGroup, /*streamId*/ 1, data, sizeof(data));
+            // Mixed Data Set: one header + one payload chunk (MT 0x5).
+            static const uint8_t mdsData[] = {0x7D, 0x4D, 0x44, 0x53};
+            midi.sendMds(kCatalogGroup, /*mdsId*/ 1, mdsData, sizeof mdsData, /*mfrId*/ 0x7D00);
             uint32_t w[4];
             midi2_msg_sysex8_packet(w, kCatalogGroup, /*Complete*/ 0x00, /*streamId*/ 1,
                                      data, sizeof(data));

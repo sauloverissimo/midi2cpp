@@ -821,6 +821,27 @@ bool Device::sendSysEx8(uint8_t group, uint8_t streamId, const uint8_t* data, ui
     return true;
 }
 
+bool Device::sendMds(uint8_t group, uint8_t mdsId, const uint8_t* data, uint16_t len,
+                     uint16_t mfrId, uint16_t deviceId,
+                     uint16_t subId1, uint16_t subId2) {
+    if (len > 0 && !data) return false;
+    auto* s = st(_state);
+    uint32_t w[4];
+    // Single chunk: header carries the full byte count, then <=14B payloads.
+    uint16_t chunks = 1, this_chunk = 1;
+    midi2_msg_mds_header(w, group, mdsId, len, chunks, this_chunk,
+                         mfrId, deviceId, subId1, subId2);
+    if (!device_write(s, w, 4)) return false;
+    uint16_t off = 0;
+    while (off < len) {
+        uint8_t n = (uint8_t)((len - off) > 14 ? 14 : (len - off));
+        midi2_msg_mds_payload(w, group, mdsId, data + off, n);
+        if (!device_write(s, w, 4)) return false;
+        off = (uint16_t)(off + n);
+    }
+    return true;
+}
+
 // ==================== MT 0xD Flex Data (4 words each) ====================
 
 bool Device::sendTempo(uint8_t group, uint32_t tenNsPerQuarter) {

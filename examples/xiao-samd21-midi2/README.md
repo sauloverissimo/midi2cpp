@@ -58,15 +58,17 @@ timeout 8 aseqdump -p ${PORT}   # chromatic walk C4..G#4
 
 ## Spec coverage
 
-Minimal core plus the standard MIDI-CI surface (Discovery, Property Exchange with DeviceInfo/ChannelList/ProgramList, Process Inquiry); static resources live in flash, so the SAMD21 SRAM budget is unaffected. The full UMP + MIDI-CI surface on a SAMD21-class chip belongs to the upcoming `xiao-samd51-midi2` (4× the SRAM).
+Minimal core plus the standard MIDI-CI surface (Discovery, Profile GM 1, Property Exchange with DeviceInfo/ChannelList/ProgramList, Process Inquiry MIDI report) plus a data-message coverage burst (SysEx7/SysEx8/MDS); static resources live in flash, so the SAMD21 SRAM budget is unaffected. The full UMP + MIDI-CI surface on a SAMD21-class chip belongs to the upcoming `xiao-samd51-midi2` (4× the SRAM).
 
 | UMP MT | Spec | Notes |
 |---|---|---|
 | 0x0 Utility | M2-104-UM §3 | JR heartbeat, 500 ms |
 | 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | NoteOn/Off + 32-bit CC #74 sweep |
+| 0x3 SysEx7 | M2-104-UM 7.7 | Universal Identity Reply, auto-fragmented |
+| 0x5 SysEx8 + Mixed Data Set | M2-104-UM 7.8/7.10 | single stream id, single-chunk MDS |
 | 0xF UMP Stream | M2-104-UM §10 | Endpoint Discovery, Device Identity, Endpoint Name, Product Instance ID, Stream Config Notify, FB Info, FB Name |
 
-MIDI-CI: Discovery + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry, via the `m2ci` responder.
+MIDI-CI: Discovery + Profile Configuration (GM 1) + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry MIDI report, via the `m2ci` responder.
 
 ## Showcase
 ![xiao-samd21-midi2 banner](monitor/stack.png)

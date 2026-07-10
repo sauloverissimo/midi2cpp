@@ -64,6 +64,7 @@ Full spec. The ESP32-S3's 512 KB SRAM (plus 8 MB PSRAM) affords the complete UMP
 | 0x0 Utility | M2-104-UM §3 | JR heartbeat 500 ms, Delta Clockstamp |
 | 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | 32-bit CCs, Per-Note family, Note Attribute, RPN/NRPN, Relative RPN/NRPN |
 | 0x3 SysEx7 | M2-104-UM §7.7 | up to 6 bytes per packet, auto-fragmented |
+| 0x5 SysEx8 + Mixed Data Set | M2-104-UM 7.8/7.10 | single stream id, single-chunk MDS |
 | 0xD Flex Data | M2-104-UM §10 | Tempo, Time Sig, Key Sig, Metronome, Chord Name, Start/End of Clip |
 | 0xF UMP Stream | M2-104-UM §11 | full Endpoint + FB Discovery |
 

@@ -392,6 +392,13 @@ static void scene_g_sysex7(m2device& midi, Showcase& s, uint32_t t) {
         0x00, 0x04, 0x00, 0x00,  // model MSB + version v0.4.0.0
     };
     midi.sendSysEx7(/*group*/ 0, payload, sizeof(payload));
+
+    // SysEx8 + Mixed Data Set (MT 0x5): single stream id / single chunk,
+    // manufacturer SysEx id 0x7D (conformance: never parallel streams).
+    static const uint8_t sx8[] = {0x7D, 0x01, 0x02, 0x03, 0x04};
+    midi.sendSysEx8(0, /*streamId*/ 0, sx8, sizeof sx8);
+    static const uint8_t mdsData[] = {0x7D, 0x4D, 0x44, 0x53};
+    midi.sendMds(0, /*mdsId*/ 1, mdsData, sizeof mdsData, /*mfrId*/ 0x7D00);
     std::printf("[G] SysEx7 emitted (%zu bytes, Identity Reply)\r\n", sizeof(payload));
     s.g_done = true;
 }

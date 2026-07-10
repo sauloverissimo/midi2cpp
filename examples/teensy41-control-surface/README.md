@@ -87,7 +87,7 @@ teensy41-control-surface/
 | MIDI-CI (SysEx7) | Discovery, Profile Inquiry (GM 1), Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList), Process Inquiry |
 | RX handling | NoteOn/Off, CC, Program Change printed to Serial |
 
-Not covered: SysEx8/MDS, Flex Data, JR Timestamps (control surface stays minimal: it is an input device, not a full-surface showcase).
+Not covered: SysEx8/MDS and Flex Data emission (control surface stays minimal: it is an input device, not a full-surface showcase). Profile GM 1 and the Process Inquiry MIDI report are registered.
 
 ## License
 

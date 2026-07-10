@@ -74,7 +74,7 @@ Minimal core plus the standard MIDI-CI surface (Discovery, Property Exchange wit
 | 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | NoteOn/Off (16-bit velocity + attribute), per-note pitch bend, per-note controller, 32-bit CC, channel pitch bend, RPN/NRPN, Program + Bank, poly pressure |
 | 0xF UMP Stream | M2-104-UM §10 | Endpoint Discovery, Device Identity, Endpoint Name, Product Instance ID, Stream Config Notify, FB Info, FB Name |
 
-MIDI-CI: Discovery + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry. Not covered: SysEx7/8 demo emission, MIDI 1.0 emission (Alt 0 present in the descriptor for compatibility but unused).
+MIDI-CI: Discovery + Profile Configuration (GM 1) + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry MIDI report, via the `m2ci` responder. Data-message coverage burst each cycle (SysEx7, SysEx8, MDS). Not covered: MIDI 1.0 emission (Alt 0 present in the descriptor for compatibility but unused).
 
 ## Showcase
 
