@@ -99,6 +99,10 @@ int main(void) {
     ci.setPropertySubscribable("ChannelList", true);
     ci.addPropertyStatic("ProgramList", "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
 
+    // Back the advertised Process Inquiry category with a MIDI report.
+    ci.setMidiReport(0x01, 0x00000000FFFFFFFFull,
+                     0xFFFFFFFFFFFFFFFFull, 0xFFFFFFFFFFFFFFFFull);
+
     uint32_t last_demo = 0;
     uint32_t last_dbg  = 0;
     uint8_t  demo_note = 60;

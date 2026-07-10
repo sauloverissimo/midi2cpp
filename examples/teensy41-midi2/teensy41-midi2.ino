@@ -74,6 +74,10 @@ void setup()
 	ci.addPropertyStatic("ChannelList", kChannelList);
 	ci.setPropertySubscribable("ChannelList", true);
 	ci.addPropertyStatic("ProgramList", "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
+
+	// Back the advertised Process Inquiry category with a MIDI report.
+	ci.setMidiReport(0x01, 0x00000000FFFFFFFFull,
+	                 0xFFFFFFFFFFFFFFFFull, 0xFFFFFFFFFFFFFFFFull);
 }
 
 void loop()

@@ -212,6 +212,10 @@ def audit(name, spec, product_ids, model_ids):
             except ValueError as e:
                 F.append(f"ResourceList invalid JSON: {e}")
 
+    if "addProfile" not in t:
+        F.append("no Profile registered (ci_cat advertises Profile Configuration)")
+    if "setMidiReport" not in t:
+        F.append("no setMidiReport (ci_cat advertises Process Inquiry)")
     for m in re.findall(r'kProfile\w*\[5\]\s*=\s*\{([^}]+)\}', t):
         if m.split(",")[0].strip() == "0x7D":
             F.append("profile 0x7D at FB scope (use GM 1 0x7E or none)")

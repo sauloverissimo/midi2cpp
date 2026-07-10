@@ -110,6 +110,13 @@ extern "C" void app_main(void) {
     ci.addPropertyStatic("ProgramList",
         "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
 
+    // Advertised in ci_cat (0x1C): back Profiles with GM 1 and Process
+    // Inquiry with a MIDI report, so every advertised category answers.
+    static const uint8_t kProfileGm1[5] = {0x7E, 0x00, 0x00, 0x01, 0x00};
+    ci.addProfile(kProfileGm1, /*alwaysOn*/ false);
+    ci.setMidiReport(0x01, 0x00000000FFFFFFFFull,
+                     0xFFFFFFFFFFFFFFFFull, 0xFFFFFFFFFFFFFFFFull);
+
     install_receiver_callbacks(midi);
 
     ESP_LOGI("boot", "ready, entering receiver loop");

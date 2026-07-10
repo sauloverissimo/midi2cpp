@@ -227,6 +227,13 @@ int main() {
     ci.addPropertyStatic("ProgramList",
         "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
 
+    // Advertised in ci_cat (0x1C): back Profiles with GM 1 and Process
+    // Inquiry with a MIDI report, so every advertised category answers.
+    static const uint8_t kProfileGm1[5] = {0x7E, 0x00, 0x00, 0x01, 0x00};
+    ci.addProfile(kProfileGm1, /*alwaysOn*/ false);
+    ci.setMidiReport(0x01, 0x00000000FFFFFFFFull,
+                     0xFFFFFFFFFFFFFFFFull, 0xFFFFFFFFFFFFFFFFull);
+
 
     static Showcase showcase{};
     bool prev_mounted = false;

@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Device MIDI 2.0
 ## WeAct Studio STM32F411CEU6 BlackPill
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 Full-surface USB MIDI 2.0 device on the **WeAct Studio STM32F411CEU6 BlackPill** (V2.0 / V3.0 core board). Headless showcase of every MIDI 2.0 message category beyond MIDI 1.0, over native OTG_FS on the USB-C connector (PA11/PA12). TinyUSB native CMake build (`family_support.cmake`) + ARM GNU toolchain, no Arduino IDE. Lives at `midi2cpp/examples/weact-STM32F411CEU6-blackpill-device-midi2/` and consumes the parent library directly (no vendoring).
 
 ![weact-STM32F411CEU6-blackpill-device-midi2 banner](board/banner.png)
