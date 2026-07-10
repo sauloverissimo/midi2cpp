@@ -14,6 +14,7 @@
 
 #include "bsp/board_api.h"
 #include "tusb.h"
+#include "nrf.h"  // chip entropy sources
 
 #include "midi2_rx_ring.h"
 
@@ -57,8 +58,17 @@ uint32_t platform_now_fn() {
 // tusb_time_millis_api at init; production firmware should swap in
 // the TRNG via sd_rand_application_vector_get when SoftDevice is
 // enabled, or NRF_RNG direct access when it is not.
+// nRF52840 hardware TRNG.
 uint32_t platform_rng_fn() {
-    return ((uint32_t)rand() << 16) ^ (uint32_t)rand();
+    NRF_RNG->TASKS_START = 1;
+    uint32_t v = 0;
+    for (int i = 0; i < 4; ++i) {
+        NRF_RNG->EVENTS_VALRDY = 0;
+        while (!NRF_RNG->EVENTS_VALRDY) {}
+        v = (v << 8) | (NRF_RNG->VALUE & 0xFF);
+    }
+    NRF_RNG->TASKS_STOP = 1;
+    return v;
 }
 
 }  // namespace

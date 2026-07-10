@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Device MIDI 2.0
 ## LilyGO T-PicoC3 (RP2040 side)
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 Full-spec USB MIDI 2.0 device on the **LilyGO T-PicoC3**, RP2040 side. Headless single-file showcase of every MIDI 2.0 message category beyond MIDI 1.0. Pico SDK build, no Arduino IDE.
 
 The board carries two MCUs sharing one USB-C jack via a physical orientation switch on the connector edge: the RP2040 in the canonical orientation, an ESP32-C3 in the flipped orientation. This recipe targets the RP2040 side; the C3 runs its own firmware. See [`t-picoc3.md`](t-picoc3.md) for the full hardware reference.

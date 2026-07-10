@@ -14,6 +14,7 @@
 
 #include "bsp/board_api.h"
 #include "tusb.h"
+#include "stm32f4xx.h"  // chip entropy sources
 
 #include "midi2_rx_ring.h"
 
@@ -55,14 +56,26 @@ uint32_t platform_now_fn() {
 // so we use libc rand() seeded from tusb_time_millis_api() at init.
 // Quality is poor but adequate for the educational MUID use case;
 // production firmware should swap in a stronger entropy source.
+// STM32F411 has no TRNG. Mix the 96-bit device unique ID (per-die, ends
+// cross-board collisions) with the DWT cycle counter,
+// enabled early in init(): by the time the first MUID is generated (after
+// USB enumeration, whose timing varies per boot) it holds millions of
+// boot-variable cycles. Enabling and reading in the same function would
+// read ~0 every time.
 uint32_t platform_rng_fn() {
-    return ((uint32_t)rand() << 16) ^ (uint32_t)rand();
+    const uint32_t* uid = (const uint32_t*)0x1FFF7A10UL;  // UID_BASE
+    return uid[0] ^ uid[1] ^ uid[2] ^ DWT->CYCCNT ^ (SysTick->VAL << 16);
 }
 
 }  // namespace
 
 void init(midi2::m2device& midi, midi2::m2ci& ci) {
     board_init();
+
+    // Start the cycle counter now so platform_rng_fn reads an accumulator
+    // full of boot-variable cycles, not a counter it just reset.
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
     g_midi = &midi;
 

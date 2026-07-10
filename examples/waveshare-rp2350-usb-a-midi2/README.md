@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Device MIDI 2.0
 ## Waveshare RP2350-USB-A
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 Full-spec USB MIDI 2.0 device on the **Waveshare RP2350-USB-A** (21 x 51 mm, USB-C + USB-A receptacle wired to GP12 / GP13 via PIO-USB). Headless single-file showcase of every MIDI 2.0 message category beyond MIDI 1.0. Pico SDK build, no Arduino IDE.
 
 This recipe drives the USB-C side only as a device. The USB-A receptacle and the PIO-USB lines (GP12 / GP13) are not driven here; using the USB-A receptacle as a host requires an R13 desolder hardware modification.

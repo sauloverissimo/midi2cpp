@@ -61,14 +61,22 @@ uint32_t platform_now_fn() {
 // not expose it, so we use libc rand() seeded from tusb_time_millis_api()
 // at init. Quality is poor but adequate for the educational MUID use
 // case; production firmware should swap in a stronger entropy source.
+// RA4M1 TRNG needs the FSP driver stack; in this bare build, mix the DWT cycle
+// counter (enabled early in init(); holds boot-variable cycles by first
+// MUID time) with SysTick jitter sampled at call time.
 uint32_t platform_rng_fn() {
-    return ((uint32_t)rand() << 16) ^ (uint32_t)rand();
+    return DWT->CYCCNT ^ (SysTick->VAL << 16) ^ (uint32_t)rand();
 }
 
 }  // namespace
 
 void init(midi2::m2device& midi, midi2::m2ci& ci) {
     board_init();
+
+    // Start the cycle counter now so platform_rng_fn reads an accumulator
+    // full of boot-variable cycles, not a counter it just reset.
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
     g_midi = &midi;
 

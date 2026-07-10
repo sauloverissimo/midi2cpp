@@ -13,6 +13,7 @@
 
 #include "bsp/board_api.h"
 #include "tusb.h"
+#include "sam.h"  // chip entropy sources
 
 #include "midi2_rx_ring.h"
 
@@ -53,8 +54,14 @@ uint32_t platform_now_fn() {
 // so we use libc rand() seeded from tusb_time_millis_api() at init. Quality is
 // poor but adequate for the educational MUID use case; production
 // firmware should swap in a stronger entropy source.
+// SAMD21 has no TRNG and no DWT (Cortex-M0+). Mix the 128-bit serial
+// number (per-die) with SysTick jitter sampled at call time.
 uint32_t platform_rng_fn() {
-    return ((uint32_t)rand() << 16) ^ (uint32_t)rand();
+    const uint32_t uid = *(const uint32_t*)0x0080A00CUL
+                       ^ *(const uint32_t*)0x0080A040UL
+                       ^ *(const uint32_t*)0x0080A044UL
+                       ^ *(const uint32_t*)0x0080A048UL;
+    return uid ^ (SysTick->VAL << 8) ^ (uint32_t)rand();
 }
 
 }  // namespace
