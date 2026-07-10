@@ -314,7 +314,30 @@ static void test_ci_destructor_unhooks_device(void) {
     PASS();
 }
 
+
+static void test_begin_seeds_muid_from_installed_rng(void) {
+    TEST("begin() seeds the boot MUID from the installed RNG (checklist ci1.1)");
+    // An address-derived seed repeats the MUID on every power-up and across
+    // boards with the same RAM layout. With a platform RNG installed before
+    // begin(), the boot MUID must follow it.
+    static const uint8_t mfr[3] = {0x7D, 0x00, 0x00};
+
+    Device da; CI a(da);
+    a.setRngFn([]() -> uint32_t { return 0x0AAAAAA1u; });
+    a.begin(mfr, 1, 1, 1);
+
+    Device db; CI b(db);
+    b.setRngFn([]() -> uint32_t { return 0x0BBBBBB2u; });
+    b.begin(mfr, 1, 1, 1);
+
+    CHECK(a.muid() == 0x0AAAAAA1u, "boot MUID must come from the installed RNG");
+    CHECK(b.muid() == 0x0BBBBBB2u, "boot MUID must come from the installed RNG");
+    CHECK(a.muid() != b.muid(), "distinct seeds, distinct MUIDs");
+    PASS();
+}
+
 int main(void) {
+    test_begin_seeds_muid_from_installed_rng();
     std::srand(42);  // deterministic RNG for tests across runs
 
     test_ci_begin_assigns_muid();

@@ -282,9 +282,14 @@ void CI::begin(const uint8_t manufacturerId[3],
                uint8_t ciCat) {
     auto* s = cst(_state);
 
-    // Seed for the initial MUID; will be regenerated via tramp_ci_rng if
-    // collision or Invalidate MUID arrives.
-    uint32_t seed = (uint32_t)((uintptr_t)s ^ (manufacturerId ? *manufacturerId : 0));
+    // Boot MUID seed. MIDI-CI requires a fresh random MUID on every power-up
+    // (checklist ci1.1); an address-derived seed repeats across boots and
+    // across boards with the same RAM layout. Prefer the platform RNG when
+    // one is installed before begin(); the address fallback keeps hosts
+    // without entropy (unit tests) link-safe.
+    uint32_t seed = s->rng_fn
+        ? s->rng_fn()
+        : (uint32_t)((uintptr_t)s ^ (manufacturerId ? *manufacturerId : 0));
 
     midi2_ci_init_ex(&s->ci, seed,
                      s->profile_storage,    MIDI2CPP_MAX_PROFILES,
