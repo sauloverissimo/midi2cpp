@@ -81,7 +81,7 @@ enum {
 static char const *string_desc_arr[] = {
     (const char[]){0x09, 0x04},   /* 0: English (0x0409)               */
     "midi2.diy",  /* 1: Manufacturer                   */
-    "WeActBlackPillF411",         /* 2: Product                        */
+    "WeAct BlackPill F411 MIDI 2.0",         /* 2: Product                        */
     "WeActBlackPillF411-0001",    /* 3: Serial (static fallback)       */
 };
 

@@ -7,7 +7,7 @@
  *
  * Forwards UMP between the two so the Feather acts as a transparent
  * MIDI 2.0 bridge: the upstream device shows up on the PC as a 16-group
- * MIDI 2.0 endpoint named "rp2040-midi2 bridge".
+ * MIDI 2.0 endpoint named "Feather RP2040 Bridge MIDI 2.0".
  */
 #ifndef TUSB_CONFIG_H_
 #define TUSB_CONFIG_H_
@@ -81,8 +81,8 @@ extern "C" {
  * (TinyUSB #3738); no NUM_FUNCTION_BLOCKS macro needed. */
 #define CFG_TUD_MIDI2_NUM_GROUPS            16
 
-#define CFG_TUD_MIDI2_EP_NAME               "rp2040-midi2 bridge"
-#define CFG_TUD_MIDI2_PRODUCT_ID            "feather-bridge"
+#define CFG_TUD_MIDI2_EP_NAME               "Feather RP2040 Bridge MIDI 2.0"
+#define CFG_TUD_MIDI2_PRODUCT_ID            "feather-rp2040-bridge-0001"
 
 /*--------------------------------------------------------------------+
  * Host side (USB-A ← upstream MIDI 2.0 device)

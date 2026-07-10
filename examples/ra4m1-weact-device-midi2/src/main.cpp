@@ -25,7 +25,7 @@
  */
 #include "tusb.h"          // tusb_time_millis_api()
 
-#include "weact_ra4m1_midi2.h"
+#include "board_midi2.h"
 
 using namespace midi2;
 
@@ -34,7 +34,7 @@ using namespace midi2;
  *--------------------------------------------------------------------*/
 static const uint8_t  kMfrId[3]        = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId        = 0x0001;
-static const uint16_t kModelId         = 0x0001;
+static const uint16_t kModelId         = 0x000B;
 static const uint32_t kVersion         = 0x00010000;
 
 /*--------------------------------------------------------------------+
@@ -80,7 +80,7 @@ struct Showcase {
 
 static inline void blink(Showcase& s) {
     s.led_on = !s.led_on;
-    weact_ra4m1_midi2::led(s.led_on);
+    midi2_board::led(s.led_on);
 }
 
 // Triangle wave: phase 0..0xFFFF rises to the peak at mid-phase, falls back.
@@ -113,7 +113,7 @@ static void phase_enter(m2device& midi, Showcase& s) {
             blink(s);
             break;
         case PH_GAP:
-            weact_ra4m1_midi2::led(false);
+            midi2_board::led(false);
             s.led_on = false;
             break;
         default: break;
@@ -212,24 +212,34 @@ int main() {
     static m2device midi;
     static m2ci     ci(midi);
 
-    weact_ra4m1_midi2::init(midi, ci);
+    midi2_board::init(midi, ci);
     midi.begin();
     midi.enableJRHeartbeat(500);
     ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
+    ci.addPropertyStatic("DeviceInfo",
+        "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[11,0],\"versionId\":[0,0,4,0],"
+         "\"manufacturer\":\"midi2.diy\","
+         "\"family\":\"RA4M1\","
+         "\"model\":\"WeAct RA4M1 MIDI 2.0\","
+         "\"version\":\"0.0.1\"}");
+    ci.addPropertyStatic("ChannelList",
+        "[{\"title\":\"Main\",\"channel\":1}]");
+    ci.addPropertyStatic("ProgramList",
+        "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
 
 
     static Showcase showcase{};
     bool prev_mounted = false;
 
     while (true) {
-        weact_ra4m1_midi2::task(midi);
+        midi2_board::task(midi);
 
         bool mounted = midi.isMounted();
         if (mounted != prev_mounted) {
             // On unmount, clear the LED; while mounted the showcase
             // drives it in time with the notes.
             if (!mounted) {
-                weact_ra4m1_midi2::led(false);
+                midi2_board::led(false);
                 showcase.led_on = false;
             }
             prev_mounted = mounted;

@@ -78,7 +78,7 @@ enum {
 static char const *string_desc_arr[] = {
     (const char[]){0x09, 0x04},   /* 0: English (0x0409)               */
     "midi2.diy",  /* 1: Manufacturer                   */
-    "ArduinoNanoESP32",          /* 2: Product                        */
+    "Arduino Nano ESP32 MIDI 2.0",          /* 2: Product                        */
     "ArduinoNanoESP32-0001",     /* 3: Serial (static fallback)       */
 };
 

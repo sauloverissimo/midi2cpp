@@ -82,8 +82,8 @@ enum {
 
 static char const *string_desc_arr[] = {
     (const char[]){0x09, 0x04},   /* 0: English (0x0409)               */
-    "MIDI 2.0 Test Bench",        /* 1: Manufacturer                   */
-    "UMP Reference Emitter",      /* 2: Product                        */
+    "midi2.diy",                  /* 1: Manufacturer                   */
+    "RP2040 UMP Bench MIDI 2.0",      /* 2: Product                        */
     NULL,                         /* 3: Serial, computed at runtime    */
 };
 

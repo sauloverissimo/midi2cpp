@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.14)  # FetchContent_MakeAvailable
 #
 # Owns Pico SDK + TinyUSB + midi2cpp wiring; consumer applications
 # (player, bridge, etc.) sit on top via the small public API in
-# src/rp2040_midi2.h and never touch tud_*, pico_*, or any USB symbol.
+# src/board_midi2.h and never touch tud_*, pico_*, or any USB symbol.
 # The bundled rp2040-midi2-showcase executable is one such application:
 # a headless full-spec MIDI 2.0 demo.
 
@@ -61,7 +61,7 @@ target_include_directories(midi2cpp PUBLIC ${MIDI2CPP_ROOT}/src)
 # rp2040-midi2 — board core (Pico SDK + TinyUSB glue + 5 hooks wired)
 # ---------------------------------------------------------------------------
 add_library(rp2040-midi2 STATIC
-    src/rp2040_midi2.cpp
+    src/board_midi2.cpp
     src/usb_descriptors.c
 )
 target_include_directories(rp2040-midi2 PUBLIC src)

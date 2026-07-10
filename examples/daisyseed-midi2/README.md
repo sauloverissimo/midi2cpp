@@ -14,6 +14,7 @@ Full-spec USB MIDI 2.0 device on the **Daisy Seed** (STM32H750, Cortex-M7 @ 480 
 | Endpoint Name | `DaisySeed` |
 | Product Instance ID | `DaisySeed-showcase-0001` |
 | MIDI-CI Manufacturer ID | `{0x7D, 0x00, 0x00}` (MMA educational prefix) |
+| DeviceInfo manufacturer | `midi2.diy` |
 
 ## Build
 
@@ -73,7 +74,7 @@ MIDI-CI: Discovery + Endpoint Info, 1 Profile, 2 Property Exchange properties (`
 
 ## Showcase
 ![daisyseed-midi2 stack](board/stack.png)
-Always on while mounted: JR heartbeat (500 ms), UMP Stream + MIDI-CI Discovery responders, 1 Profile, 2 PE properties.
+Always on while mounted: JR heartbeat (500 ms), UMP Stream + MIDI-CI Discovery responders, 1 Profile (GM 1), 4 PE resources (ResourceList, DeviceInfo, ChannelList, ProgramList).
 
 Per cycle (~5 s):
 

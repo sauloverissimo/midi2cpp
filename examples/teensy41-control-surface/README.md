@@ -14,7 +14,7 @@ Hardware-driven USB MIDI 2.0 control surface on the **Teensy 4.1**. 4 pots send 
 | Field | Value |
 |---|---|
 | VID:PID | `16C0:0485` (PJRC `USB_TYPE = MIDI2` slot) |
-| Manufacturer | `github.com/sauloverissimo` (via `src/usb_names_override.c`) |
+| Manufacturer | `midi2.diy` (via `src/usb_names_override.c`) |
 | Product | `Teensy41 CS` (via `src/usb_names_override.c`) |
 | iSerial | per-board chip serial |
 | Endpoint Name | `Teensy41 CS` |
@@ -77,6 +77,17 @@ teensy41-control-surface/
     ├── teensy41_control_surface.cpp backend glue implementation
     └── usb_names_override.c         Manufacturer + Product via weak-alias hook
 ```
+
+## Spec coverage
+
+| Area | Coverage |
+|---|---|
+| MIDI 2.0 Channel Voice (MT 0x4) | Note On/Off with 16-bit velocity (switches), 32-bit CC (pots) |
+| UMP Stream (MT 0xF) | Endpoint Info, Device Identity, Endpoint Name, Product Instance Id, FB Info + Name (boot burst; cores fork answers GET_DESCRIPTOR GTB) |
+| MIDI-CI (SysEx7) | Discovery, Profile Inquiry (GM 1), Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList), Process Inquiry |
+| RX handling | NoteOn/Off, CC, Program Change printed to Serial |
+
+Not covered: SysEx8/MDS, Flex Data, JR Timestamps (control surface stays minimal: it is an input device, not a full-surface showcase).
 
 ## License
 

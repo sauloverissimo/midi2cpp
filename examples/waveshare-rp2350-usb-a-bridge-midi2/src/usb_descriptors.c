@@ -79,7 +79,7 @@ enum {
 static char const *string_desc_arr[] = {
     (const char[]){0x09, 0x04},   /* 0: English (0x0409)               */
     "midi2.diy",  /* 1: Manufacturer                   */
-    "waveshare-RP2350-USB-A bridge", /* 2: Product                     */
+    "RP2350 USB-A Bridge MIDI 2.0", /* 2: Product                     */
     NULL,                         /* 3: Serial, computed at runtime   */
 };
 

@@ -30,7 +30,7 @@
  */
 #include "tusb.h"          // tusb_time_millis_api()
 
-#include "nrf52840_promicro_midi2.h"
+#include "board_midi2.h"
 
 using namespace midi2;
 
@@ -39,7 +39,7 @@ using namespace midi2;
  *--------------------------------------------------------------------*/
 static const uint8_t  kMfrId[3]        = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId        = 0x0001;
-static const uint16_t kModelId         = 0x0001;
+static const uint16_t kModelId         = 0x000A;
 static const uint32_t kVersion         = 0x00010000;
 
 /*--------------------------------------------------------------------+
@@ -223,21 +223,31 @@ int main() {
     static m2device midi;
     static m2ci     ci(midi);
 
-    nrf52840_promicro_midi2::init(midi, ci);
+    midi2_board::init(midi, ci);
     midi.begin();
     midi.enableJRHeartbeat(500);
     ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
+    ci.addPropertyStatic("DeviceInfo",
+        "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[10,0],\"versionId\":[0,0,4,0],"
+         "\"manufacturer\":\"midi2.diy\","
+         "\"family\":\"nRF52840\","
+         "\"model\":\"nRF52840 Pro Micro MIDI 2.0\","
+         "\"version\":\"0.0.1\"}");
+    ci.addPropertyStatic("ChannelList",
+        "[{\"title\":\"Main\",\"channel\":1}]");
+    ci.addPropertyStatic("ProgramList",
+        "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
 
 
     static Showcase showcase{};
     bool prev_mounted = false;
 
     while (true) {
-        nrf52840_promicro_midi2::task(midi);
+        midi2_board::task(midi);
 
         bool mounted = midi.isMounted();
         if (mounted != prev_mounted) {
-            nrf52840_promicro_midi2::led_show_mounted(mounted);
+            midi2_board::led_show_mounted(mounted);
             prev_mounted = mounted;
         }
 

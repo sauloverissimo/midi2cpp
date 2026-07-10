@@ -1,5 +1,5 @@
 /*
- * tusb_config.h, TinyUSB configuration for nrf52840-promicro-midi2.
+ * tusb_config.h: TinyUSB configuration for nrf52840-promicro-midi2 (nRF52840)
  *
  * Device-only MIDI 2.0 class. Full speed (nRF52840 USB peripheral, FS only).
  * Standard-subset scope suitable for the nRF52840 (256 KB SRAM,

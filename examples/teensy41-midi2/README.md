@@ -14,7 +14,7 @@ USB MIDI 2.0 device on the **Teensy 4.1** (Cortex-M7 @ 600 MHz, 1 MB SRAM). Firs
 | Field | Value |
 |---|---|
 | VID:PID | `16C0:0485` (PJRC `USB_TYPE = MIDI2` slot under the V-USB shared VID, kept intact) |
-| Manufacturer | `github.com/sauloverissimo` (via `src/usb_names_override.c` weak-alias hook) |
+| Manufacturer | `midi2.diy` (via `src/usb_names_override.c` weak-alias hook) |
 | Product | `Teensy41` (via `src/usb_names_override.c` weak-alias hook) |
 | iSerial | per-board chip serial |
 | Endpoint Name | `Teensy41` |

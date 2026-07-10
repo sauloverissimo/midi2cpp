@@ -1,5 +1,5 @@
 /*
- * tusb_config.h, TinyUSB configuration for esp32-p4-devkit-usb-midi2.
+ * tusb_config.h: TinyUSB configuration for esp32-p4-devkit-usb-midi2 (ESP32-P4)
  *
  * Device-only MIDI 2.0 class. Full speed (ESP32-P4 USB-OTG internal PHY).
  */

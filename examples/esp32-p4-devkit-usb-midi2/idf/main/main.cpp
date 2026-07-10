@@ -54,7 +54,7 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 
-#include "esp32_p4_devkit_midi2.h"
+#include "board_midi2.h"
 
 using namespace midi2;
 
@@ -63,9 +63,9 @@ using namespace midi2;
  *--------------------------------------------------------------------*/
 static const uint8_t  kMfrId[3]        = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId        = 0x0001;
-static const uint16_t kModelId         = 0x0001;
+static const uint16_t kModelId         = 0x000E;
 static const uint32_t kVersion         = 0x00010000;
-static const uint8_t  kProfileId[5]    = {0x7D, 0x00, 0x00, 0x01, 0x00};
+static const uint8_t  kProfileId[5]    = {0x7E, 0x00, 0x00, 0x01, 0x00};
 
 // Subscribable property value. Updated every cycle so subscribers see
 // PE Notify deltas.
@@ -95,8 +95,18 @@ static void install_ci_bootstrap(m2ci& ci) {
                     id[0], id[1], id[2], id[3], id[4], (unsigned)numChannels);
     });
 
+    /* App-supplied ResourceList (overrides the lib built-in) so the
+     * custom X-OverlayRate entry carries its schema (M2-105). */
+    ci.addPropertyStatic("ResourceList",
+        "[{\"resource\":\"DeviceInfo\"},"
+         "{\"resource\":\"ChannelList\"},"
+         "{\"resource\":\"ProgramList\"},"
+         "{\"resource\":\"X-OverlayRate\",\"schema\":"
+         "{\"title\":\"Overlay Rate\",\"type\":\"object\",\"properties\":"
+         "{\"rateHz\":{\"title\":\"Rate (Hz)\",\"type\":\"integer\"}}}}]");
+
     rc = ci.addPropertyStatic("DeviceInfo",
-        "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[1,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
+        "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[14,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
          "\"family\":\"ESP32-P4\","
          "\"model\":\"ESP32-P4 DevKit MIDI 2.0\","
          "\"version\":\"0.0.1\"}");
@@ -111,16 +121,16 @@ static void install_ci_bootstrap(m2ci& ci) {
     rc = ci.addPropertyStatic("ProgramList", "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
     std::printf("[ci] addPropertyStatic(ProgramList) rc=%d\r\n", rc);
 
-    rc = ci.addProperty("OverlayRate",
+    rc = ci.addProperty("X-OverlayRate",
         []() -> const char* { return g_overlay_rate; },
         [](const char* value) -> bool {
             std::strncpy(g_overlay_rate, value, sizeof(g_overlay_rate) - 1);
             g_overlay_rate[sizeof(g_overlay_rate) - 1] = '\0';
-            std::printf("[ci] OverlayRate set to %s\r\n", g_overlay_rate);
+            std::printf("[ci] X-OverlayRate set to %s\r\n", g_overlay_rate);
             return true;
         });
-    std::printf("[ci] addProperty(OverlayRate) rc=%d\r\n", rc);
-    ci.setPropertySubscribable("OverlayRate", true);
+    std::printf("[ci] addProperty(X-OverlayRate) rc=%d\r\n", rc);
+    ci.setPropertySubscribable("X-OverlayRate", true);
 
     ci.setMidiReport(/*msg_data_control*/ 0x01,
                      /*system bitmap*/    0x00000000FFFFFFFFull,
@@ -379,7 +389,7 @@ static void scene_i_pe_notify(m2ci& ci, Showcase& s, uint32_t t) {
     if (s.i_done || t < kI_Ms) return;
     std::snprintf(g_overlay_rate, sizeof(g_overlay_rate),
                   "{\"rateHz\":%u}", (unsigned)(50 + s.cycle_count));
-    ci.notifyPropertyChanged("OverlayRate");
+    ci.notifyPropertyChanged("X-OverlayRate");
     std::printf("[I] PE Notify OverlayRate=%s subscribers=%u\r\n",
                 g_overlay_rate, (unsigned)ci.subscriberCount());
     s.i_done = true;
@@ -435,7 +445,7 @@ extern "C" void app_main(void) {
     static m2device midi;
     static m2ci     ci(midi);
 
-    esp32_p4_devkit_midi2::init(midi, ci);
+    midi2_board::init(midi, ci);
     midi.begin();
     midi.enableJRHeartbeat(500);
     ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
@@ -452,11 +462,11 @@ extern "C" void app_main(void) {
     static Showcase showcase{};
     bool prev_mounted = false;
     while (true) {
-        esp32_p4_devkit_midi2::task(midi);
+        midi2_board::task(midi);
 
         bool mounted = midi.isMounted();
         if (mounted != prev_mounted) {
-            esp32_p4_devkit_midi2::led_show_mounted(mounted);
+            midi2_board::led_show_mounted(mounted);
             prev_mounted = mounted;
         }
 

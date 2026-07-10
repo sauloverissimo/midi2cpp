@@ -10,8 +10,8 @@ USB MIDI 2.0 device on the [**XIAO SAMD21**](https://wiki.seeedstudio.com/Seeedu
 | Field | Value |
 |---|---|
 | VID:PID | `cafe:40F0` (development-only) |
-| Product | `XiaoSAMD21` |
-| Manufacturer | `github.com/sauloverissimo` |
+| Product | `XIAO SAMD21 MIDI 2.0` |
+| Manufacturer | `midi2.diy` |
 
 ![xiao-samd21-midi2 banner](board/hardware.png)
 
@@ -58,7 +58,7 @@ timeout 8 aseqdump -p ${PORT}   # chromatic walk C4..G#4
 
 ## Spec coverage
 
-Minimal core. No SysEx, no Profile Configuration, no Property Exchange, no Process Inquiry, due to SAMD21 SRAM budget. The full UMP + MIDI-CI surface on a SAMD21-class chip belongs to the upcoming `xiao-samd51-midi2` (4× the SRAM).
+Minimal core plus the standard MIDI-CI surface (Discovery, Property Exchange with DeviceInfo/ChannelList/ProgramList, Process Inquiry); static resources live in flash, so the SAMD21 SRAM budget is unaffected. The full UMP + MIDI-CI surface on a SAMD21-class chip belongs to the upcoming `xiao-samd51-midi2` (4× the SRAM).
 
 | UMP MT | Spec | Notes |
 |---|---|---|
@@ -66,7 +66,7 @@ Minimal core. No SysEx, no Profile Configuration, no Property Exchange, no Proce
 | 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | NoteOn/Off + 32-bit CC #74 sweep |
 | 0xF UMP Stream | M2-104-UM §10 | Endpoint Discovery, Device Identity, Endpoint Name, Product Instance ID, Stream Config Notify, FB Info, FB Name |
 
-MIDI-CI: Discovery responder only (MUID, Manufacturer, Family, Model, Version).
+MIDI-CI: Discovery + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry, via the `m2ci` responder.
 
 ## Showcase
 ![xiao-samd21-midi2 banner](monitor/stack.png)

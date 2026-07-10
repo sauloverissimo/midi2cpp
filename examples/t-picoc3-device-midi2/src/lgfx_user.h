@@ -5,7 +5,7 @@
  * Bus: RP2040 SPI0 @ 40 MHz on GP2 (SCLK) + GP3 (MOSI).
  * Pins: CS=GP5, DC=GP1, RST=GP0, BL=GP4.
  * Power: GP22 (PWR_ON) drives the panel rail; this header configures
- * the SPI/Panel/Light only — the showcase main pulls GP22 HIGH before
+ * the SPI/Panel/Light only: the showcase main pulls GP22 HIGH before
  * calling scene_display::init().
  */
 #pragma once

@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.14)  # FetchContent_MakeAvailable
 #
 # Owns Pico SDK + TinyUSB + midi2cpp wiring; the application layer
 # (catalog + trigger logic) sits on top via the small public API in
-# src/rp2040_midi2.h and never touches tud_*, pico_*, or any USB
+# src/board_midi2.h and never touches tud_*, pico_*, or any USB
 # symbol. The bundled rp2040-promicro-ump-test-bench-showcase executable
 # emits a 101-message UMP catalog on boot, accepts NoteOn group=15
 # triggers for on-demand emission, and CC 120/121 group=15 to
@@ -63,7 +63,7 @@ target_include_directories(midi2cpp PUBLIC ${MIDI2CPP_ROOT}/src)
 # logic lives entirely in the showcase translation unit.
 # ---------------------------------------------------------------------------
 add_library(rp2040-promicro-ump-test-bench STATIC
-    src/rp2040_midi2.cpp
+    src/board_midi2.cpp
     src/usb_descriptors.c
 )
 target_include_directories(rp2040-promicro-ump-test-bench PUBLIC src)

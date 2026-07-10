@@ -32,3 +32,6 @@ compile_commands.json
 
 # Build logs
 *.log
+
+# MIDI 2.0 Workbench self-certification checklists (local only, not published)
+**/workbench-checklist.pdf

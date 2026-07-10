@@ -11,7 +11,7 @@ set(MIDI2CPP_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../src")
 idf_component_register(
     SRCS
         "main.cpp"
-        "arduino_nano_esp32_midi2.cpp"
+        "board_midi2.cpp"
         "${MIDI2CPP_ROOT}/midi2.c"
         "${MIDI2CPP_ROOT}/midi2_device.cpp"
         "${MIDI2CPP_ROOT}/midi2_ci.cpp"

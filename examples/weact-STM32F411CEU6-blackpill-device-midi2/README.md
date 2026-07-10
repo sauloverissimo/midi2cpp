@@ -10,9 +10,9 @@ Full-surface USB MIDI 2.0 device on the **WeAct Studio STM32F411CEU6 BlackPill**
 | Field | Value |
 |---|---|
 | VID:PID | `cafe:40f3` (development-only) |
-| USB Product (descriptor) | `WeActBlackPillF411` |
+| USB Product (descriptor) | `WeAct BlackPill F411 MIDI 2.0` |
 | Endpoint Name (host display) | `STM32F411 MIDI 2.0` |
-| Manufacturer | `github.com/sauloverissimo` |
+| Manufacturer | `midi2.diy` |
 | MIDI-CI | `{0x7D, 0x00, 0x00}` / Family `0x0001` / Model `0x0001` / Version `0x00010000` |
 
 A real product MUST replace `idVendor` / `idProduct` with its own allocation (pid.codes `0x1209`, a purchased USB-IF VID, etc.).
@@ -82,13 +82,13 @@ Full UMP + MIDI-CI device surface. The STM32F411CEU6 (128 KB SRAM, 512 KB flash,
 | 0xD Flex Data | M2-104-UM §10 | Tempo, Time Sig, Key Sig, Metronome, Chord Name, Start/End of Clip |
 | 0xF UMP Stream | M2-104-UM §11 | full Endpoint + FB Discovery |
 
-MIDI-CI: Discovery + Profiles (1 custom registered) + Property Exchange (3 properties: static, dynamic, subscribable) + Process Inquiry, via the `m2ci` Appendix E responder.
+MIDI-CI: Discovery + Profiles (GM 1, `7E 00 00 01 00`) + Property Exchange (5 resources: ResourceList with schema, DeviceInfo, ChannelList, ProgramList, X-OverlayRate rw+subscribable) + Process Inquiry, via the `m2ci` Appendix E responder.
 
 Not covered: SysEx8 (MT 0x5) and full Mixed Data Set, plus multi-Group endpoint. All library-supported; left out to keep the cycle readable.
 
 ## Showcase
 
-Always on while mounted: JR heartbeat (500 ms), UMP Stream + MIDI-CI Discovery responders, 1 Profile, 3 PE properties, Process Inquiry, PC13 LED.
+Always on while mounted: JR heartbeat (500 ms), UMP Stream + MIDI-CI Discovery responders, 1 Profile, 5 PE resources, Process Inquiry, PC13 LED.
 
 Each cycle (~22 s):
 
@@ -102,7 +102,7 @@ Each cycle (~22 s):
 | F | Note On with Attribute pitch_7_9 (E4 +50 cents) |
 | G | SysEx7 Universal Identity Reply (auto-fragmented) |
 | H | Delta Clockstamp: DCTPQ 480 + 240 ticks |
-| I | Property Exchange Notify: OverlayRate broadcast to subscribers |
+| I | Property Exchange Notify: X-OverlayRate broadcast to subscribers |
 | J | End of Clip |
 
 `aseqdump` decodes the MIDI 1.0-translatable subset (notes, CC, pressure, pitch bend, program, RPN/NRPN, SysEx). The MIDI 2.0-only messages (Flex Data, per-note controllers, Note Attribute, Delta Clockstamp) show in a UMP-native monitor such as the Microsoft MIDI Services Console.

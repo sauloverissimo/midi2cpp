@@ -98,7 +98,7 @@ add_executable(${PROJECT_NAME})
 
 target_sources(${PROJECT_NAME} PRIVATE
     src/main.cpp
-    src/weact_blackpill_f411_midi2.cpp
+    src/board_midi2.cpp
     src/usb_descriptors.c
 )
 

@@ -59,7 +59,7 @@ target_include_directories(midi2cpp PUBLIC ${MIDI2CPP_ROOT}/src)
 # 5 hooks wired). Same code as rp2040-midi2 core, board target swapped.
 # ---------------------------------------------------------------------------
 add_library(waveshare-rp2350-usb-a-midi2 STATIC
-    src/rp2040_midi2.cpp
+    src/board_midi2.cpp
     src/usb_descriptors.c
 )
 target_include_directories(waveshare-rp2350-usb-a-midi2 PUBLIC src)

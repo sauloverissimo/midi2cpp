@@ -12,8 +12,8 @@ This recipe uses the upstream `feather_nrf52840_express` BSP because it matches 
 | Field | Value |
 |---|---|
 | VID:PID | `cafe:40F1` (development-only) |
-| Product | `Nrf52840ProMicro` |
-| Manufacturer | `github.com/sauloverissimo` |
+| Product | `nRF52840 Pro Micro MIDI 2.0` |
+| Manufacturer | `midi2.diy` |
 
 ## Build
 
@@ -71,7 +71,7 @@ timeout 15 aseqdump -p ${PORT}
 
 ## Spec coverage
 
-256 KB SRAM and 1 MB flash easily fit the full UMP + MIDI-CI surface, but this recipe is intentionally scoped to Channel Voice + Stream Discovery. No SysEx, no Profile Configuration, no Property Exchange, no Process Inquiry. Future variants (`nrf52840-sysex-bench`, `nice-nano-ble-midi2`) can extend the surface.
+256 KB SRAM and 1 MB flash easily fit the full UMP + MIDI-CI surface, but this recipe is intentionally scoped to Channel Voice + Stream Discovery, plus the standard MIDI-CI surface (Discovery, Profile Inquiry, Property Exchange with DeviceInfo/ChannelList/ProgramList, Process Inquiry). Future variants (`nrf52840-sysex-bench`, `nice-nano-ble-midi2`) can extend the surface.
 
 | UMP MT | Spec | Notes |
 |---|---|---|
@@ -79,7 +79,7 @@ timeout 15 aseqdump -p ${PORT}
 | 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | Per-Note Pitch Bend, NoteOn/Off, 32-bit CC, RPN, NRPN, Relative RPN, Relative NRPN |
 | 0xF UMP Stream | M2-104-UM §11 | full Endpoint + FB Discovery |
 
-MIDI-CI: Discovery responder only (MUID, Manufacturer, Family, Model, Version).
+MIDI-CI: Discovery + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry, via the `m2ci` responder.
 
 ## Showcase
 ![nrf52840-promicro-midi2 banner](monitor/stack.png)

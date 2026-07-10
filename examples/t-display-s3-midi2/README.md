@@ -12,8 +12,8 @@ This recipe is a **receiver showcase**: it does not emit notes, does not generat
 | Field | Value |
 |---|---|
 | VID:PID | `cafe:4094` (development-only) |
-| Product | `TDisplayS3` |
-| Manufacturer | `github.com/sauloverissimo` |
+| Product | `LILYGO T-Display S3 MIDI 2.0` |
+| Manufacturer | `midi2.diy` |
 
 ## Build
 
@@ -72,7 +72,7 @@ lsusb | grep cafe:4094
 amidi -l                        # IO  hw:N,1,0  Group 1 (Main)
 ```
 
-Drive notes from any MIDI 2.0 host and watch the on-board piano roll mirror them. Microsoft MIDI Services Console (Windows) shows `TDisplayS3` with Native data format = UMP, MIDI 2.0 Protocol = True. Audio MIDI Setup (macOS) shows `TDisplayS3` with one source / one destination.
+Drive notes from any MIDI 2.0 host and watch the on-board piano roll mirror them. Microsoft MIDI Services Console (Windows) shows `LILYGO T-Display S3 MIDI 2.0` with Native data format = UMP, MIDI 2.0 Protocol = True. Audio MIDI Setup (macOS) shows `LILYGO T-Display S3 MIDI 2.0` with one source / one destination.
 
 `amidi -p hw:N,1,0 -S "903C7F"` on Linux sends a MIDI 1.0 NoteOn (C4 at velocity `7F`) into the MIDI 2.0 alt setting; ALSA upscales the byte stream into UMP MT 0x2 and the receiver lights the centre key of the piano roll.
 
@@ -93,7 +93,7 @@ Full UMP receiver. The recipe decodes the full inbound UMP surface and responds 
 | 0xD Flex Data | RX | M2-104-UM §10 | counter (Other) |
 | 0xF UMP Stream | TX (responder) | M2-104-UM §11 | (no UI) |
 
-MIDI-CI: Discovery + Profiles (1 custom registered) + Property Exchange (Capability + Get on static `DeviceInfo`) + Process Inquiry, all via the `m2ci` Appendix E convenience responder.
+MIDI-CI: Discovery + Profiles (GM 1, `7E 00 00 01 00`) + Property Exchange (Capability + Get on static `DeviceInfo`) + Process Inquiry, all via the `m2ci` Appendix E convenience responder.
 
 ## Showcase
 

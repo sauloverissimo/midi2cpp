@@ -80,7 +80,7 @@ enum {
 static char const *string_desc_arr[] = {
     (const char[]){0x09, 0x04},   /* 0: English (0x0409)               */
     "midi2.diy",  /* 1: Manufacturer                   */
-    "Nrf52840ProMicro",           /* 2: Product                        */
+    "nRF52840 Pro Micro MIDI 2.0",           /* 2: Product                        */
     "Nrf52840ProMicro-0001",      /* 3: Serial (static fallback)       */
 };
 

@@ -52,7 +52,7 @@
 
 #include "tusb.h"          // tusb_time_millis_api()
 
-#include "weact_blackpill_f411_midi2.h"
+#include "board_midi2.h"
 
 using namespace midi2;
 
@@ -61,9 +61,9 @@ using namespace midi2;
  *--------------------------------------------------------------------*/
 static const uint8_t  kMfrId[3]      = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId      = 0x0001;
-static const uint16_t kModelId       = 0x0001;
+static const uint16_t kModelId       = 0x0009;
 static const uint32_t kVersion       = 0x00010000;
-static const uint8_t  kProfileId[5]     = {0x7D, 0x00, 0x00, 0x01, 0x00};
+static const uint8_t  kProfileId[5]     = {0x7E, 0x00, 0x00, 0x01, 0x00};
 // Endpoint Name = CFG_TUD_MIDI2_EP_NAME, Product Instance Id =
 // CFG_TUD_MIDI2_PRODUCT_ID (tusb_config.h), FB name "Main" =
 // tud_midi2_fb_name_cb, FB direction = GTB descriptor (board glue). The
@@ -85,8 +85,18 @@ static void install_ci_bootstrap(m2ci& ci) {
     ci.onProfileDisable([](const uint8_t[5], uint8_t) {});
 
     // Property Exchange
+    /* App-supplied ResourceList (overrides the lib built-in) so the
+     * custom X-OverlayRate entry carries its schema (M2-105). */
+    ci.addPropertyStatic("ResourceList",
+        "[{\"resource\":\"DeviceInfo\"},"
+         "{\"resource\":\"ChannelList\"},"
+         "{\"resource\":\"ProgramList\"},"
+         "{\"resource\":\"X-OverlayRate\",\"schema\":"
+         "{\"title\":\"Overlay Rate\",\"type\":\"object\",\"properties\":"
+         "{\"rateHz\":{\"title\":\"Rate (Hz)\",\"type\":\"integer\"}}}}]");
+
     ci.addPropertyStatic("DeviceInfo",
-        "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[1,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
+        "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[9,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
          "\"family\":\"STM32F411\","
          "\"model\":\"WeAct BlackPill F411 MIDI 2.0\","
          "\"version\":\"0.0.1\"}");
@@ -98,14 +108,14 @@ static void install_ci_bootstrap(m2ci& ci) {
 
     ci.addPropertyStatic("ProgramList", "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
 
-    ci.addProperty("OverlayRate",
+    ci.addProperty("X-OverlayRate",
         []() -> const char* { return g_overlay_rate; },
         [](const char* value) -> bool {
             std::strncpy(g_overlay_rate, value, sizeof(g_overlay_rate) - 1);
             g_overlay_rate[sizeof(g_overlay_rate) - 1] = '\0';
             return true;
         });
-    ci.setPropertySubscribable("OverlayRate", true);
+    ci.setPropertySubscribable("X-OverlayRate", true);
 
     // Process Inquiry, advertise capability across all 16 channels.
     ci.setMidiReport(/*msg_data_control*/ 0x01,
@@ -218,7 +228,7 @@ static int32_t vibrato_offset(uint32_t elapsed_ms) {
  *--------------------------------------------------------------------*/
 static void scene_a_flex(m2device& midi, Showcase& s) {
     if (s.a_done) return;
-    // Flex Data suite, all UMP MT 0xD, none of these exist in MIDI 1.0.
+    // Flex Data suite, UMP MT 0xD (MIDI 2.0 only).
     midi.sendTempo(0, /*ten_ns_per_quarter*/ 50000000u);    // 120 BPM
     midi.sendTimeSignature(0, /*num*/ 4, /*denom*/ 2);       // 4/4
     midi.sendKeySignature(0, /*sharps_flats*/ 0, /*minor*/ false);  // C major
@@ -324,8 +334,8 @@ static void scene_c_walk(m2device& midi, Showcase& s, uint32_t t, uint32_t now) 
 
 static void scene_d_program(m2device& midi, Showcase& s, uint32_t t) {
     if (s.d_done || t < kD_Ms) return;
-    // Program Change with Bank in a single UMP, impossible in MIDI 1.0
-    // (which needs 3 messages: BankMSB CC#0, BankLSB CC#32, then Program).
+    // Program Change with Bank in a single UMP, MIDI 1.0 needs 3 messages
+    // (BankMSB CC#0, BankLSB CC#32, Program).
     midi.sendProgram(0, kCh, /*program*/ 42,
                      /*bankMSB*/ 0x10, /*bankLSB*/ 0x05, /*bankValid*/ true);
     s.d_done = true;
@@ -399,7 +409,7 @@ static void scene_i_pe_notify(m2ci& ci, Showcase& s, uint32_t t) {
     // the API path still runs.
     std::snprintf(g_overlay_rate, sizeof(g_overlay_rate),
                   "{\"rateHz\":%u}", (unsigned)(50 + s.cycle_count));
-    ci.notifyPropertyChanged("OverlayRate");
+    ci.notifyPropertyChanged("X-OverlayRate");
     s.i_done = true;
 }
 
@@ -444,7 +454,7 @@ int main() {
     static m2device midi;
     static m2ci     ci(midi);
 
-    weact_blackpill_f411_midi2::init(midi, ci);
+    midi2_board::init(midi, ci);
     midi.begin();
     midi.enableJRHeartbeat(500);
     ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
@@ -455,11 +465,11 @@ int main() {
     bool prev_mounted = false;
 
     while (true) {
-        weact_blackpill_f411_midi2::task(midi);
+        midi2_board::task(midi);
 
         bool mounted = midi.isMounted();
         if (mounted != prev_mounted) {
-            weact_blackpill_f411_midi2::led_show_mounted(mounted);
+            midi2_board::led_show_mounted(mounted);
             prev_mounted = mounted;
         }
 

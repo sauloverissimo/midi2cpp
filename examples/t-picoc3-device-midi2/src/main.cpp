@@ -1,44 +1,25 @@
 /*
- * main.cpp — t-picoc3-device-midi2-showcase
+ * t-picoc3-device-midi2-showcase: full-surface USB MIDI 2.0 device showcase, ~22 s scene cycle
+ * while mounted.
  *
- * Headless full-spec USB MIDI 2.0 device showcase. Demonstrates every
- * category of message MIDI 2.0 brings beyond MIDI 1.0, in a ~22 s cycle
- * that loops while mounted. The features are ordered to be inspectable:
+ * Boot: UMP Stream Discovery responder (TinyUSB #3738 built-in) + MIDI-CI
+ * responder: Discovery, Profile GM 1, PE (DeviceInfo, ChannelList,
+ * ProgramList, X-OverlayRate subscribable), Process Inquiry MIDI Report.
+ *
+ * Scenes:
+ *   A  Flex Data: Tempo, TimeSig, KeySig, Metronome, Chord + Start of Clip
+ *   B  Per-Note: PB vibrato, Registered/Assignable controllers, Mgmt Reset
+ *   C  Resolution walk: 16-bit velocity, 32-bit CC / PB / PolyP / ChanP
+ *   D  Program Change with Bank in a single UMP
+ *   E  RPN/NRPN 32-bit + Relative RPN/NRPN
+ *   F  Note On attribute pitch_7_9 (+50 cents)
+ *   G  SysEx7 (fragmented Universal Identity Reply)
+ *   H  Delta Clockstamp (DCTPQ + delta ticks)
+ *   I  PE Notify: X-OverlayRate broadcast to subscribers
+ *   J  End of Clip
+ * Always: JR Timestamp heartbeat (500 ms).
+ *
  * each scene logs to UART and emits observable UMPs.
- *
- *   Boot (once):
- *     - UMP Stream Discovery responder (Endpoint Info, Device Identity,
- *       Endpoint Name, Product Instance ID, Stream Config, FB Info,
- *       FB Name)
- *     - MIDI-CI Discovery + PE Capability + PE Get auto-replied via
- *       m2ci's Appendix E convenience responder
- *     - 1 Custom Profile registered (id 7D 00 00 01 00)
- *     - 3 Properties: static DeviceInfo, dynamic ChannelList,
- *       subscribable OverlayRate (broadcast to subscribers each cycle)
- *     - Process Inquiry: setMidiReport (system + channel + note bitmaps)
- *
- *   Each cycle (~22 s):
- *     Scene A — Flex Data suite: Tempo, Time Sig, Key Sig, Metronome,
- *               Chord Name (Cmaj7) + Start of Clip
- *     Scene B — Per-Note expression stack (single sustained note):
- *               Per-Note Pitch Bend vibrato + Registered Per-Note
- *               Controller (volume) + Assignable Per-Note Controller
- *               (brightness) + Per-Note Management Reset at end
- *     Scene C — Resolution showcase (chromatic walk): 16-bit variable
- *               velocity + 32-bit CC sweep + 32-bit Pitch Bend ramp +
- *               32-bit Poly Pressure + 32-bit Channel Pressure
- *     Scene D — Program Change with Bank in a single UMP
- *     Scene E — RPN/NRPN 32-bit + Relative RPN/NRPN (incremental)
- *     Scene F — Note On with Attribute pitch_7_9 (microtonal +50¢)
- *     Scene G — SysEx7 emission (fragmented Universal SysEx Identity Reply)
- *     Scene H — Delta Clockstamp (DCTPQ + delta ticks)
- *     Scene I — Property Exchange Notify (broadcast OverlayRate change
- *               to any current subscribers)
- *     Scene J — End of Clip
- *
- *   Always:
- *     - JR Timestamp heartbeat (500 ms — also a MIDI 2.0-only message)
- *
  * UART debug print on GP0 / GP1 @ 115200 8N1. LED follows mounted state.
  */
 #include <cstdio>
@@ -50,7 +31,7 @@
 #include "hardware/gpio.h"
 #include "bsp/board_api.h"
 
-#include "t_picoc3_midi2.h"
+#include "board_midi2.h"
 #include "scene_display.h"
 
 using namespace midi2;
@@ -60,9 +41,9 @@ using namespace midi2;
  *--------------------------------------------------------------------*/
 static const uint8_t  kMfrId[3]      = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId      = 0x0001;
-static const uint16_t kModelId       = 0x0001;
+static const uint16_t kModelId       = 0x0008;
 static const uint32_t kVersion       = 0x00010000;
-static const uint8_t  kProfileId[5]     = {0x7D, 0x00, 0x00, 0x01, 0x00};
+static const uint8_t  kProfileId[5]     = {0x7E, 0x00, 0x00, 0x01, 0x00};
 
 // Subscribable property value. Updated every cycle so subscribers see
 // PE Notify deltas.
@@ -94,8 +75,18 @@ static void install_ci_bootstrap(m2ci& ci) {
     });
 
     // Property Exchange
+    /* App-supplied ResourceList (overrides the lib built-in) so the
+     * custom X-OverlayRate entry carries its schema (M2-105). */
+    ci.addPropertyStatic("ResourceList",
+        "[{\"resource\":\"DeviceInfo\"},"
+         "{\"resource\":\"ChannelList\"},"
+         "{\"resource\":\"ProgramList\"},"
+         "{\"resource\":\"X-OverlayRate\",\"schema\":"
+         "{\"title\":\"Overlay Rate\",\"type\":\"object\",\"properties\":"
+         "{\"rateHz\":{\"title\":\"Rate (Hz)\",\"type\":\"integer\"}}}}]");
+
     rc = ci.addPropertyStatic("DeviceInfo",
-        "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[1,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
+        "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[8,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
          "\"family\":\"RP2040\","
          "\"model\":\"LILYGO T-PicoC3 MIDI 2.0\","
          "\"version\":\"0.0.1\"}");
@@ -110,18 +101,18 @@ static void install_ci_bootstrap(m2ci& ci) {
     rc = ci.addPropertyStatic("ProgramList", "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
     std::printf("[ci] addPropertyStatic(ProgramList) rc=%d\r\n", rc);
 
-    rc = ci.addProperty("OverlayRate",
+    rc = ci.addProperty("X-OverlayRate",
         []() -> const char* { return g_overlay_rate; },
         [](const char* value) -> bool {
             std::strncpy(g_overlay_rate, value, sizeof(g_overlay_rate) - 1);
             g_overlay_rate[sizeof(g_overlay_rate) - 1] = '\0';
-            std::printf("[ci] OverlayRate set to %s\r\n", g_overlay_rate);
+            std::printf("[ci] X-OverlayRate set to %s\r\n", g_overlay_rate);
             return true;
         });
-    std::printf("[ci] addProperty(OverlayRate) rc=%d\r\n", rc);
-    ci.setPropertySubscribable("OverlayRate", true);
+    std::printf("[ci] addProperty(X-OverlayRate) rc=%d\r\n", rc);
+    ci.setPropertySubscribable("X-OverlayRate", true);
 
-    // Process Inquiry — advertise capability across all 16 channels.
+    // Process Inquiry: advertise capability across all 16 channels.
     ci.setMidiReport(/*msg_data_control*/ 0x01,
                      /*system bitmap*/    0x00000000FFFFFFFFull,
                      /*channel bitmap*/   0xFFFFFFFFFFFFFFFFull,
@@ -219,7 +210,7 @@ static void scene_a_flex(m2device& midi, Showcase& s) {
     if (s.a_done) return;
     scene_display::set_scene(scene_display::Scene::A_FlexData, s.cycle_count);
     scene_display::notify_flex(/*bpm_x100*/ 12000, /*num*/ 4, /*den*/ 4, "Cmaj7");
-    // Flex Data suite — all UMP MT 0xD, none of these exist in MIDI 1.0.
+    // Flex Data suite: UMP MT 0xD (MIDI 2.0 only).
     midi.sendTempo(0, /*ten_ns_per_quarter*/ 50000000u);    // 120 BPM
     midi.sendTimeSignature(0, /*num*/ 4, /*denom*/ 2);       // 4/4
     midi.sendKeySignature(0, /*sharps_flats*/ 0, /*minor*/ false);  // C major
@@ -254,7 +245,7 @@ static void scene_b_per_note(m2device& midi, Showcase& s, uint32_t t, uint32_t n
         scene_display::bump_counter(scene_display::CounterKind::NoteOn);
         s.b_on = true;
         s.b_last_vib = 0;
-        std::printf("[B] note on C4 — Per-Note PB vibrato + Per-Note CCs incoming\r\n");
+        std::printf("[B] note on C4: Per-Note PB vibrato + Per-Note CCs incoming\r\n");
     }
     if (s.b_on && !s.b_off && t < kB_NoteOffMs) {
         // Per-Note Pitch Bend at 50 Hz
@@ -269,7 +260,7 @@ static void scene_b_per_note(m2device& midi, Showcase& s, uint32_t t, uint32_t n
         }
     }
     if (!s.b_reg_pnc && s.b_on && t >= kB_RegPncMs) {
-        // Registered Per-Note Controller #7 (Volume) — UNIQUE to MIDI 2.0.
+        // Registered Per-Note Controller #7 (Volume) (MIDI 2.0 only).
         midi.sendRegPerNoteController(0, kCh, kB_Note, /*idx*/ 7,
                                       /*val32*/ 0xC0000000u);
         std::printf("[B] Registered Per-Note Controller #7 (volume) val=0xC0000000\r\n");
@@ -359,8 +350,8 @@ static void scene_d_program(m2device& midi, Showcase& s, uint32_t t) {
         scene_display::set_scene(scene_display::Scene::D_ProgramBank, s.cycle_count);
     }
     if (s.d_done) return;
-    // Program Change with Bank in a single UMP — impossible in MIDI 1.0
-    // (which needs 3 messages: BankMSB CC#0, BankLSB CC#32, then Program).
+    // Program Change with Bank in a single UMP: MIDI 1.0 needs 3 messages
+    // (BankMSB CC#0, BankLSB CC#32, Program).
     midi.sendProgram(0, kCh, /*program*/ 42,
                      /*bankMSB*/ 0x10, /*bankLSB*/ 0x05, /*bankValid*/ true);
     scene_display::notify_program(42, 0x10, 0x05);
@@ -470,8 +461,8 @@ static void scene_i_pe_notify(m2ci& ci, Showcase& s, uint32_t t) {
     if (s.i_done || t < kI_Ms) return;
     std::snprintf(g_overlay_rate, sizeof(g_overlay_rate),
                   "{\"rateHz\":%u}", (unsigned)(50 + s.cycle_count));
-    ci.notifyPropertyChanged("OverlayRate");
-    scene_display::notify_pe("OverlayRate", (uint8_t)ci.subscriberCount());
+    ci.notifyPropertyChanged("X-OverlayRate");
+    scene_display::notify_pe("X-OverlayRate", (uint8_t)ci.subscriberCount());
     std::printf("[I] PE Notify OverlayRate=%s subscribers=%u\r\n",
                 g_overlay_rate, (unsigned)ci.subscriberCount());
     s.i_done = true;
@@ -540,7 +531,7 @@ int main() {
     m2device midi;
     m2ci     ci(midi);
 
-    t_picoc3_midi2::init(midi, ci);
+    midi2_board::init(midi, ci);
     midi.begin();
     midi.enableJRHeartbeat(500);
     ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
@@ -554,7 +545,7 @@ int main() {
     Showcase showcase{};
     bool last_mounted = false;
     while (true) {
-        t_picoc3_midi2::task(midi);
+        midi2_board::task(midi);
         bool mounted = midi.isMounted();
         board_led_write(mounted);
         if (mounted != last_mounted) {

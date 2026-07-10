@@ -12,8 +12,8 @@ The board carries two MCUs sharing one USB-C jack via a physical orientation swi
 | Field | Value |
 |---|---|
 | VID:PID | `cafe:4079` (development-only) |
-| Product | `TPicoC3` |
-| Manufacturer | `github.com/sauloverissimo` |
+| Product | `LILYGO T-PicoC3 MIDI 2.0` |
+| Manufacturer | `midi2.diy` |
 
 ## Build
 
@@ -65,11 +65,11 @@ Full spec. The RP2040's 264 KB SRAM affords the complete UMP + MIDI-CI surface.
 | 0xD Flex Data | M2-104-UM §10 | Tempo, Time Sig, Key Sig, Metronome, Chord Name, Start/End of Clip |
 | 0xF UMP Stream | M2-104-UM §11 | full Endpoint + FB Discovery |
 
-MIDI-CI: Discovery + Profiles (1 custom registered) + Property Exchange (3 properties: static, dynamic, subscribable) + Process Inquiry, all via the `m2ci` Appendix E convenience responder.
+MIDI-CI: Discovery + Profiles (GM 1, `7E 00 00 01 00`) + Property Exchange (5 resources: ResourceList with schema, DeviceInfo, ChannelList, ProgramList, X-OverlayRate rw+subscribable) + Process Inquiry, all via the `m2ci` Appendix E convenience responder.
 
 ## Showcase
 ![t-picoc3-hardware](board/stack.png)
-Always on while mounted: JR heartbeat (500 ms), UMP Stream + MIDI-CI Discovery responders, 1 custom Profile, 3 PE properties, Process Inquiry replies. GP25 LED lit.
+Always on while mounted: JR heartbeat (500 ms), UMP Stream + MIDI-CI Discovery responders, 1 Profile (GM 1), 5 PE resources, Process Inquiry replies. GP25 LED lit.
 
 Per cycle (~22 s):
 
@@ -83,7 +83,7 @@ Per cycle (~22 s):
 | **F.** Note Attribute | Note On with `attribute_type=0x03` (pitch_7_9), E4 +50 cents | Microtonal attribute |
 | **G.** SysEx7 | Universal SysEx Identity Reply, 12 bytes, auto-fragmented (Start + End) | MT 0x3 |
 | **H.** Delta Clockstamp | DCTPQ=480 + Delta Clockstamp=240 ticks | MT 0x0 utility |
-| **I.** PE Notify | Broadcast `OverlayRate` change to subscribers (value increments per cycle) | Property Exchange |
+| **I.** PE Notify | Broadcast `X-OverlayRate` change to subscribers (value increments per cycle) | Property Exchange |
 | **J.** End of Clip | Sequencer End of Clip marker | MT 0xF status 0x21 |
 
 Every scene logs to UART on GP0 @ 115200 8N1.

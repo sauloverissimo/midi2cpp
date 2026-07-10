@@ -1,7 +1,7 @@
 # [midi2cpp](../..) | Bridge MIDI 2.0
 ## Waveshare RP2350-USB-A
 
-Transparent USB MIDI 2.0 bridge on the **Waveshare RP2350-USB-A**. Runs TinyUSB host on USB-A (PIO-USB GP12 / GP13) and TinyUSB device on USB-C (native USB) in the same firmware, forwarding UMP between them so any MIDI 2.0 device plugged into USB-A appears on the PC as a 16-group MIDI 2.0 endpoint named `waveshare-RP2350-USB-A bridge`. Pico SDK build, no Arduino IDE.
+Transparent USB MIDI 2.0 bridge on the **Waveshare RP2350-USB-A**. Runs TinyUSB host on USB-A (PIO-USB GP12 / GP13) and TinyUSB device on USB-C (native USB) in the same firmware, forwarding UMP between them so any MIDI 2.0 device plugged into USB-A appears on the PC as a 16-group MIDI 2.0 endpoint named `RP2350 USB-A Bridge MIDI 2.0`. Pico SDK build, no Arduino IDE.
 
 ![waveshare-RP2350-USB-A bridge banner](board/banner.png)
 
@@ -34,8 +34,8 @@ What the PC sees on the device side (USB-C):
 | Field | Value |
 |---|---|
 | VID:PID | `cafe:4077` (development-only) |
-| Product | `waveshare-RP2350-USB-A bridge` |
-| Manufacturer | `github.com/sauloverissimo` |
+| Product | `RP2350 USB-A Bridge MIDI 2.0` |
+| Manufacturer | `midi2.diy` |
 | MIDI 2.0 Groups | 16 (1:1 passthrough, group N upstream becomes group N to PC) |
 | Function Blocks | 1 (covers all groups) |
 
@@ -77,8 +77,8 @@ The board has no software-controlled USB-A 5V power gate; VBUS comes through the
 Plug any USB MIDI 2.0 device into the USB-A jack, plug the USB-C into a PC. Expected on the PC:
 
 - **Linux**: `lsusb | grep cafe:4077`. `amidi -l` lists the bridge's MIDI 2.0 group.
-- **Windows**: Microsoft MIDI Services Console shows `waveshare-RP2350-USB-A bridge` with Native data format = UMP, MIDI 2.0 Protocol = True.
-- **macOS**: Audio MIDI Setup shows `waveshare-RP2350-USB-A bridge`.
+- **Windows**: Microsoft MIDI Services Console shows `RP2350 USB-A Bridge MIDI 2.0` with Native data format = UMP, MIDI 2.0 Protocol = True.
+- **macOS**: Audio MIDI Setup shows `RP2350 USB-A Bridge MIDI 2.0`.
 
 ![bench top-down with the board on a protoboard](monitor/stack.png)
 ![laptop running Microsoft MIDI Services Console](monitor/bridge.png)

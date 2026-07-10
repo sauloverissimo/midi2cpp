@@ -105,7 +105,7 @@ target_link_libraries(lovyangfx PUBLIC
 # t-picoc3-device-midi2 — board core + scene_display visualiser.
 # ---------------------------------------------------------------------------
 add_library(t-picoc3-device-midi2 STATIC
-    src/t_picoc3_midi2.cpp
+    src/board_midi2.cpp
     src/usb_descriptors.c
     src/scene_display.cpp
 )

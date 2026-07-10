@@ -1,7 +1,7 @@
 # [midi2cpp](../..) | Bridge MIDI 2.0
 ## Waveshare ESP32-P4-WIFI6-DEV-KIT
 
-Dual-stack USB MIDI 2.0 bridge on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**. Runs TinyUSB host on the USB-A jacks (UTMI PHY, OTG_HS controller at 480 Mbps, rhport 1) and TinyUSB device on the **USB-Device** USB-C jack (INT PHY, OTG_FS controller, rhport 0) in the same firmware, forwarding MIDI 2.0 channel-voice traffic from any upstream device into the host PC's view of `ESP32P4Bridge`. Mixed-protocol bus: MIDI 1.0 controllers (Arturia, M-Audio, generic synths) coexist with MIDI 2.0 devices on the same USB-A hub, each routed through its own class driver. ESP-IDF v5.4 build, no Arduino IDE.
+Dual-stack USB MIDI 2.0 bridge on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**. Runs TinyUSB host on the USB-A jacks (UTMI PHY, OTG_HS controller at 480 Mbps, rhport 1) and TinyUSB device on the **USB-Device** USB-C jack (INT PHY, OTG_FS controller, rhport 0) in the same firmware, forwarding MIDI 2.0 channel-voice traffic from any upstream device into the host PC's view of `ESP32-P4 Bridge MIDI 2.0`. Mixed-protocol bus: MIDI 1.0 controllers (Arturia, M-Audio, generic synths) coexist with MIDI 2.0 devices on the same USB-A hub, each routed through its own class driver. ESP-IDF v5.4 build, no Arduino IDE.
 
 ![esp32-p4-devkit-bridge-midi2 banner](board/banner.png)
 
@@ -37,8 +37,8 @@ What the PC sees on the device side (USB-Device USB-C jack):
 | Field | Value |
 |---|---|
 | VID:PID | `cafe:4092` (development-only) |
-| Product | `ESP32P4Bridge` |
-| Manufacturer | `github.com/sauloverissimo` |
+| Product | `ESP32-P4 Bridge MIDI 2.0` |
+| Manufacturer | `midi2.diy` |
 
 The bridge also runs an `m2host` instance for the upstream side, with its own MUID seeded from `esp_random()` masked to 28 bits, so the bridge is a CI Initiator towards upstream devices and a CI Responder towards the PC at the same time.
 
@@ -75,9 +75,9 @@ To override TinyUSB with a local working copy: `ln -sfn /path/to/your/tinyusb id
 
 Plug the **USB-Device** USB-C into the host PC. Plug any USB MIDI 2.0 device into either USB-A jack. The PC should enumerate `cafe:4092 ESP32P4Bridge` and expose a MIDI 2.0 endpoint.
 
-- **Linux**: `lsusb | grep cafe:4092` shows `ESP32P4Bridge`. `amidi -l` lists the bridge's MIDI 2.0 group. `aseqdump -p <bridge-port>` shows the upstream device's NoteOn / NoteOff / CC / PitchBend in real time.
-- **Windows**: Microsoft MIDI Services Console shows `ESP32P4Bridge` with Native data format = UMP, MIDI 2.0 Protocol = True.
-- **macOS**: Audio MIDI Setup shows `ESP32P4Bridge`.
+- **Linux**: `lsusb | grep cafe:4092` shows `ESP32-P4 Bridge MIDI 2.0`. `amidi -l` lists the bridge's MIDI 2.0 group. `aseqdump -p <bridge-port>` shows the upstream device's NoteOn / NoteOff / CC / PitchBend in real time.
+- **Windows**: Microsoft MIDI Services Console shows `ESP32-P4 Bridge MIDI 2.0` with Native data format = UMP, MIDI 2.0 Protocol = True.
+- **macOS**: Audio MIDI Setup shows `ESP32-P4 Bridge MIDI 2.0`.
 
 The UART console mirrors the events:
 

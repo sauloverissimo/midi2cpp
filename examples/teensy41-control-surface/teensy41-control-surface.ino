@@ -24,6 +24,20 @@
 #include "src/teensy41_control_surface.h"
 
 teensy41::Backend backend;
+static midi2::m2ci ci(backend.device());
+
+// MIDI-CI identity (matches the Discovery Reply bytes).
+static const uint8_t  kMfrId[3]  = {0x7D, 0x00, 0x00};
+static const uint16_t kFamilyId  = 0x0001;
+static const uint16_t kModelId   = 0x0002;
+static const uint32_t kVersion   = 0x00010000;
+static const char     kDeviceInfo[] =
+    "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[2,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
+    "\"family\":\"Teensy\","
+    "\"model\":\"Teensy41 Control Surface MIDI 2.0\","
+    "\"version\":\"0.0.1\"}";
+static const char     kChannelList[] =
+    "[{\"title\":\"Control Surface\",\"channel\":1}]";
 
 // -- pots ---------------------------------------------------------------
 static const uint8_t  kPotPin[4]   = { A0, A1, A2, A3 };
@@ -46,6 +60,16 @@ static const uint32_t kSwDebounceMs = 20;
 static void printRx(const __FlashStringHelper *tag, uint8_t g, uint8_t ch);
 static void registerRxHandlers(midi2::Device &midi);
 
+
+// Boot MUID entropy: cycle counter + ADC noise (no TRNG on i.MX RT1062).
+static uint32_t plat_rng() {
+    uint32_t s = micros();
+    for (int i = 0; i < 8; ++i) {
+        s = (s << 3) ^ analogRead(A0) ^ ARM_DWT_CYCCNT;
+    }
+    return s;
+}
+
 void setup()
 {
 	Serial.begin(115200);
@@ -65,6 +89,7 @@ void setup()
 	                      /*staticFb*/true, /*numFb*/1,
 	                      /*midi2*/true, /*midi1*/true,
 	                      /*rxJr*/false, /*txJr*/true);
+	midi.sendDeviceIdentity(kMfrId, kFamilyId, kModelId, kVersion);
 	midi.sendEndpointNameUpdate("Teensy41 CS");
 	midi.sendProductInstanceIdUpdate("Teensy41-controlsurface-0001");
 	midi.sendFbInfo(/*active*/true, /*fbNum*/0,
@@ -73,6 +98,14 @@ void setup()
 	                /*firstGroup*/0, /*numGroups*/1,
 	                /*midiCiVer*/0, /*sysex8*/false, /*protocol*/3);
 	midi.sendFbNameUpdate(0, "Control Surface");
+
+	// MIDI-CI: identity + PE resources (same package as teensy41-midi2)
+	ci.setRngFn(plat_rng);
+	ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
+	ci.addPropertyStatic("DeviceInfo",  kDeviceInfo);
+	ci.addPropertyStatic("ChannelList", kChannelList);
+	ci.setPropertySubscribable("ChannelList", true);
+	ci.addPropertyStatic("ProgramList", "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
 
 	registerRxHandlers(midi);
 }

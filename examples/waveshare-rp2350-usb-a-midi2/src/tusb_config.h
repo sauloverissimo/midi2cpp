@@ -1,7 +1,7 @@
 /*
- * tusb_config.h: TinyUSB configuration for rp2040-midi2 (RP2040)
+ * tusb_config.h: TinyUSB configuration for waveshare-rp2350-usb-a-midi2 (RP2350)
  *
- * Device-only MIDI 2.0 class. Full speed (RP2040 native USB).
+ * Device-only MIDI 2.0 class. Full speed (RP2350 native USB).
  */
 #ifndef TUSB_CONFIG_H_
 #define TUSB_CONFIG_H_

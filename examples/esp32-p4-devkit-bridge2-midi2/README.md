@@ -1,7 +1,7 @@
 # [midi2cpp](../..) | Bridge MIDI 2.0
 ## Waveshare ESP32-P4-WIFI6-DEV-KIT (m2bridge variant)
 
-Dual-stack USB MIDI 2.0 bridge on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**, identical wire role to the v1 sibling at [`esp32-p4-devkit-bridge-midi2`](../esp32-p4-devkit-bridge-midi2/) but built on top of the reusable `midi2::m2bridge` class. The slot table, multi-FB Stream Discovery responder, per-FB group rewrite, dynamic FB Names, and MIDI 1.0 alt 0 byte uplift all live inside `midi2cpp/src/midi2_bridge.cpp`; the recipe carries only the platform layer (PHY init, TinyUSB tasks, write callbacks, mount-event forwarding into the bridge slot table). PC sees PID `0x4095` / `ESP32P4Bridge2`, distinct from the v1 sibling's `0x4092` / `ESP32P4Bridge`, so both firmwares can coexist on the same host for A/B comparison.
+Dual-stack USB MIDI 2.0 bridge on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**, identical wire role to the v1 sibling at [`esp32-p4-devkit-bridge-midi2`](../esp32-p4-devkit-bridge-midi2/) but built on top of the reusable `midi2::m2bridge` class. The slot table, multi-FB Stream Discovery responder, per-FB group rewrite, dynamic FB Names, and MIDI 1.0 alt 0 byte uplift all live inside `midi2cpp/src/midi2_bridge.cpp`; the recipe carries only the platform layer (PHY init, TinyUSB tasks, write callbacks, mount-event forwarding into the bridge slot table). PC sees PID `0x4095` / `ESP32-P4 Bridge2 MIDI 2.0`, distinct from the v1 sibling's `0x4092` / `ESP32-P4 Bridge MIDI 2.0`, so both firmwares can coexist on the same host for A/B comparison.
 
 ![esp32-p4-devkit-bridge2-midi2 banner](board/banner.png)
 
@@ -47,8 +47,8 @@ What the PC sees on the device side (USB-Device USB-C jack):
 | Field | Value |
 |---|---|
 | VID:PID | `cafe:4095` (development-only) |
-| Product | `ESP32P4Bridge2` |
-| Manufacturer | `github.com/sauloverissimo` |
+| Product | `ESP32-P4 Bridge2 MIDI 2.0` |
+| Manufacturer | `midi2.diy` |
 | MIDI 2.0 Groups | 16 (4 per slot, 4 slots) |
 | Function Blocks | 4, one per slot, name pulled from upstream Endpoint Name |
 
@@ -89,9 +89,9 @@ Identical to the v1 sibling. No board modification required.
 
 Plug the **USB-Device** USB-C into the host PC. Plug any USB MIDI 2.0 device into either USB-A jack. The PC should enumerate `cafe:4095 ESP32P4Bridge2` and expose a multi-FB MIDI 2.0 endpoint.
 
-- **Linux**: `lsusb | grep cafe:4095` shows `ESP32P4Bridge2`. `aconnect -l` lists the four group ranges with the upstream Endpoint Name in parentheses (e.g. `Group 1 (RP2040PiZero)`). `aseqdump -p "ESP32P4Bridge2:1"` and `aseqdump -p "ESP32P4Bridge2:5"` show two upstream devices on disjoint groups in real time.
-- **Windows**: Microsoft MIDI Services Console shows `ESP32P4Bridge2` with Native data format = UMP, MIDI 2.0 Protocol = True, Declared Function Block Count = 4. Each active FB carries the upstream Endpoint Name; inactive FBs read `(empty slot)`.
-- **macOS**: Audio MIDI Setup shows `ESP32P4Bridge2` with the four group windows visible.
+- **Linux**: `lsusb | grep cafe:4095` shows `ESP32-P4 Bridge2 MIDI 2.0`. `aconnect -l` lists the four group ranges with the upstream Endpoint Name in parentheses (e.g. `Group 1 (RP2040PiZero)`). `aseqdump -p "ESP32P4Bridge2:1"` and `aseqdump -p "ESP32P4Bridge2:5"` show two upstream devices on disjoint groups in real time.
+- **Windows**: Microsoft MIDI Services Console shows `ESP32-P4 Bridge2 MIDI 2.0` with Native data format = UMP, MIDI 2.0 Protocol = True, Declared Function Block Count = 4. Each active FB carries the upstream Endpoint Name; inactive FBs read `(empty slot)`.
+- **macOS**: Audio MIDI Setup shows `ESP32-P4 Bridge2 MIDI 2.0` with the four group windows visible.
 
 The UART console mirrors the lifecycle:
 
@@ -137,7 +137,7 @@ MIDI-CI: Discovery + Process Inquiry are answered locally by the bridge's `m2ci`
 ```
 midi2cpp/examples/esp32-p4-devkit-bridge2-midi2/
 ├── README.md
-├── board/                              board photos / pinout (TBD)
+├── board/                              board photos / pinout
 └── idf/
     ├── CMakeLists.txt                  ESP-IDF project root
     ├── partitions.csv                  single-app, 16 MB flash

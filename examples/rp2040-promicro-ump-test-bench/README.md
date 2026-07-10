@@ -10,8 +10,8 @@ USB MIDI 2.0 device on the **Tenstar Robot RP2040 Pro Micro**, configured as a *
 | Field | Value |
 |---|---|
 | VID:PID | `cafe:4078` (development-only) |
-| Product | `UMP Reference Emitter` |
-| Manufacturer | `MIDI 2.0 Test Bench` |
+| Product | `RP2040 UMP Bench MIDI 2.0` |
+| Manufacturer | `midi2.diy` |
 | Function Block | 1 bidirectional, `firstGroup=0`, `numGroups=1`, name `Test Bench Group 0` |
 
 ## Build
@@ -58,7 +58,7 @@ lsusb | grep cafe:4078
 amidi -l                        # IO  hw:N,1,0  Group 1 (Test Bench Group 0)
 ```
 
-**Linux**: any UMP-aware logger captures the auto-emit on plug. **Windows**: `midi enumerate midi-services-endpoints -i` lists `UMP Reference Emitter`. `midi endpoint <id> monitor -c capture.txt -n` captures every UMP from auto-emit. Cross-check the EMIT log on UART against the captured `.txt` file; the bytes should be identical.
+**Linux**: any UMP-aware logger captures the auto-emit on plug. **Windows**: `midi enumerate midi-services-endpoints -i` lists `RP2040 UMP Bench MIDI 2.0`. `midi endpoint <id> monitor -c capture.txt -n` captures every UMP from auto-emit. Cross-check the EMIT log on UART against the captured `.txt` file; the bytes should be identical.
 
 ## Spec coverage
 
@@ -75,7 +75,7 @@ Full UMP catalog. 101 of 101 entries implemented.
 | 0xD Flex Data | M2-104-UM §7.5 | 0..34 | `sendTempo`, `sendTimeSignature`, `sendKeySignature`, `sendMetronome`, `sendChordName`, `sendFlexText` |
 | 0xF UMP Stream | M2-104-UM §7.1 | 82..93 | `sendEndpointInfo`, `sendDeviceIdentity`, `sendEndpointName*`, `sendProductInstanceId*`, `sendStreamConfigNotify`, `sendFbInfo`, `sendFbName*`, `sendStartOfClip`, `sendEndOfClip` |
 
-MIDI-CI: minimum surface (Endpoint Discovery + Device Identity). Profile, PE, and PI subsystems are not exercised.
+MIDI-CI: Discovery + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry replies. Profiles are not registered.
 
 ## License
 

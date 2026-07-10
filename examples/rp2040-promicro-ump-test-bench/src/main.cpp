@@ -38,7 +38,7 @@
 #include "pico/time.h"
 #include "bsp/board_api.h"
 
-#include "rp2040_midi2.h"
+#include "board_midi2.h"
 #include "catalog.h"
 #if BENCH_AUTOFLOOD
 #include "gabarito_battery.h"   // gab::kBattery: the musical interpretation battery
@@ -51,7 +51,7 @@ using namespace midi2;
  *--------------------------------------------------------------------*/
 static const uint8_t  kMfrId[3]      = {0x7D, 0x00, 0x00};  // educational prefix
 static const uint16_t kFamilyId      = 0x0001;
-static const uint16_t kModelId       = 0x0001;
+static const uint16_t kModelId       = 0x000D;
 static const uint32_t kVersion       = 0x00010000;
 
 /*--------------------------------------------------------------------+
@@ -84,7 +84,7 @@ static BenchState       g_state{};
  * UMP Stream Discovery is answered by the TinyUSB built-in responder
  * (PR #3738): Endpoint Name from CFG_TUD_MIDI2_EP_NAME, FB direction +
  * group span from tud_midi2_gtb_desc_cb, FB name from tud_midi2_fb_name_cb
- * (in rp2040_midi2.cpp). No app-side stream responder is installed; Device
+ * (in board_midi2.cpp). No app-side stream responder is installed; Device
  * Identity is carried by MIDI-CI Discovery (SysEx) via ci.begin.
  *--------------------------------------------------------------------*/
 
@@ -135,7 +135,7 @@ static constexpr uint8_t kBG = 1, kBCh = 0;
 static uint32_t g_seq = 0;
 
 static inline uint32_t af_now() { return (uint32_t)(time_us_64() / 1000ULL); }
-static void af_pump(midi2::m2device& m) { rp2040_midi2::task(m); }
+static void af_pump(midi2::m2device& m) { midi2_board::task(m); }
 
 static void af_hold(midi2::m2device& m, uint32_t ms) {
     const uint32_t t0 = af_now();
@@ -190,17 +190,27 @@ int main() {
     m2device midi;
     m2ci     ci(midi);
 
-    rp2040_midi2::init(midi, ci);
+    midi2_board::init(midi, ci);
     midi.begin();
     midi.enableJRHeartbeat(500);
     ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
+    ci.addPropertyStatic("DeviceInfo",
+        "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[13,0],\"versionId\":[0,0,4,0],"
+         "\"manufacturer\":\"midi2.diy\","
+         "\"family\":\"RP2040\","
+         "\"model\":\"RP2040 UMP Bench MIDI 2.0\","
+         "\"version\":\"0.0.1\"}");
+    ci.addPropertyStatic("ChannelList",
+        "[{\"title\":\"Main\",\"channel\":1}]");
+    ci.addPropertyStatic("ProgramList",
+        "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
 
     install_triggers(midi);
 
     std::printf("[ready] entering main loop, waiting for mount + alt=1\r\n");
 
     while (true) {
-        rp2040_midi2::task(midi);
+        midi2_board::task(midi);
         board_led_write(midi.isMounted());
 
         const bool     ready = midi.isMounted() && midi.altSetting() == 1;

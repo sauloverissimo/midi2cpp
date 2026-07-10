@@ -36,6 +36,16 @@ static const char     kDeviceInfo[] =
 static const char     kChannelList[] =
     "[{\"title\":\"Main\",\"channel\":1}]";
 
+
+// Boot MUID entropy: cycle counter + ADC noise (no TRNG on i.MX RT1062).
+static uint32_t plat_rng() {
+    uint32_t s = micros();
+    for (int i = 0; i < 8; ++i) {
+        s = (s << 3) ^ analogRead(A0) ^ ARM_DWT_CYCCNT;
+    }
+    return s;
+}
+
 void setup()
 {
 	backend.begin();
@@ -57,6 +67,7 @@ void setup()
 	midi.sendFbNameUpdate(0, "Main");
 
 	// MIDI-CI: identity + profile + 2 properties
+	ci.setRngFn(plat_rng);
 	ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
 	ci.addProfile(kProfileGm);
 	ci.addPropertyStatic("DeviceInfo",  kDeviceInfo);

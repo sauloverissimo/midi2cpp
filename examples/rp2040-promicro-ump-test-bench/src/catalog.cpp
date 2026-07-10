@@ -2,7 +2,7 @@
  * catalog.cpp, deterministic UMP catalog (101 entries).
  *
  * Each entry follows the same shape:
- *   1. issue the midi.sendXxx() call (or rp2040_midi2::pumpRaw for the
+ *   1. issue the midi.sendXxx() call (or midi2_board::pumpRaw for the
  *      five entries that have no midi2cpp sender: Endpoint Discovery,
  *      Stream Config Request, FB Discovery, plus the two intentional
  *      edge cases),
@@ -27,7 +27,7 @@
  * be consulted on the host side to verify.
  */
 #include "catalog.h"
-#include "rp2040_midi2.h"
+#include "board_midi2.h"
 
 #include <cstdio>
 #include <cstring>
@@ -113,7 +113,7 @@ void emit_set_key_sig(uint8_t idx, midi2::m2device& /*midi*/,
     uint32_t w[4];
     midi2_msg_key_sig_full(w, kCatalogGroup, /*address*/ 0x01, /*channel*/ 0,
                             sf, tonic, key_type);
-    rp2040_midi2::pumpRaw(w, 4);
+    midi2_board::pumpRaw(w, 4);
     log_words(idx, label, w, 4);
 }
 
@@ -256,7 +256,7 @@ void emit_sysex7_one(uint8_t idx, midi2::m2device& midi,
     // two together internally.
     uint32_t w[4] = {0, 0, 0, 0};
     midi2_msg_sysex7_packet(w, kCatalogGroup, status_nibble_high, data, len);
-    rp2040_midi2::pumpRaw(w, 2);
+    midi2_board::pumpRaw(w, 2);
     log_words(idx, label, w, 2);
 }
 
@@ -266,7 +266,7 @@ void emit_sysex8_one(uint8_t idx, midi2::m2device& midi,
                      const char* label) {
     uint32_t w[4] = {0, 0, 0, 0};
     midi2_msg_sysex8_packet(w, kCatalogGroup, status_nibble_high, stream_id, data, len);
-    rp2040_midi2::pumpRaw(w, 4);
+    midi2_board::pumpRaw(w, 4);
     log_words(idx, label, w, 4);
 }
 
@@ -280,7 +280,7 @@ void emit_endpoint_name_text(uint8_t idx, const char* text, const char* label) {
     if (total <= 14) {
         uint32_t w[4];
         midi2_msg_stream_endpoint_name(w, /*format*/ 0, bytes, (uint8_t)total);
-        rp2040_midi2::pumpRaw(w, 4);
+        midi2_board::pumpRaw(w, 4);
         log_words(idx, label, w, 4);
         return;
     }
@@ -290,7 +290,7 @@ void emit_endpoint_name_text(uint8_t idx, const char* text, const char* label) {
         uint8_t  format = (off == 0) ? 1 : ((off + chunk) >= total ? 3 : 2);
         uint32_t w[4];
         midi2_msg_stream_endpoint_name(w, format, bytes + off, chunk);
-        rp2040_midi2::pumpRaw(w, 4);
+        midi2_board::pumpRaw(w, 4);
         log_words(idx, label, w, 4);
         off = (uint16_t)(off + chunk);
     }
@@ -302,7 +302,7 @@ void emit_product_id_text(uint8_t idx, const char* text, const char* label) {
     if (total <= 14) {
         uint32_t w[4];
         midi2_msg_stream_product_id(w, /*format*/ 0, bytes, (uint8_t)total);
-        rp2040_midi2::pumpRaw(w, 4);
+        midi2_board::pumpRaw(w, 4);
         log_words(idx, label, w, 4);
         return;
     }
@@ -312,7 +312,7 @@ void emit_product_id_text(uint8_t idx, const char* text, const char* label) {
         uint8_t  format = (off == 0) ? 1 : ((off + chunk) >= total ? 3 : 2);
         uint32_t w[4];
         midi2_msg_stream_product_id(w, format, bytes + off, chunk);
-        rp2040_midi2::pumpRaw(w, 4);
+        midi2_board::pumpRaw(w, 4);
         log_words(idx, label, w, 4);
         off = (uint16_t)(off + chunk);
     }
@@ -324,7 +324,7 @@ void emit_fb_name_text(uint8_t idx, uint8_t fb_num, const char* text, const char
     if (total <= 13) {
         uint32_t w[4];
         midi2_msg_stream_fb_name(w, /*format*/ 0, fb_num, bytes, (uint8_t)total);
-        rp2040_midi2::pumpRaw(w, 4);
+        midi2_board::pumpRaw(w, 4);
         log_words(idx, label, w, 4);
         return;
     }
@@ -334,7 +334,7 @@ void emit_fb_name_text(uint8_t idx, uint8_t fb_num, const char* text, const char
         uint8_t  format = (off == 0) ? 1 : ((off + chunk) >= total ? 3 : 2);
         uint32_t w[4];
         midi2_msg_stream_fb_name(w, format, fb_num, bytes + off, chunk);
-        rp2040_midi2::pumpRaw(w, 4);
+        midi2_board::pumpRaw(w, 4);
         log_words(idx, label, w, 4);
         off = (uint16_t)(off + chunk);
     }
@@ -670,7 +670,7 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
             midi2_msg_stream_endpoint_discovery(w, /*ump_ver_major*/ 1,
                                                  /*ump_ver_minor*/ 1,
                                                  /*filter*/ 0xFF);
-            rp2040_midi2::pumpRaw(w, 4);
+            midi2_board::pumpRaw(w, 4);
             log_words(82, "stream endpoint_discovery filter=0xFF", w, 4);
         } break;
         case 83: {
@@ -702,7 +702,7 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
         case 87: {
             // Stream Configuration Request, no midi2cpp sender (host-side message).
             uint32_t w[4]; midi2_msg_stream_config_request(w, /*protocol*/ 0x02, false, false);
-            rp2040_midi2::pumpRaw(w, 4);
+            midi2_board::pumpRaw(w, 4);
             log_words(87, "stream config_request protocol=2", w, 4);
         } break;
         case 88: {
@@ -713,7 +713,7 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
         case 89: {
             // FB Discovery, no midi2cpp sender (host-side message).
             uint32_t w[4]; midi2_msg_stream_fb_discovery(w, /*fb_num*/ 0xFF, /*filter*/ 0xFF);
-            rp2040_midi2::pumpRaw(w, 4);
+            midi2_board::pumpRaw(w, 4);
             log_words(89, "stream fb_discovery fb=0xFF filter=0xFF", w, 4);
         } break;
         case 90: {
@@ -779,7 +779,7 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
             uint32_t w[4];
             midi2_msg_tempo(w, kCatalogGroup, /*ten_ns*/ 50000000u);
             w[2] |= (UINT32_C(1) << 31);
-            rp2040_midi2::pumpRaw(w, 4);
+            midi2_board::pumpRaw(w, 4);
             log_words(99, "edge: set_tempo with reserved bit set", w, 4);
         } break;
         case 100: {
@@ -792,7 +792,7 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
                  | ((uint32_t)0x00 << 16)            // channel 0
                  | ((uint32_t)0x00 << 8)             // statusBank 0x00
                  |  (uint32_t)0x42;                  // status 0x42 (unassigned)
-            rp2040_midi2::pumpRaw(w, 4);
+            midi2_board::pumpRaw(w, 4);
             log_words(100, "edge: flex_data bank=0x00 status=0x42", w, 4);
         } break;
 

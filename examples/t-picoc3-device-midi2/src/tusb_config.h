@@ -1,5 +1,5 @@
 /*
- * tusb_config.h — TinyUSB configuration for t-picoc3-device-midi2 (LilyGO T-PicoC3, RP2040 side)
+ * tusb_config.h: TinyUSB configuration for t-picoc3-device-midi2 (RP2040)
  *
  * Device-only MIDI 2.0 class. Full speed (RP2040 native USB).
  */

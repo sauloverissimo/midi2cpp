@@ -1,5 +1,5 @@
 /*
- * tusb_config.h, TinyUSB configuration for t-display-s3-midi2.
+ * tusb_config.h: TinyUSB configuration for t-display-s3-midi2 (ESP32-S3)
  *
  * Device-only MIDI 2.0 class. Full speed (ESP32-S3 USB-OTG internal PHY,
  * single USB-C port on the LilyGo T-Display S3).

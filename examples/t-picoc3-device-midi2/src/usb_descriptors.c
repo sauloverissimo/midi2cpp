@@ -1,5 +1,5 @@
 /*
- * usb_descriptors.c — USB Device descriptors for t-picoc3-device-midi2.
+ * usb_descriptors.c: USB Device descriptors for t-picoc3-device-midi2.
  *
  * Identification:
  *   USB VID:PID         0xCAFE:0x4079   (TinyUSB educational VID + project PID)
@@ -78,8 +78,8 @@ enum {
 static char const *string_desc_arr[] = {
     (const char[]){0x09, 0x04},   /* 0: English (0x0409)               */
     "midi2.diy",  /* 1: Manufacturer                   */
-    "TPicoC3",                    /* 2: Product                        */
-    NULL,                         /* 3: Serial — computed at runtime   */
+    "LILYGO T-PicoC3 MIDI 2.0",                    /* 2: Product                        */
+    NULL,                         /* 3: Serial: computed at runtime   */
 };
 
 static uint16_t _desc_str[32 + 1];

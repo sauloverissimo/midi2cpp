@@ -7,7 +7,7 @@
  *
  * Forwards UMP between the two so the board acts as a transparent
  * MIDI 2.0 bridge: the upstream device shows up on the PC as a 16-group
- * MIDI 2.0 endpoint named "waveshare-RP2350-USB-A bridge".
+ * MIDI 2.0 endpoint named "RP2350 USB-A Bridge MIDI 2.0".
  *
  * Hardware modification required: desolder R13 (1.5 kOhm pull-up on
  * the USB-A D+ line) before the host port enumerates correctly.
@@ -84,8 +84,8 @@ extern "C" {
  * (TinyUSB #3738); no NUM_FUNCTION_BLOCKS macro needed. */
 #define CFG_TUD_MIDI2_NUM_GROUPS            16
 
-#define CFG_TUD_MIDI2_EP_NAME               "waveshare-RP2350-USB-A bridge"
-#define CFG_TUD_MIDI2_PRODUCT_ID            "feather-bridge"
+#define CFG_TUD_MIDI2_EP_NAME               "RP2350 USB-A Bridge MIDI 2.0"
+#define CFG_TUD_MIDI2_PRODUCT_ID            "rp2350-usb-a-bridge-0001"
 
 /*--------------------------------------------------------------------+
  * Host side (USB-A ← upstream MIDI 2.0 device)

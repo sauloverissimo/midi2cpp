@@ -1,5 +1,5 @@
 /*
- * tusb_config.h, TinyUSB configuration for
+ * tusb_config.h: TinyUSB configuration for weact-STM32F411CEU6-blackpill-device-midi2 (STM32F411)
  * weact-STM32F411CEU6-blackpill-device-midi2.
  *
  * Device-only MIDI 2.0 class. Full speed (STM32F411 OTG_FS peripheral,

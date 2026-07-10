@@ -1,5 +1,5 @@
 /*
- * tusb_config.h — TinyUSB configuration for rp2040-midi2 (RP2040)
+ * tusb_config.h: TinyUSB configuration for rp2040-midi2 (RP2040)
  *
  * Device-only MIDI 2.0 class. Full speed (RP2040 native USB).
  */
@@ -68,7 +68,6 @@ extern "C" {
 /* Product Instance Id reported by the #3738 built-in Stream responder. */
 #define CFG_TUD_MIDI2_PRODUCT_ID           "rp2040-midi2-showcase-0001"
 
-/* TX buffer sized for short bursts of UMP words during playback. */
 
 #ifdef __cplusplus
 }

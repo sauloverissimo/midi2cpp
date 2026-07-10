@@ -12,8 +12,8 @@ USB MIDI 2.0 device on the [**WeAct RA4M1 64-Pin Core Board**](https://github.co
 | Field | Value |
 |---|---|
 | VID:PID | `cafe:40F2` (development-only) |
-| Product (`iProduct`) | `WeActRA4M1` |
-| Manufacturer | `github.com/sauloverissimo` |
+| Product (`iProduct`) | `WeAct RA4M1 MIDI 2.0` |
+| Manufacturer | `midi2.diy` |
 | UMP Endpoint Name | `WeAct RA4M1 MIDI 2.0` |
 | Product Instance ID | `WeActRA4M1-showcase-0001` |
 | MIDI-CI Manufacturer | `7D 00 00` (educational prefix) |
@@ -66,7 +66,7 @@ The RA4M1 USBFS transceiver runs off an on-chip LDO gated by `USBMC.VDCEN`, enab
 
 ## Spec coverage
 
-Minimal core. No SysEx, no Profile Configuration, no Property Exchange, no Process Inquiry, due to the RA4M1's 32 KB SRAM budget. Same scope as the SAMD21 sibling [`xiao-samd21-midi2`](../xiao-samd21-midi2/).
+Minimal core plus the standard MIDI-CI surface (Discovery, Property Exchange with DeviceInfo/ChannelList/ProgramList, Process Inquiry); static resources live in flash, so the RA4M1 32 KB SRAM budget is unaffected. Same scope as the SAMD21 sibling [`xiao-samd21-midi2`](../xiao-samd21-midi2/).
 
 | UMP MT | Spec | Notes |
 |---|---|---|
@@ -74,7 +74,7 @@ Minimal core. No SysEx, no Profile Configuration, no Property Exchange, no Proce
 | 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | NoteOn/Off (16-bit velocity + attribute), per-note pitch bend, per-note controller, 32-bit CC, channel pitch bend, RPN/NRPN, Program + Bank, poly pressure |
 | 0xF UMP Stream | M2-104-UM §10 | Endpoint Discovery, Device Identity, Endpoint Name, Product Instance ID, Stream Config Notify, FB Info, FB Name |
 
-MIDI-CI: Discovery responder only. Not covered: SysEx7/8 (no reassembly buffers), Profile Configuration / Property Exchange / Process Inquiry (out of scope for this recipe), MIDI 1.0 emission (Alt 0 present in the descriptor for compatibility but unused).
+MIDI-CI: Discovery + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry. Not covered: SysEx7/8 demo emission, MIDI 1.0 emission (Alt 0 present in the descriptor for compatibility but unused).
 
 ## Showcase
 

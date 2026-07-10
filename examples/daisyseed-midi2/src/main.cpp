@@ -13,57 +13,115 @@
 #include "daisy_seed.h"
 #include "daisyseed_midi2.h"
 
+// DBG-RX7 instrumentation (temporary): device RX diagnostics from libDaisy,
+// exfiltrated over MIDI TX (CC 110-114 on channel 15) so the Workbench can
+// read them. Remove once the RX bug is pinpointed.
+extern "C" {
+extern volatile uint32_t usbd_dbg_dataout_count;  // OUT packets reaching USB class
+extern volatile uint32_t usbd_dbg_rxcb_count;     // ReceiveCallback invocations
+extern volatile uint32_t usbd_dbg_last_rxlen;     // last RxLength
+extern volatile uint8_t  usbd_dbg_last_alt;       // usbd_midi2_alt_setting at DataOut
+extern volatile uint8_t  usbd_dbg_rxactive;       // RxActive() at last callback
+extern volatile uint32_t usbd_dbg_cdcrecv_count;  // CDC_Receive_FS invocations
+extern volatile uint8_t  usbd_dbg_cb_is_dummy;    // rx_callback_fs == dummy?
+extern volatile uint32_t usbd_dbg_preprecv_count; // USBD_LL_PrepareReceive (OUT re-arm) calls
+extern volatile uint8_t  usbd_dbg_preprecv_status;// last HAL_PCD_EP_Receive status (0/1/2/3)
+}
+
 static daisy::DaisySeed   hw;
 static daisyseed::Backend backend;
 static midi2::m2ci        ci(backend.device());
 
 static const uint8_t  kMfrId[3]     = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId     = 0x0001;
-static const uint16_t kModelId      = 0x0001;
+static const uint16_t kModelId      = 0x0003;
 static const uint32_t kVersion      = 0x00010000;
 static const uint8_t  kProfileGm[5] = {0x7E, 0x00, 0x00, 0x01, 0x00};
 static const char     kDeviceInfo[] =
-    "{\"manufacturer\":\"github.com/sauloverissimo\","
-    "\"family\":\"Daisy Seed\","
-    "\"model\":\"Daisy Seed\","
-    "\"version\":\"1.0.0\"}";
+    "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[3,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
+    "\"family\":\"Daisy\","
+    "\"model\":\"Daisy Seed MIDI 2.0\","
+    "\"version\":\"0.0.1\"}";
 static const char     kChannelList[] =
-    "{\"channelList\":[{\"title\":\"Main\",\"channel\":1}]}";
+    "[{\"title\":\"Main\",\"channel\":1}]";
 
 int main(void) {
     hw.Init();
     backend.begin();
     auto& midi = backend.device();
 
-    // UMP Stream identity (M2-104-UM Endpoint Discovery)
-    midi.sendEndpointInfo(/*umpVerMajor*/ 1, /*umpVerMinor*/ 1,
-                          /*staticFb*/ true, /*numFb*/ 1,
-                          /*midi2*/ true, /*midi1*/ true,
-                          /*rxJr*/ false, /*txJr*/ true);
+    // UMP Stream responder (M2-104-UM Endpoint/FB Discovery). libDaisy has no
+    // built-in Stream responder, so the app must answer the host's discovery
+    // requests; an unanswered discovery leaves the endpoint info at defaults
+    // and initiators skip MIDI-CI entirely.
+    midi.onEndpointDiscovery([&midi](uint8_t filter) {
+        if (filter & 0x01)
+            midi.sendEndpointInfo(/*umpVerMajor*/ 1, /*umpVerMinor*/ 1,
+                                  /*staticFb*/ true, /*numFb*/ 1,
+                                  /*midi2*/ true, /*midi1*/ true,
+                                  /*rxJr*/ false, /*txJr*/ true);
+        if (filter & 0x02) midi.sendDeviceIdentity(kMfrId, kFamilyId, kModelId, kVersion);
+        if (filter & 0x04) midi.sendEndpointNameUpdate("DaisySeed");
+        if (filter & 0x08) midi.sendProductInstanceIdUpdate("DaisySeed-showcase-0001");
+        if (filter & 0x10) midi.sendStreamConfigNotify(/*protocol*/ 0x02);
+    });
+    midi.onFbDiscovery([&midi](uint8_t fbNum, uint8_t filter) {
+        uint8_t target = (fbNum == 0xFF) ? 0 : fbNum;
+        if (target != 0) return;
+        if (filter & 0x01)
+            midi.sendFbInfo(/*active*/ true, /*fbNum*/ 0,
+                            /*direction*/ 3 /*Bidirectional*/,
+                            /*uiHint*/ 3 /*Bidirectional*/,
+                            /*firstGroup*/ 0, /*numGroups*/ 1,
+                            /*midiCiVer*/ 0x02, /*sysex8*/ false,
+                            /*protocol*/ 0x02);
+        if (filter & 0x02) midi.sendFbNameUpdate(0, "Main");
+    });
+    midi.onStreamConfigRequest([&midi](uint8_t protocol) {
+        midi.sendStreamConfigNotify(protocol);
+    });
+
+    // Unsolicited identity at boot for hosts that captured enumeration early.
+    midi.sendEndpointInfo(1, 1, true, 1, true, true, false, true);
     midi.sendDeviceIdentity(kMfrId, kFamilyId, kModelId, kVersion);
     midi.sendEndpointNameUpdate("DaisySeed");
     midi.sendProductInstanceIdUpdate("DaisySeed-showcase-0001");
-    midi.sendFbInfo(/*active*/ true, /*fbNum*/ 0,
-                    /*direction*/ 3 /*Bidirectional*/,
-                    /*uiHint*/ 3 /*Bidirectional*/,
-                    /*firstGroup*/ 0, /*numGroups*/ 1,
-                    /*midiCiVer*/ 0, /*sysex8*/ false, /*protocol*/ 3);
+    midi.sendFbInfo(true, 0, 3, 3, 0, 1, /*midiCiVer*/ 0x02, false, /*protocol*/ 0x02);
     midi.sendFbNameUpdate(0, "Main");
 
     // MIDI-CI: identity + profile + 2 properties
+    // Boot MUID from the STM32H7 TRNG (initialized by System::Init).
+    ci.setRngFn([]() -> uint32_t { return daisy::Random::GetValue(); });
     ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
     ci.addProfile(kProfileGm);
     ci.addPropertyStatic("DeviceInfo", kDeviceInfo);
     ci.addPropertyStatic("ChannelList", kChannelList);
     ci.setPropertySubscribable("ChannelList", true);
+    ci.addPropertyStatic("ProgramList", "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]");
 
     uint32_t last_demo = 0;
+    uint32_t last_dbg  = 0;
     uint8_t  demo_note = 60;
 
     for (;;) {
         backend.task();
 
         uint32_t now = daisy::System::GetNow();
+
+        // DBG-RX7: report device RX counters over MIDI (channel 15, CC 110-114)
+        if (now - last_dbg >= 1000) {
+            midi.sendCC(0, 15, 110, usbd_dbg_dataout_count);          // OUT reached class?
+            midi.sendCC(0, 15, 111, (uint32_t)usbd_dbg_last_alt);     // alt (0/1/0xFF)
+            midi.sendCC(0, 15, 112, usbd_dbg_rxcb_count);             // ReceiveCallback ran?
+            midi.sendCC(0, 15, 113, (uint32_t)usbd_dbg_rxactive);     // RxActive (0/1/0xFF)
+            midi.sendCC(0, 15, 114, usbd_dbg_last_rxlen);             // last RxLength
+            midi.sendCC(0, 15, 115, usbd_dbg_cdcrecv_count);          // CDC_Receive_FS count
+            midi.sendCC(0, 15, 116, (uint32_t)usbd_dbg_cb_is_dummy);  // callback == dummy?
+            midi.sendCC(0, 15, 117, usbd_dbg_preprecv_count);         // OUT re-arm (PrepareReceive) count
+            midi.sendCC(0, 15, 118, (uint32_t)usbd_dbg_preprecv_status);// last HAL EP_Receive status
+            last_dbg = now;
+        }
+
         if (now - last_demo >= 5000) {
             // 16-bit velocity NoteOn (MIDI 2.0), 200 ms sustain
             midi.sendNoteOn(/*group*/ 0, /*channel*/ 0, demo_note, 0xC000);

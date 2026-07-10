@@ -7,7 +7,7 @@
  * writes are atomic on the RP2040 (32-bit aligned, single store per
  * field); core1 samples a snapshot at the top of every frame, so a
  * torn read across two fields yields a one-frame visual glitch at
- * worst — never invalid state.
+ * worst: never invalid state.
  */
 #include "scene_display.h"
 #include "lgfx_user.h"
@@ -117,7 +117,7 @@ std::atomic<uint32_t> g_h_delta{0};
 char                  g_i_property[24] = "";
 std::atomic<uint8_t>  g_i_subscribers{0};
 
-// Scene J — fade phase starts at 255, fades to 0 over ~1.5 s.
+// Scene J: fade phase starts at 255, fades to 0 over ~1.5 s.
 std::atomic<int16_t>  g_j_fade{0};
 std::atomic<uint32_t> g_j_started_ms{0};
 
@@ -250,7 +250,7 @@ void draw_footer(Scene s, float progress) {
 // Scene renderers
 // --------------------------------------------------------------------------
 
-// A — Flex Data: tempo + time sig + chord + animated metronome.
+// A: Flex Data: tempo + time sig + chord + animated metronome.
 void render_a(float local_phase) {
     g_canvas.fillRect(0, kMainY, kScreenW, kMainH, kBg);
 
@@ -286,7 +286,7 @@ void render_a(float local_phase) {
     g_canvas.fillRect((kScreenW - bar_w) / 2, kMainY + kMainH - 8, bar_w, 4, kAccentA);
 }
 
-// B — Per-Note PB: piano key + animated sine vibrato.
+// B: Per-Note PB: piano key + animated sine vibrato.
 void render_b(float local_phase) {
     g_canvas.fillRect(0, kMainY, kScreenW, kMainH, kBg);
 
@@ -350,7 +350,7 @@ void render_b(float local_phase) {
     g_canvas.drawString("Per-Note PB  5 Hz", 6, kMainY + kMainH - 2);
 }
 
-// C — Resolution: 4 vertical bars (CC32, PB32, Poly, ChP) + tiny 7-bit ref.
+// C: Resolution: 4 vertical bars (CC32, PB32, Poly, ChP) + tiny 7-bit ref.
 void render_c(float /*local_phase*/) {
     g_canvas.fillRect(0, kMainY, kScreenW, kMainH, kBg);
 
@@ -394,7 +394,7 @@ void render_c(float /*local_phase*/) {
     g_canvas.drawString(top, kScreenW - 6, kMainY + 2);
 }
 
-// D — Program + Bank: huge program number + bank below.
+// D: Program + Bank: huge program number + bank below.
 void render_d(float /*local_phase*/) {
     g_canvas.fillRect(0, kMainY, kScreenW, kMainH, kBg);
 
@@ -416,7 +416,7 @@ void render_d(float /*local_phase*/) {
     g_canvas.drawString(buf, kScreenW / 2, kMainY + 76);
 }
 
-// E — RPN / NRPN: 4 quadrants, last triggered glows accent colour.
+// E: RPN / NRPN: 4 quadrants, last triggered glows accent colour.
 void render_e(float local_phase) {
     g_canvas.fillRect(0, kMainY, kScreenW, kMainH, kBg);
 
@@ -455,7 +455,7 @@ void render_e(float local_phase) {
     }
 }
 
-// F — Note Attribute: piano key E4 highlighted + microtonal arrow + cents.
+// F: Note Attribute: piano key E4 highlighted + microtonal arrow + cents.
 void render_f(float local_phase) {
     g_canvas.fillRect(0, kMainY, kScreenW, kMainH, kBg);
 
@@ -500,7 +500,7 @@ void render_f(float local_phase) {
                         kScreenW / 2, kMainY + kMainH - 2);
 }
 
-// G — SysEx7: scrolling hex bytes.
+// G: SysEx7: scrolling hex bytes.
 void render_g(float local_phase) {
     g_canvas.fillRect(0, kMainY, kScreenW, kMainH, kBg);
 
@@ -530,7 +530,7 @@ void render_g(float local_phase) {
                         6, kMainY + kMainH - 6);
 }
 
-// H — Delta Clockstamp: timeline with tick marks + delta marker.
+// H: Delta Clockstamp: timeline with tick marks + delta marker.
 void render_h(float /*local_phase*/) {
     g_canvas.fillRect(0, kMainY, kScreenW, kMainH, kBg);
 
@@ -561,7 +561,7 @@ void render_h(float /*local_phase*/) {
     g_canvas.drawString(buf, kScreenW / 2, kMainY + kMainH - 4);
 }
 
-// I — PE Notify: radiating wave + property + subscribers.
+// I: PE Notify: radiating wave + property + subscribers.
 void render_i(float local_phase) {
     g_canvas.fillRect(0, kMainY, kScreenW, kMainH, kBg);
 
@@ -590,7 +590,7 @@ void render_i(float local_phase) {
     g_canvas.drawString(buf, 90, kMainY + 74);
 }
 
-// J — End of Clip: fade-to-black + centered label.
+// J: End of Clip: fade-to-black + centered label.
 void render_j(float /*local_phase*/) {
     int16_t fade = g_j_fade.load();
     if (fade < 0) fade = 0;
