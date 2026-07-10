@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-/* Auto-generated from midi2 v0.6.1 (reproducible: no timestamp)
+/* Auto-generated from midi2 v0.7.0 (reproducible: no timestamp)
  * https://github.com/sauloverissimo/midi2
  *
  * Portable MIDI 2.0 library (C99, zero dependencies)
@@ -56,7 +56,6 @@ extern "C" {
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI 2.0 UMP (M2-104-UM v1.1.2, Nov 2024)
- * Version: 0.3.0
  */
 
 
@@ -704,7 +703,7 @@ static inline void midi2_msg_sysex7_packet(uint32_t *w, uint8_t group,
  *
  * Word: [MT:4][reserved:4][status:4][reserved:4][timestamp:16]
  *
- * Utility messages are Groupless in spec v1.1.2 — the former Group
+ * Utility messages are Groupless in spec v1.1.2; the former Group
  * field (bits [27:24]) is now Reserved and shall be zero.
  *
  * NOOP        status = 0x0, timestamp = 0
@@ -1334,7 +1333,6 @@ static inline bool midi2_msg_cable_event_to_ump(uint32_t cable_event,
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI-CI (M2-101-UM v1.2, Jun 2023)
- * Version: 0.3.0
  */
 
 
@@ -2127,7 +2125,6 @@ static inline uint16_t midi2_ci_build_pi_midi_report_end(
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI 2.0 UMP (M2-104-UM v1.1.2, Nov 2024)
- * Version: 0.3.0
  */
 
 
@@ -2408,7 +2405,6 @@ void midi2_dispatch_feed(const uint32_t *words, uint8_t word_count, void *contex
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI 2.0 UMP (M2-104-UM v1.1.2, Nov 2024)
- * Version: 0.3.0
  */
 
 
@@ -2572,7 +2568,6 @@ void midi2_proc_send_sysex8(uint8_t group, uint8_t stream_id,
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI 2.0 UMP (M2-104-UM v1.1.2, Nov 2024)
- * Version: 0.3.0
  */
 
 
@@ -2656,7 +2651,6 @@ bool midi2_conv_feed(midi2_conv_state *state, uint8_t byte);
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI-CI (M2-101-UM v1.2, Jun 2023)
- * Version: 0.3.0
  */
 
 
@@ -2882,7 +2876,6 @@ bool midi2_ci_dispatch_feed(midi2_ci_dispatch *dp, uint8_t group,
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI-CI (M2-101-UM v1.2, Jun 2023)
- * Version: 0.3.0
  */
 
 
@@ -3196,7 +3189,6 @@ bool midi2_ci_process_sysex(midi2_ci_state *state,
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI 2.0 UMP (M2-104-UM v1.1.2, Nov 2024)
- * Version: 0.3.0
  */
 
 
@@ -3804,7 +3796,6 @@ void midi2_dispatch_feed(const uint32_t *words, uint8_t word_count, void *contex
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI 2.0 UMP (M2-104-UM v1.1.2, Nov 2024)
- * Version: 0.3.0
  */
 
 
@@ -4241,7 +4232,6 @@ void midi2_proc_send_sysex8(uint8_t group, uint8_t stream_id,
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI 2.0 UMP (M2-104-UM v1.1.2, Nov 2024)
- * Version: 0.3.0
  */
 
 
@@ -4445,7 +4435,6 @@ bool midi2_conv_feed(midi2_conv_state *state, uint8_t byte) {
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI-CI (M2-101-UM v1.2, Jun 2023)
- * Version: 0.3.0
  */
 
 
@@ -4791,7 +4780,6 @@ bool midi2_ci_dispatch_feed(midi2_ci_dispatch *dp, uint8_t group,
  * https://github.com/sauloverissimo/midi2
  *
  * Spec: MIDI-CI (M2-101-UM v1.2, Jun 2023)
- * Version: 0.3.0
  */
 
 
@@ -5254,6 +5242,21 @@ static const char *ci_pe_resource(const uint8_t *hdr, uint16_t hdr_len,
   return NULL;
 }
 
+/* Find a registered property whose name matches the requested resource. */
+static const midi2_ci_property *ci_pe_find_property(const midi2_ci_state *state,
+                                                       const char *res,
+                                                       uint16_t res_len) {
+  uint8_t i;
+  for (i = 0; i < state->property_count; i++) {
+    const char *name = state->properties[i].name;
+    if (name != NULL && (uint16_t)strlen(name) == res_len
+        && memcmp(name, res, res_len) == 0) {
+      return &state->properties[i];
+    }
+  }
+  return NULL;
+}
+
 /* Build the built-in ResourceList body: a JSON array of {"resource":"NAME"}
  * for every registered property. Emits only entries that fit whole, always
  * closing the array, so the result is valid JSON even when it overflows (a
@@ -5286,12 +5289,69 @@ static uint16_t ci_pe_build_resource_list(const midi2_ci_state *state,
   return p;
 }
 
+/* If body is a JSON array, count its top-level elements; returns 1 and sets
+ * *count. Returns 0 for a non-array body (e.g. the DeviceInfo object). String-
+ * and nesting-aware, so commas inside strings or nested objects/arrays are not
+ * counted. An empty array "[]" yields count 0. */
+static int ci_pe_array_count(const uint8_t *body, uint16_t len,
+                               uint16_t *count) {
+  uint16_t i = 0, n;
+  int depth = 0, in_str = 0;
+  *count = 0;
+  while (i < len && (body[i] == ' ' || body[i] == '\t'
+                     || body[i] == '\r' || body[i] == '\n')) i++;
+  if (i >= len || body[i] != '[') return 0;
+  for (i++; i < len && (body[i] == ' ' || body[i] == '\t'
+                        || body[i] == '\r' || body[i] == '\n'); i++) {}
+  if (i < len && body[i] == ']') return 1;  /* empty array -> 0 */
+  n = 1;                                     /* at least one element */
+  for (; i < len; i++) {
+    uint8_t c = body[i];
+    if (in_str) {
+      if (c == '\\') { i++; continue; }      /* skip escaped char */
+      if (c == '"') in_str = 0;
+      continue;
+    }
+    if (c == '"') in_str = 1;
+    else if (c == '{' || c == '[') depth++;
+    else if (c == '}') depth--;
+    else if (c == ']') { if (depth == 0) break; depth--; }
+    else if (c == ',' && depth == 0) n++;
+  }
+  *count = n;
+  return 1;
+}
+
+/* Build the success header: {"status":200} or, for a list resource,
+ * {"status":200,"totalCount":N}. totalCount is required by M2-105 for
+ * paginable resources (the Workbench warns without it). Returns bytes written;
+ * buf must hold at least CI_PE_OK_HDR_MAX bytes. */
+#define CI_PE_OK_HDR_MAX 40
+static uint16_t ci_pe_ok_header(uint8_t *buf, int has_count, uint16_t count) {
+  static const char HEAD[]  = "{\"status\":200";
+  static const char TOTAL[] = ",\"totalCount\":";
+  uint16_t p = 0, k;
+  for (k = 0; k < (uint16_t)(sizeof(HEAD) - 1); k++) buf[p++] = (uint8_t)HEAD[k];
+  if (has_count) {
+    uint8_t tmp[5];
+    uint8_t t = 0;
+    for (k = 0; k < (uint16_t)(sizeof(TOTAL) - 1); k++) buf[p++] = (uint8_t)TOTAL[k];
+    if (count == 0) { buf[p++] = '0'; }
+    else {
+      while (count > 0) { tmp[t++] = (uint8_t)('0' + (count % 10)); count /= 10; }
+      while (t > 0)     { buf[p++] = tmp[--t]; }
+    }
+  }
+  buf[p++] = '}';
+  return p;
+}
+
 /*--------------------------------------------------------------------+
  * PE Get handler -- uses midi2_ci_build_pe_get_reply
  *
  * Matches the requested resource by name. Built-in "ResourceList" enumerates
  * the registered resources. Unknown resource -> {"status":404}. Every reply
- * carries a non-empty header.
+ * carries a non-empty header; list resources also carry "totalCount".
  *--------------------------------------------------------------------*/
 static void ci_handle_pe_get(midi2_ci_state *state, uint8_t group,
                                const uint8_t *data, uint16_t length) {
@@ -5311,13 +5371,20 @@ static void ci_handle_pe_get(midi2_ci_state *state, uint8_t group,
   uint8_t reply[CI_PE_REPLY_MAX];
   uint16_t reply_len;
 
-  /* Built-in ResourceList: enumerate the registered resources. */
-  if (res != NULL && res_len == 12 && memcmp(res, "ResourceList", 12) == 0) {
+  /* Built-in ResourceList: enumerate the registered resources. An
+   * app-registered "ResourceList" property takes precedence (served by the
+   * named lookup below), so devices can publish entries that carry a schema
+   * for custom X- resources, as M2-105 requires. */
+  if (res != NULL && res_len == 12 && memcmp(res, "ResourceList", 12) == 0
+      && !ci_pe_find_property(state, res, res_len)) {
     uint8_t body[CI_PE_BODY_MAX];
     uint16_t body_len = ci_pe_build_resource_list(state, body, sizeof(body));
+    uint8_t hdr[CI_PE_OK_HDR_MAX];
+    uint16_t total = 0;
+    (void)ci_pe_array_count(body, body_len, &total);
     reply_len = midi2_ci_build_pe_get_reply(
         reply, CI_RESPONDER_VERSION, state->muid, src_muid, request_id,
-        (const uint8_t *)PE_HDR_OK, (uint16_t)(sizeof(PE_HDR_OK) - 1),
+        hdr, ci_pe_ok_header(hdr, 1, total),
         1, 1, body, body_len);
     ci_send(state, group, reply, reply_len);
     return;
@@ -5338,12 +5405,18 @@ static void ci_handle_pe_get(midi2_ci_state *state, uint8_t group,
           : state->properties[i].static_value;
       if (value == NULL) break;  /* resource exists but has no value -> 404 */
 
+      uint8_t hdr[CI_PE_OK_HDR_MAX];
+      uint16_t total = 0;
+      int is_list;
       val_len = (uint16_t)strlen(value);
       if (val_len > CI_PE_BODY_MAX) val_len = CI_PE_BODY_MAX;
 
+      /* List resources (array body) carry totalCount; objects (DeviceInfo) do
+       * not. Count on the possibly-truncated body so it matches what is sent. */
+      is_list = ci_pe_array_count((const uint8_t *)value, val_len, &total);
       reply_len = midi2_ci_build_pe_get_reply(
           reply, CI_RESPONDER_VERSION, state->muid, src_muid, request_id,
-          (const uint8_t *)PE_HDR_OK, (uint16_t)(sizeof(PE_HDR_OK) - 1),
+          hdr, ci_pe_ok_header(hdr, is_list, total),
           1, 1, (const uint8_t *)value, val_len);
       ci_send(state, group, reply, reply_len);
       return;
@@ -5432,14 +5505,32 @@ static void ci_handle_pe_set(midi2_ci_state *state, uint8_t group,
  * installed RNG. Without an RNG the request is silently ignored (v0.2.3
  * behavior preserved).
  *--------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------+
+ * Re-announce with a fresh MUID (M2-101 §5.9 / Workbench ci1.2)
+ *
+ * After the MUID changes (Invalidate MUID or collision), the initiator
+ * only learns the new value if the device initiates a new Discovery.
+ * Silence here strands every open transaction on a dead MUID.
+ *--------------------------------------------------------------------*/
+static void ci_reannounce_discovery(midi2_ci_state *state, uint8_t group) {
+  if (state->write_fn == NULL) return;
+  uint8_t disc[40];
+  uint16_t len = midi2_ci_build_discovery(
+      disc, CI_RESPONDER_VERSION, state->muid,
+      state->manufacturer_id, state->family_id, state->model_id,
+      state->version_id, state->ci_cat, 512, 0);
+  ci_send(state, group, disc, len);
+}
+
 static void ci_handle_invalidate_muid(midi2_ci_state *state, uint8_t group,
                                          const uint8_t *data, uint16_t length) {
-  (void)group;
   if (length < 17) return;
   if (state->rng == NULL) return;
   uint32_t target = midi2_ci_get_target_muid(data);
   if (target != state->muid) return;
   midi2_ci_new_muid(state);
+  ci_reannounce_discovery(state, group);
 }
 
 /*--------------------------------------------------------------------+
@@ -5461,6 +5552,7 @@ static void ci_check_muid_collision(midi2_ci_state *state, uint8_t group,
   uint16_t len = midi2_ci_build_invalidate_muid(
       buf, CI_RESPONDER_VERSION, state->muid, old);
   ci_send(state, group, buf, len);
+  ci_reannounce_discovery(state, group);
 }
 
 /*--------------------------------------------------------------------+
@@ -5500,6 +5592,88 @@ static void ci_handle_process_inquiry(midi2_ci_state *state, uint8_t group,
 }
 
 /*--------------------------------------------------------------------+
+ * Profile Set On/Off handler
+ *
+ * The responder publishes fixed, always-on profiles: a listed profile cannot
+ * be turned off. Per the Profile Configuration rules a Set Profile On for a
+ * profile that can be turned on, and a Set Profile Off for a profile that
+ * cannot be turned off while currently on, both reply with a Profile Enabled
+ * Report. A Set message for a profile the responder does not publish is NAKed.
+ *--------------------------------------------------------------------*/
+static bool ci_profile_listed(const midi2_ci_state *state,
+                                const uint8_t profile_id[5]) {
+  uint8_t i;
+  for (i = 0; i < state->profile_count; i++) {
+    if (memcmp(state->profiles[i], profile_id, 5) == 0) return true;
+  }
+  return false;
+}
+
+static void ci_handle_set_profile(midi2_ci_state *state, uint8_t group,
+                                     const uint8_t *data, uint16_t length,
+                                     bool set_on) {
+  if (length < 18) return;  /* 13-byte header + 5-byte profile id */
+
+  uint8_t        device_id  = midi2_ci_get_device_id(data);
+  const uint8_t *profile_id = data + 13;
+
+  uint8_t  reply[32];
+  uint16_t reply_len;
+
+  if (!ci_profile_listed(state, profile_id)) {
+    ci_send_nak_not_supported(state, group, data,
+                              set_on ? MIDI2_CI_SET_PROFILE_ON
+                                     : MIDI2_CI_SET_PROFILE_OFF);
+    return;
+  }
+
+  /* Listed and always-on: enabled either way. Echo the requested channel count
+   * from a Set Profile On (v2, at offset 18); a Set Profile Off carries none. */
+  uint16_t num_channels = 0;
+  if (set_on && length >= 20) {
+    num_channels = midi2_ci_read_14(&data[18]);
+  }
+  reply_len = midi2_ci_build_profile_enabled(
+      reply, CI_RESPONDER_VERSION, state->muid, device_id,
+      profile_id, num_channels);
+  ci_send(state, group, reply, reply_len);
+}
+
+/*--------------------------------------------------------------------+
+ * Process Inquiry: MIDI Message Report handler
+ *
+ * The responder keeps no live channel state, so it reports no messages: it
+ * answers with a Reply to MIDI Message Report declaring an empty set, then
+ * End of MIDI Message Report. A request addressed to a single MIDI channel the
+ * device does not use is NAKed (channel not in use); Group (0x7E) and Function
+ * Block (0x7F) requests are answered once.
+ *--------------------------------------------------------------------*/
+static void ci_handle_pi_midi_report(midi2_ci_state *state, uint8_t group,
+                                        const uint8_t *data, uint16_t length) {
+  if (length < 18) return;  /* header + MDC + 4 bitmap bytes */
+
+  uint32_t src_muid  = midi2_ci_get_src_muid(data);
+  uint8_t  device_id = midi2_ci_get_device_id(data);
+
+  if (device_id <= 0x0F && device_id != 0x00) {
+    ci_send_nak_not_supported(state, group, data, MIDI2_CI_PI_MIDI_REPORT);
+    return;
+  }
+
+  uint8_t  buf[32];
+  uint16_t len;
+
+  len = midi2_ci_build_pi_midi_report_reply(
+      buf, CI_RESPONDER_VERSION, state->muid, src_muid, device_id,
+      /*system*/ 0, /*reserved*/ 0, /*channel_ctrl*/ 0, /*note_data*/ 0);
+  ci_send(state, group, buf, len);
+
+  len = midi2_ci_build_pi_midi_report_end(
+      buf, CI_RESPONDER_VERSION, state->muid, src_muid, device_id);
+  ci_send(state, group, buf, len);
+}
+
+/*--------------------------------------------------------------------+
  * Process incoming SysEx
  *--------------------------------------------------------------------*/
 bool midi2_ci_process_sysex(midi2_ci_state *state,
@@ -5524,6 +5698,14 @@ bool midi2_ci_process_sysex(midi2_ci_state *state,
       ci_handle_profile_inquiry(state, group, data, length);
       return true;
 
+    case MIDI2_CI_SET_PROFILE_ON:
+      ci_handle_set_profile(state, group, data, length, true);
+      return true;
+
+    case MIDI2_CI_SET_PROFILE_OFF:
+      ci_handle_set_profile(state, group, data, length, false);
+      return true;
+
     case MIDI2_CI_PE_CAPABILITY:
       ci_handle_pe_capability(state, group, data, length);
       return true;
@@ -5538,6 +5720,10 @@ bool midi2_ci_process_sysex(midi2_ci_state *state,
 
     case MIDI2_CI_PI_CAPABILITY:
       ci_handle_process_inquiry(state, group, data, length);
+      return true;
+
+    case MIDI2_CI_PI_MIDI_REPORT:
+      ci_handle_pi_midi_report(state, group, data, length);
       return true;
 
     default:
