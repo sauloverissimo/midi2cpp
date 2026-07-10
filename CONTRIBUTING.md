@@ -60,10 +60,10 @@ The simplest way to add a new recipe is to copy the closest existing one under `
 cmake -B build -DMIDI2CPP_BUILD_TESTS=ON
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure                         # all tests
-arduino-cli compile examples/HelloMIDI2 --fqbn rp2040:rp2040:rpipico  # Arduino path
+arduino-cli compile examples/hello-midi2-arduino --fqbn rp2040:rp2040:rpipico  # Arduino path
 ```
 
-CI runs host tests on Linux + macOS, strict warnings (gcc + clang), arduino-cli compile of `HelloMIDI2.ino`, and the Pico SDK build of `examples/rp2040-midi2`.
+CI runs host tests on Linux + macOS, strict warnings (gcc + clang), arduino-cli compile of `hello-midi2-arduino.ino`, and the Pico SDK build of `examples/rp2040-midi2`.
 
 ## Spec References
 
