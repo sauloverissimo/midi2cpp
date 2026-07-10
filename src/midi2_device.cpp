@@ -123,14 +123,20 @@ void Device::setAltSetting(uint8_t alt) {
 
 void Device::feedRx(const uint32_t* words, size_t count) {
     auto* s = st(_state);
-    // midi2_proc_feed takes uint8_t word_count. UMP messages are 1-4 words,
-    // so chunked feeding here keeps the library API in size_t while
-    // respecting the upstream signature.
-    while (count > 0) {
-        uint8_t chunk = (count > 255) ? 255 : (uint8_t)count;
-        midi2_proc_feed(&s->proc, words, chunk);
-        words += chunk;
-        count -= chunk;
+    // midi2_proc_feed consumes exactly ONE UMP packet per call: it decodes
+    // the front message at words[0] and ignores anything after it. Platform
+    // RX paths hand this method bursts (a USB FIFO drain routinely carries
+    // several packets back-to-back), so slice the stream per packet here.
+    // Feeding a multi-packet burst in one call silently drops every packet
+    // after the first, which truncates a multi-packet SysEx7 run (e.g. a
+    // paginated PE GET) into a bogus 404.
+    size_t i = 0;
+    while (i < count) {
+        uint8_t mt = (uint8_t)((words[i] >> 28) & 0x0F);
+        uint8_t wc = midi2_msg_word_count(mt);
+        if (wc == 0 || i + wc > count) break;  // malformed or truncated tail
+        midi2_proc_feed(&s->proc, words + i, wc);
+        i += wc;
     }
 }
 

@@ -7,6 +7,51 @@ uint32_t g_test_now_ms = 0;
 
 using namespace midi2;
 
+
+static void test_feedRx_slices_multi_packet_bursts(void) {
+    TEST("feedRx slices a multi-packet burst per UMP packet (regression: paginated PE GET 404)");
+    // midi2_proc_feed consumes exactly one packet per call. A USB FIFO
+    // drain hands feedRx several packets back-to-back; before the fix the
+    // wrapper passed the whole burst in one call and every packet after
+    // the first was silently dropped, truncating multi-packet SysEx7 runs.
+    Device d;
+    d.setWriteFn(capture_write);
+    d.setMounted(true);
+    d.setAltSetting(1);
+    d.begin();
+
+    // Reassembled SysEx7 destination: count completed messages + bytes.
+    static size_t   s_runs = 0;
+    static uint16_t s_len  = 0;
+    d.onSysEx7([](uint8_t, const uint8_t*, uint16_t len) {
+        s_runs++;
+        s_len = len;
+    });
+    s_runs = 0; s_len = 0;
+
+    // 18 payload bytes -> 3 SysEx7 packets (START/CONTINUE/END), fed as ONE
+    // burst of 6 words, exactly like an RxRing slot / FIFO drain would.
+    const uint8_t payload[18] = {
+        0x7E, 0x7F, 0x0D, 0x7F, 0x01, 0x02,
+        0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+        0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
+    };
+    uint32_t burst[6];
+    for (int p = 0; p < 3; ++p) {
+        uint8_t status = (p == 0) ? 0x1u : (p == 2) ? 0x3u : 0x2u;
+        const uint8_t* b = &payload[p * 6];
+        burst[p*2]     = (0x3u << 28) | ((uint32_t)status << 20) | (6u << 16)
+                       | ((uint32_t)b[0] << 8) | b[1];
+        burst[p*2 + 1] = ((uint32_t)b[2] << 24) | ((uint32_t)b[3] << 16)
+                       | ((uint32_t)b[4] << 8) | b[5];
+    }
+    d.feedRx(burst, 6);
+
+    CHECK_EQ(s_runs, (size_t)1, "one complete SysEx7 run expected");
+    CHECK_EQ(s_len, (uint16_t)18, "all 18 bytes must survive the burst");
+    PASS();
+}
+
 static void test_device_defaults(void) {
     TEST("Device defaults to unmounted + alt 0");
     Device d;
@@ -631,6 +676,7 @@ int main(void) {
     test_cableEventToUmp_translates_note_on();
 
     // Coverage gaps + carry-over fixes
+    test_feedRx_slices_multi_packet_bursts();
     test_setGroupRemap_writes_proc_table();
     test_sendDeviceIdentity_rejects_null();
     test_reassembled_sysex7_two_hop_context();
