@@ -5,6 +5,36 @@ All notable changes to `midi2cpp` are recorded here. Format follows
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
+## [Unreleased]
+
+### Added
+
+- `Device::sendMds`: single-chunk Mixed Data Set sender.
+- `tools/compliance-audit.py`: static compliance audit for the device recipes.
+- `rp2350-pico2-midi2` recipe (default RP2350 target) and the
+  `hello-midi2-arduino` baseline sketch.
+- Full-surface coverage burst on the compact device recipes.
+
+### Changed
+
+- Generic `board_midi2` core shared by the TinyUSB recipes; board identity
+  lives entirely in the configuration parameters.
+- Fleet-unique MIDI-CI model ids; function block names follow the endpoint
+  name.
+- Every device recipe backs the advertised MIDI-CI categories: GM 1 profile,
+  Process Inquiry MIDI report, SysEx8 and Mixed Data Set coverage.
+- Vendored midi2 amalgam refreshed (re-announce via Discovery after MUID
+  invalidate or collision).
+
+### Fixed
+
+- `Device::feedRx` slices multi-packet bursts per UMP packet.
+- Boot MUID seeds from the installed RNG, with per-chip entropy sources on
+  the native CMake recipes.
+- TinyUSB glue drains RX through an SPSC ring and applies bounded TX
+  backpressure with mounted/alt guards.
+- UMP test bench: spec-valid catalog vectors and coherent stream identity.
+
 ## [0.6.1]
 
 Recipe TinyUSB pins follow the merge of PR #3738 (Function Blocks derived
