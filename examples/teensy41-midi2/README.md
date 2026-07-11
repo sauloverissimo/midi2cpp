@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Device MIDI 2.0
 ## Teensy 4.1
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 USB MIDI 2.0 device on the **Teensy 4.1** (Cortex-M7 @ 600 MHz, 1 MB SRAM). First Arduino IDE / arduino-cli recipe in midi2cpp. Backend (63 LOC, `src/teensy41_midi2.{h,cpp}`) bridges the Teensy cores fork USB MIDI 2.0 primitives (`usbMIDI2.read/write/altSetting`) into `midi2::Device` / `midi2::CI`.
 
 ![teensy41-midi2 banner](monitor/properties.png)

@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Device MIDI 2.0
 ## LilyGo T-Display S3 (receiver, on-board piano roll)
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 USB MIDI 2.0 device receiver on the **LilyGo T-Display S3** (ESP32-S3R8, 8 MB Octal PSRAM, 16 MB flash, ST7789 1.9" 320x170 IPS parallel 8-bit). Headless on the audio side, visual on the display side: the host sends UMP, the on-board piano roll mirrors note activity in real time. ESP-IDF v5.4 build, no Arduino IDE.
 
 ![t-display-s3-midi2 banner](board/banner.jpg)

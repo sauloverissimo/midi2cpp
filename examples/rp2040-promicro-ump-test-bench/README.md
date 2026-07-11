@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Device MIDI 2.0
 ## Tenstar Robot RP2040 Pro Micro (UMP test bench)
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 USB MIDI 2.0 device on the **Tenstar Robot RP2040 Pro Micro**, configured as a **deterministic UMP catalog emitter**: 101 entries covering every MT category in M2-104-UM v1.1.2 (Flex Data 0x00 / 0x01 / 0x02, MIDI 2.0 + MIDI 1.0 Channel Voice, System Common / Real-Time, SysEx7, SysEx8, UMP Stream, Utility). Pico SDK build, no Arduino IDE.
 
 ![rp2040-promicro-ump-test-bench banner](monitor/banner.png)

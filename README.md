@@ -62,7 +62,7 @@ m2ci     ci(midi);
 
 // 1. Outbound UMP. Forward to the platform's USB MIDI write API.
 void plat_write(const uint32_t* words, size_t count) {
-  // tud_midi_n_stream_write(0, (uint8_t*)words, count * 4);  // TinyUSB
+  // tud_midi2_n_ump_write(0, words, count);                  // TinyUSB
   // usbMIDI2.write(words, count);                            // Teensy (cores fork)
   // ...
 }
@@ -87,7 +87,9 @@ void setup() {
   static const uint8_t mfrId[3] = {0x7D, 0x00, 0x00};  // educational prefix
   ci.begin(mfrId, /*family*/ 0x0001, /*model*/ 0x0001, /*version*/ 0x00010000);
   ci.addPropertyStatic("DeviceInfo",
-    "{\"manufacturer\":\"midi2cpp\",\"model\":\"hello\"}");
+    "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[1,0],"
+     "\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2cpp\","
+     "\"family\":\"Demo\",\"model\":\"Hello MIDI 2.0\",\"version\":\"0.0.1\"}");
 
   midi.onNoteOn([](uint8_t /*g*/, uint8_t ch, uint8_t n, uint16_t v,
                    uint8_t /*at*/, uint16_t /*ad*/) {
@@ -133,26 +135,26 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 
 | Board | MCU | Device | Host | Bridge | Workbench | Transport | Notes |
 |-------|-----|:-:|:-:|:-:|:-:|-----------|-------|
-| **ESP32-S3 DevKitC-1** | ESP32-S3 | ✅ | - | - | - | TinyUSB | [`esp32-s3-devkitc-usb-midi2`](examples/esp32-s3-devkitc-usb-midi2) |
-| **Arduino Nano ESP32** | ESP32-S3 | ✅ | - | - | - | TinyUSB | [`arduino-nano-esp32-midi2`](examples/arduino-nano-esp32-midi2) |
-| **Waveshare ESP32-P4-WIFI6-DEV-KIT** (device) | ESP32-P4 | ✅ | - | - | - | TinyUSB | [`esp32-p4-devkit-usb-midi2`](examples/esp32-p4-devkit-usb-midi2) — mandatory `LP_SYS.usb_ctrl` PHY swap |
+| **ESP32-S3 DevKitC-1** | ESP32-S3 | ✅ | - | - | ✅ | TinyUSB | [`esp32-s3-devkitc-usb-midi2`](examples/esp32-s3-devkitc-usb-midi2) |
+| **Arduino Nano ESP32** | ESP32-S3 | ✅ | - | - | ✅ | TinyUSB | [`arduino-nano-esp32-midi2`](examples/arduino-nano-esp32-midi2) |
+| **Waveshare ESP32-P4-WIFI6-DEV-KIT** (device) | ESP32-P4 | ✅ | - | - | ✅ | TinyUSB | [`esp32-p4-devkit-usb-midi2`](examples/esp32-p4-devkit-usb-midi2) — mandatory `LP_SYS.usb_ctrl` PHY swap |
 | **Waveshare ESP32-P4-WIFI6-DEV-KIT** (host / bridge) | ESP32-P4 | - | ✅ | ✅ | - | ![experimental](https://img.shields.io/badge/-experimental-yellow.svg) TinyUSB | [`esp32-p4-devkit-host-midi2`](examples/esp32-p4-devkit-host-midi2), [`esp32-p4-devkit-bridge-midi2`](examples/esp32-p4-devkit-bridge-midi2), [`esp32-p4-devkit-bridge2-midi2`](examples/esp32-p4-devkit-bridge2-midi2) — experimental coexistence branch |
-| **LilyGo T-Display S3** | ESP32-S3 | ✅ | - | - | - | TinyUSB | [`t-display-s3-midi2`](examples/t-display-s3-midi2) — Tier A, on-board ST7789 piano roll |
+| **LilyGo T-Display S3** | ESP32-S3 | ✅ | - | - | ✅ | TinyUSB | [`t-display-s3-midi2`](examples/t-display-s3-midi2) — Tier A receiver, on-board ST7789 piano roll |
 | T-Display S3 AMOLED | ESP32-S3 | ✅ | ✅ | - | - | TinyUSB | direct consumer |
 | **Teensy 4.1** | i.MX RT1062 | ✅ | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) Teensyduino native + USBHost_t36 | [`teensy41-midi2`](examples/teensy41-midi2) (device), [`teensy41-control-surface`](examples/teensy41-control-surface), [`teensy41-host-midi2`](examples/teensy41-host-midi2) — Teensyduino cores + USBHost_t36 forks |
 | **Daisy Seed** | STM32H750 | ✅ | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) libDaisy native | [`daisyseed-midi2`](examples/daisyseed-midi2) (device), [`daisyseed-host-midi2`](examples/daisyseed-host-midi2) (host) — libDaisy fork, STM32 HAL stack |
 | **Raspberry Pi Pico** | RP2040 | ✅ | - | - | ✅ | TinyUSB | [`rp2040-midi2`](examples/rp2040-midi2) |
 | **Waveshare RP2040 Pi Zero** | RP2040 | ✅ | - | - | ✅ | TinyUSB | [`waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2) |
 | **Adafruit Feather RP2040 USB Host** | RP2040 | ✅ | ✅ | ✅ | - | TinyUSB, PIO-USB | [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2), [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2) — Pico-PIO-USB `675543b` |
-| **RP2040 Pro Micro (Tenstar Robot)** | RP2040 | ✅ | - | - | - | TinyUSB | [`rp2040-promicro-ump-test-bench`](examples/rp2040-promicro-ump-test-bench) — deterministic UMP emitter for Windows MIDI Services testing |
-| **Waveshare RP2350-USB-A** | RP2350 | ✅ | ✅ | ✅ | - | TinyUSB, PIO-USB on GP12/GP13 | [`waveshare-rp2350-usb-a-midi2`](examples/waveshare-rp2350-usb-a-midi2) (device), [`waveshare-rp2350-usb-a-bridge-midi2`](examples/waveshare-rp2350-usb-a-bridge-midi2) (bridge) — R13 hardware mod for host mode |
-| **SparkFun Pro Micro RP2350** | RP2350 | ✅ | - | - | - | TinyUSB | [`sparkfun-promicro-rp2350-midi2`](examples/sparkfun-promicro-rp2350-midi2) |
+| **RP2040 Pro Micro (Tenstar Robot)** | RP2040 | ✅ | - | - | ✅ | TinyUSB | [`rp2040-promicro-ump-test-bench`](examples/rp2040-promicro-ump-test-bench) — deterministic UMP emitter for Windows MIDI Services testing |
+| **Waveshare RP2350-USB-A** | RP2350 | ✅ | ✅ | ✅ | ✅ | TinyUSB, PIO-USB on GP12/GP13 | [`waveshare-rp2350-usb-a-midi2`](examples/waveshare-rp2350-usb-a-midi2) (device), [`waveshare-rp2350-usb-a-bridge-midi2`](examples/waveshare-rp2350-usb-a-bridge-midi2) (bridge) — R13 hardware mod for host mode |
 | **Raspberry Pi Pico 2** | RP2350 | ✅ | - | - | ✅ | TinyUSB | [`rp2350-pico2-midi2`](examples/rp2350-pico2-midi2) |
 | **ESP32-C6-DevKitC-1** | ESP32-C6 | ![WIP](https://img.shields.io/badge/-WIP-orange.svg) | - | - | - | BLE-MIDI 1.0 + ESP-NOW | [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2) — Tier B wireless (BLE-MIDI + ESP-NOW), no USB-OTG |
-| **nRF52840 Pro Micro (Nice!Nano class)** | nRF52840 | ✅ | - | - | - | TinyUSB | [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2) — Tier B, TinyUSB native CMake build |
+| **nRF52840 Pro Micro (Nice!Nano class)** | nRF52840 | ✅ | - | - | ✅ | TinyUSB | [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2) — Tier B, TinyUSB native CMake build |
 | **Seeed XIAO SAMD21** | SAMD21 | ✅ | - | - | - | TinyUSB | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2) — Tier C, TinyUSB native CMake build |
-| **T-PicoC3** (RP2040 side) | RP2040 + ESP32-C3 | ✅ | - | - | - | TinyUSB | [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2) — on-board LCD visualizer (LovyanGFX) |
+| **T-PicoC3** (RP2040 side) | RP2040 + ESP32-C3 | ✅ | - | - | ✅ | TinyUSB | [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2) — on-board LCD visualizer (LovyanGFX) |
 | **WeAct RA4M1 64-Pin Core Board** | RA4M1 | ✅ | - | - | - | TinyUSB | [`ra4m1-weact-device-midi2`](examples/ra4m1-weact-device-midi2) — Tier C, board overlay for bootloader-less 0x0 flash |
+| **WeAct STM32F411 BlackPill** | STM32F411 | ✅ | - | - | ✅ | TinyUSB | [`weact-STM32F411CEU6-blackpill-device-midi2`](examples/weact-STM32F411CEU6-blackpill-device-midi2) — Tier C, native OTG_FS, CMake build |
 
 **Workbench** ✅ marks a device recipe validated against the official [MIDI 2.0 Workbench](https://github.com/midi2-dev/MIDI2.0Workbench): it completes the self-certification checklist for the features it implements (MIDI-CI Discovery, Profile Configuration, Property Exchange, Process Inquiry, plus the UMP message categories the recipe emits). A blank cell means the recipe has not been run through the Workbench yet, not that it fails.
 
@@ -164,7 +166,7 @@ Three dependencies pinned outside their upstream release: [Pico-PIO-USB](https:/
 
 | Build system | Count | Recipes |
 |---|:-:|---|
-| **Pico SDK** | 9 | [`rp2040-midi2`](examples/rp2040-midi2), [`waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2), [`sparkfun-promicro-rp2350-midi2`](examples/sparkfun-promicro-rp2350-midi2), [`waveshare-rp2350-usb-a-midi2`](examples/waveshare-rp2350-usb-a-midi2), [`waveshare-rp2350-usb-a-bridge-midi2`](examples/waveshare-rp2350-usb-a-bridge-midi2), [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2), [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2), [`rp2040-promicro-ump-test-bench`](examples/rp2040-promicro-ump-test-bench), [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2) |
+| **Pico SDK** | 9 | [`rp2040-midi2`](examples/rp2040-midi2), [`waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2), [`rp2350-pico2-midi2`](examples/rp2350-pico2-midi2), [`waveshare-rp2350-usb-a-midi2`](examples/waveshare-rp2350-usb-a-midi2), [`waveshare-rp2350-usb-a-bridge-midi2`](examples/waveshare-rp2350-usb-a-bridge-midi2), [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2), [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2), [`rp2040-promicro-ump-test-bench`](examples/rp2040-promicro-ump-test-bench), [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2) |
 | **ESP-IDF** | 7 | [`arduino-nano-esp32-midi2`](examples/arduino-nano-esp32-midi2), [`esp32-s3-devkitc-usb-midi2`](examples/esp32-s3-devkitc-usb-midi2), [`esp32-p4-devkit-usb-midi2`](examples/esp32-p4-devkit-usb-midi2), [`esp32-p4-devkit-host-midi2`](examples/esp32-p4-devkit-host-midi2), [`esp32-p4-devkit-bridge-midi2`](examples/esp32-p4-devkit-bridge-midi2), [`esp32-p4-devkit-bridge2-midi2`](examples/esp32-p4-devkit-bridge2-midi2), [`t-display-s3-midi2`](examples/t-display-s3-midi2) |
 | **PlatformIO + ESP32_Host_MIDI** | 3 | [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2), [`esp32-s3-devkitc-host-midi2`](examples/esp32-s3-devkitc-host-midi2), [`t-display-s3-shield-host-midi2`](examples/t-display-s3-shield-host-midi2) |
 | **TinyUSB native CMake** | 3 | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2), [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2), [`ra4m1-weact-device-midi2`](examples/ra4m1-weact-device-midi2) |

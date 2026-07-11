@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Device MIDI 2.0
 ## Waveshare ESP32-P4-WIFI6-DEV-KIT
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 Full-spec USB MIDI 2.0 device on the **Waveshare ESP32-P4-WIFI6-DEV-KIT** (RISC-V Cortex-M-class core, USB-OTG internal PHY). Headless single-file showcase of every MIDI 2.0 message category beyond MIDI 1.0. ESP-IDF v5.4 build, no Arduino IDE.
 
 ![esp32-p4-devkit-usb-midi2 banner](board/banner.jpg)

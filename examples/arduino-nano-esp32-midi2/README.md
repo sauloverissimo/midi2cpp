@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Device MIDI 2.0
 ## Arduino Nano ESP32
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 ![arduino-esp32](board/banner.png)
 
 Full-spec USB MIDI 2.0 device on the [**Arduino Nano ESP32**](https://docs.arduino.cc/hardware/nano-esp32/) (ESP32-S3-MINI-1 in Nano form factor, single-channel `LED_BUILTIN` on D13 / GPIO48). Headless single-file showcase of every MIDI 2.0 message category beyond MIDI 1.0. ESP-IDF v5.4 build, no Arduino IDE.
