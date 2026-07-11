@@ -38,7 +38,7 @@ static uint32_t sysex_send_trampoline(const uint32_t* words, uint32_t count,
 }
 
 // ============================================================================
-// HostState — internal pimpl. Per-idx arrays of midi2 C99 state, plus
+// HostState, internal pimpl. Per-idx arrays of midi2 C99 state, plus
 // platform hooks and user callback slots.
 //
 // Memory footprint (MAX_DEVICES = 4):
@@ -70,7 +70,7 @@ struct HostState {
     // off the RX path; task() (consumer) drains it and runs the decode.
     RxRing<MIDI2CPP_HOST_RX_RING> rx;
 
-    // Per-device midi2 C99 state — proc + dispatch + ci_dispatch.
+    // Per-device midi2 C99 state, proc + dispatch + ci_dispatch.
     midi2_proc_state    procs[Host::MAX_DEVICES];
     midi2_dispatch      dispatches[Host::MAX_DEVICES];
     midi2_ci_dispatch   ci_dispatches[Host::MAX_DEVICES];
@@ -211,7 +211,7 @@ void tramp_chord(uint8_t group, uint8_t address, uint8_t channel,
     c->host->cb_chord(c->idx, group, d);
 }
 
-// MT 0xF UMP Stream — populate identity from device's Discovery responses.
+// MT 0xF UMP Stream, populate identity from device's Discovery responses.
 void tramp_endpoint_info(uint8_t ump_maj, uint8_t ump_min, bool static_fb,
                           uint8_t num_fb, bool midi2, bool midi1,
                           bool /*rx_jr*/, bool /*tx_jr*/, void* ctx) {
@@ -275,11 +275,11 @@ void tramp_fb_info(bool active, uint8_t fb_num,
 
 void tramp_fb_name(uint8_t /*format*/, uint8_t /*fb_num*/,
                     const uint8_t* /*data*/, uint8_t /*len*/, void* /*ctx*/) {
-    // Same — v0.1 tracks endpoint name only. Per-FB names come later.
+    // Same, v0.1 tracks endpoint name only. Per-FB names come later.
 }
 
 // ----------------------------------------------------------------------------
-// SysEx7 reassembly hook — when a complete CI SysEx arrives, route it to
+// SysEx7 reassembly hook, when a complete CI SysEx arrives, route it to
 // the per-idx midi2_ci_dispatch so on_discovery_reply etc. fire.
 //
 // Two-hop context: proc.context points at dispatch (so on_ump =
@@ -312,7 +312,7 @@ void tramp_proc_sysex8(uint8_t group, uint8_t stream_id, const uint8_t* data,
 }
 
 // ----------------------------------------------------------------------------
-// MIDI-CI dispatch trampoline — handle Discovery Reply: validate the
+// MIDI-CI dispatch trampoline, handle Discovery Reply: validate the
 // request_id matches our pending inquiry, then populate identity.
 // ----------------------------------------------------------------------------
 void tramp_ci_discovery_reply(midi2_ci_header hdr, uint32_t mfr_id,
@@ -325,7 +325,7 @@ void tramp_ci_discovery_reply(midi2_ci_header hdr, uint32_t mfr_id,
     auto& id = c->host->identities[c->idx];
 
     // We are the Initiator. Validate dst_muid matches our host_muid (it
-    // should — the device is replying to us). src_muid is the device's MUID.
+    // should, the device is replying to us). src_muid is the device's MUID.
     if (hdr.dst_muid != c->host->host_muid) return;
 
     id.ciMuid                 = hdr.src_muid;
@@ -416,7 +416,7 @@ void Host::begin() {
         // trampolines, AND proc -> our SysEx hooks. The dispatch struct
         // already carries dispatch_contexts[i] in its own .context field
         // (set above), so the dispatch trampolines see the right context.
-        // For SysEx hooks we use proc.context — since proc.on_ump consumes
+        // For SysEx hooks we use proc.context, since proc.on_ump consumes
         // it as dispatch*, but proc.on_sysex7/8 also consume it, we need
         // to reach dispatch_contexts[i] from the SysEx side too. The
         // simplest way is to point proc.context at the dispatch struct
@@ -483,7 +483,7 @@ void Host::feedRx(uint8_t idx, const uint32_t* words, size_t count) {
     if (idx >= MAX_DEVICES) return;
     if (!words || count == 0) return;
     auto* s = st(_state);
-    // Enqueue only — split the incoming words into individual UMP packets and
+    // Enqueue only, split the incoming words into individual UMP packets and
     // push each into the RX ring. O(1) per packet, no decode here; the heavy
     // work (group remap + midi2_proc_feed) runs in task() off the RX path.
     size_t i = 0;
@@ -532,13 +532,13 @@ void Host::notifyDeviceMounted(uint8_t idx,
                                                   /*filter*/ 0x1F);
             s->write_fn(idx, words, 4);
 
-            // Also FB Discovery for FB 0xFF (all FBs) — info + name bits.
+            // Also FB Discovery for FB 0xFF (all FBs), info + name bits.
             uint32_t fbw[4] = {0};
             midi2_msg_stream_fb_discovery(fbw, /*fb_num*/ 0xFF,
                                             /*filter*/ 0x03);
             s->write_fn(idx, fbw, 4);
         }
-        // CI Discovery Inquiry — populates ciMuid and the manufacturer
+        // CI Discovery Inquiry, populates ciMuid and the manufacturer
         // bundle when the device replies.
         sendDiscoveryInquiry(idx);
     }
@@ -733,7 +733,7 @@ bool Host::pitchBend(uint8_t idx, uint8_t channel, uint32_t value) {
 }
 
 // ----------------------------------------------------------------------------
-// CI Initiator — sendDiscoveryInquiry builds a Universal SysEx CI
+// CI Initiator, sendDiscoveryInquiry builds a Universal SysEx CI
 // Discovery, fragments it through midi2_proc_send_sysex7, and sets the
 // pending-tracking on the per-device identity.
 //

@@ -144,13 +144,13 @@ static void test_ci_removeProperty_preserves_lambda_alignment(void) {
 
     // Remove beta: gamma's lambda must move down to where beta was. If the
     // pe_getters[] array did not shift, we'd invoke beta's lambda for gamma
-    // (or hit a NULL slot) — observable via beta_fired flipping for a
+    // (or hit a NULL slot), observable via beta_fired flipping for a
     // gamma getter call.
     CHECK_EQ(ci.removeProperty("beta"), MIDI2_CI_OK, "remove beta");
 
     // Now drive a PE Get for "gamma" via the C99 layer's invocation path:
     // we can't easily construct the SysEx, but we can call the getter
-    // directly — it goes through the same trampoline since process_sysex
+    // directly, it goes through the same trampoline since process_sysex
     // does it that way. Instead simulate via the captured fact that
     // gamma's lambda is now at the same index as beta used to be.
     Device& dev = d;
@@ -159,7 +159,7 @@ static void test_ci_removeProperty_preserves_lambda_alignment(void) {
     // Call the dynamic getter via state.properties[i].getter to mimic the
     // upstream invocation. We don't have direct CIState access, but the
     // public API provides notifyPropertyChanged which fans out via
-    // build_pe_notify — that exercises the property lookup path that
+    // build_pe_notify, that exercises the property lookup path that
     // would surface a misalignment.
     ci.notifyPropertyChanged("gamma");
     // Test passes if there is no crash and gamma's lambda was reachable.
@@ -236,7 +236,7 @@ static void test_ci_pe_get_invokes_user_getter_no_crash(void) {
     uint16_t hdr_len = (uint16_t)(sizeof(hdr) - 1);
     sysex[p++] = (uint8_t)(hdr_len & 0x7F);
     sysex[p++] = (uint8_t)((hdr_len >> 7) & 0x7F);
-    // chunks (1-of-1) — 14-bit each
+    // chunks (1-of-1), 14-bit each
     sysex[p++] = 1; sysex[p++] = 0;
     sysex[p++] = 1; sysex[p++] = 0;
     // body length = 0
@@ -245,7 +245,7 @@ static void test_ci_pe_get_invokes_user_getter_no_crash(void) {
     std::memcpy(&sysex[p], hdr, hdr_len);
     p += hdr_len;
 
-    // Feed directly to dispatch — proves the trampolines see a non-NULL
+    // Feed directly to dispatch, proves the trampolines see a non-NULL
     // ctx (dispatch.context = CIState*). The convenience-responder side
     // (process_sysex) needs the SysEx wrapped F0/F7 stripped, but the
     // dispatch path we wired in begin() uses the raw bytes.
@@ -266,7 +266,7 @@ static void test_ci_pe_get_invokes_user_getter_no_crash(void) {
         CHECK(found, "header carries the requested resource name");
     });
 
-    // Feed via the public dispatch path — go through Device's reassembly
+    // Feed via the public dispatch path, go through Device's reassembly
     // by invoking the CI hook which begin() installed.
     // Easiest: drive midi2_ci_process_sysex directly with our forged bytes
     // (skipping the F0/F7 wrapping; the responder expects payload only).

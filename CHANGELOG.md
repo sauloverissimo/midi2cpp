@@ -325,7 +325,7 @@ First public release. C++17 Arduino-style wrapper for MIDI 2.0 on
 embedded devices, layered over the portable [midi2 C99](https://github.com/sauloverissimo/midi2)
 library (vendored stb-style at `src/midi2.{h,c}` from v0.3.0+).
 
-### `midi2::Device` — UMP transport (M2-104)
+### `midi2::Device`, UMP transport (M2-104)
 
 - Lifecycle: `begin()` initialises the dispatcher and proc; the caller
   owns the platform USB stack lifecycle. `task()` runs the JR Timestamp
@@ -368,7 +368,7 @@ library (vendored stb-style at `src/midi2.{h,c}` from v0.3.0+).
 - `ByteStreamConverter` inner class: MIDI 1.0 DIN-5 byte stream → UMP
   MT 0x2 / MT 0x3 with running status and SysEx accumulation.
 
-### `midi2::CI` — MIDI-CI v1.2 (M2-101)
+### `midi2::CI`, MIDI-CI v1.2 (M2-101)
 
 - Lifecycle: `begin(mfrId[3], family, model, version, ciCat=0x1C)`
   enables Profile + PE + PI by default.
@@ -398,7 +398,7 @@ library (vendored stb-style at `src/midi2.{h,c}` from v0.3.0+).
 - Process Inquiry (M2-101 §9 + Appendix F): `setMidiReport`,
   `onPICapability`, `onMidiReportInquiry`.
 
-### `midi2::Host` — USB MIDI 2.0 host shape
+### `midi2::Host`, USB MIDI 2.0 host shape
 
 - Reactive multi-device host (`MIDI2CPP_HOST_MAX_DEVICES`, default 4).
   Caller wires `tuh_midi2_*` (or platform-equivalent) into
@@ -442,16 +442,16 @@ library (vendored stb-style at `src/midi2.{h,c}` from v0.3.0+).
 
 ### Platform contract (5 caller-wired hooks)
 
-- `Device::setWriteFn(WriteFn)` — outbound UMP. Library invokes the
+- `Device::setWriteFn(WriteFn)`, outbound UMP. Library invokes the
   caller's function for every `sendXxx` and the JR heartbeat.
-- `Device::feedRx(const uint32_t* words, size_t count)` — inbound UMP.
+- `Device::feedRx(const uint32_t* words, size_t count)`, inbound UMP.
   Caller pumps RX into the library; chunks transparently to the
   upstream `uint8_t word_count` limit of `midi2_proc_feed`.
-- `Device::setNowFn(NowFn)` — monotonic ms clock for the JR heartbeat.
+- `Device::setNowFn(NowFn)`, monotonic ms clock for the JR heartbeat.
   When unset, the heartbeat never fires (link-safe on bare hosts).
-- `Device::setMounted(bool)` / `Device::setAltSetting(uint8_t)` — caller
+- `Device::setMounted(bool)` / `Device::setAltSetting(uint8_t)`, caller
   informs USB enumeration state.
-- `CI::setRngFn(RngFn)` — caller-supplied entropy source. When unset,
+- `CI::setRngFn(RngFn)`, caller-supplied entropy source. When unset,
   MUID stays at the value seeded in `begin()`.
 
 `Host` follows the same pattern with idx-prefixed equivalents
@@ -476,34 +476,34 @@ library (vendored stb-style at `src/midi2.{h,c}` from v0.3.0+).
 - `lib/tinyusb` git submodule and the `.gitmodules` entry removed. The
   library has zero external dependencies: midi2 C99 stays vendored,
   every USB stack and clock and RNG source is caller-wired. `git clone`
-  is the install — no `--recurse-submodules`, no half-initialised state.
+  is the install, no `--recurse-submodules`, no half-initialised state.
 
 ### Examples / Recipes
 
 12 platform recipes covering RP2040, RP2350, ESP32-S3 and ESP32-P4
 boards, each with the platform-specific glue + a showcase main:
 
-- `rp2040-midi2` — Raspberry Pi Pico, first concrete platform recipe
-- `waveshare-rp2040-midi2` — Waveshare RP2040 Pi Zero
-- `sparkfun-promicro-rp2350-midi2` — SparkFun Pro Micro RP2350
-- `ump-test-bench-rp2040` — RP2040 Pro Micro (Tenstar Robot),
+- `rp2040-midi2`, Raspberry Pi Pico, first concrete platform recipe
+- `waveshare-rp2040-midi2`, Waveshare RP2040 Pi Zero
+- `sparkfun-promicro-rp2350-midi2`, SparkFun Pro Micro RP2350
+- `ump-test-bench-rp2040`, RP2040 Pro Micro (Tenstar Robot),
   deterministic 101-entry UMP catalog emitter for Windows MIDI Services
   consumer-side testing
-- `esp32-s3-devkitc-usb-midi2` — ESP32-S3 DevKitC-1 (PID 0x4090)
-- `esp32-p4-devkit-usb-midi2` — Waveshare ESP32-P4-WIFI6-DEV-KIT device
+- `esp32-s3-devkitc-usb-midi2`, ESP32-S3 DevKitC-1 (PID 0x4090)
+- `esp32-p4-devkit-usb-midi2`, Waveshare ESP32-P4-WIFI6-DEV-KIT device
   (PID 0x4091, INT PHY OTG_FS, mandatory `LP_SYS.usb_ctrl` swap)
-- `esp32-p4-devkit-host-midi2` — same kit as host (UTMI PHY OTG_HS)
-- `esp32-p4-devkit-bridge-midi2` — same kit as dual-stack bridge (PID
+- `esp32-p4-devkit-host-midi2`, same kit as host (UTMI PHY OTG_HS)
+- `esp32-p4-devkit-bridge-midi2`, same kit as dual-stack bridge (PID
   0x4092), validated with simultaneous MIDI 1.0 (Arturia MiniLab 25) +
   MIDI 2.0 (ESP32-S3) host coexistence via the experimental TinyUSB
   alt-walk bcdMSC defer
-- `adafruit-feather-rp2040-host-midi2` — Adafruit Feather RP2040 USB
+- `adafruit-feather-rp2040-host-midi2`, Adafruit Feather RP2040 USB
   Host with SSD1306 OLED, MIDI 2.0 host over PIO-USB
-- `adafruit-feather-rp2040-bridge-midi2` — same Feather as dual-stack
+- `adafruit-feather-rp2040-bridge-midi2`, same Feather as dual-stack
   bridge (USB-C device + USB-A host)
-- `waveshare-rp2350-usb-a-midi2` — Waveshare RP2350-USB-A device
+- `waveshare-rp2350-usb-a-midi2`, Waveshare RP2350-USB-A device
   (requires R13 hardware mod)
-- `waveshare-rp2350-usb-a-bridge-midi2` — same kit as dual-stack bridge
+- `waveshare-rp2350-usb-a-bridge-midi2`, same kit as dual-stack bridge
 
 Each recipe ships with: TinyUSB PR #3571 fork bootstrap script (ESP-IDF
 recipes use `idf/scripts/fetch_tinyusb.sh`; Pico SDK recipes use
@@ -539,7 +539,7 @@ glue, and a README with build, flash and validation instructions.
 - AVR Uno (2 KB RAM) is out of scope.
 - `setMaxSysexSize` not exposed (midi2 C99 lacks the setter upstream).
 - 5 Initiator-role senders (`sendEndpointInfoInquiry/Reply`, `sendAck`,
-  `sendProfileDetailsReply`, `sendProfileSpecificData`) deferred — the
+  `sendProfileDetailsReply`, `sendProfileSpecificData`) deferred, the
   convenience responder covers the common Receiver flows.
 - `sendFlexText` does not yet fragment payloads > 12 bytes.
 - MT 0x2 named senders cover the simple case; UMP → DIN-5 byte stream

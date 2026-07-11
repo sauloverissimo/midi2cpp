@@ -62,7 +62,7 @@ public:
   void onProfileRemoved(ProfileIdCb cb);
   void onProfileDetailsInquiry(ProfileDetailsCb cb);
   // sendProfileDetailsReply / sendProfileSpecificData deferred to v0.1.x
-  // — convenience responder auto-replies to inquiries from registered
+  //, convenience responder auto-replies to inquiries from registered
   // profiles; explicit senders only matter for app-driven flows.
 
   void onProfileSpecificData(ProfileDataCb cb);
@@ -79,7 +79,7 @@ public:
   int removeProperty(const char* name);
 
   // PE callbacks deliver raw bytes (header + optional body). M2-103 payloads
-  // can exceed 256 bytes — DeviceInfo, ChannelList, etc. Caller picks the
+  // can exceed 256 bytes, DeviceInfo, ChannelList, etc. Caller picks the
   // parsing strategy (cJSON, picojson, hand-roll).
   using PeCapsCb      = std::function<void(uint8_t maxSimultaneous, uint8_t peMajor, uint8_t peMinor)>;
   using PeGetCb       = std::function<void(const uint8_t* header, uint16_t headerLen)>;

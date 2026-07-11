@@ -4,11 +4,11 @@
 namespace midi2 {
 
 // ============================================================================
-// CIState — internal pimpl held behind Device::_state's sibling pointer.
+// CIState, internal pimpl held behind Device::_state's sibling pointer.
 // Stores midi2_ci state, the granular dispatch (33 callbacks), caller-provided
 // arrays sized by MIDI2CPP_MAX_*, and ~20 std::function slots for the
 // high-level callbacks the wrapper exposes (Discovery, ACK/NAK, Profile,
-// PE, PI). The raw 33-callback dispatch is intentionally not all surfaced —
+// PE, PI). The raw 33-callback dispatch is intentionally not all surfaced -
 // the wrapper picks a coarser, ergonomic subset.
 // ============================================================================
 
@@ -249,7 +249,7 @@ bool tramp_pe_setter(const char* name, const char* value, void* context) {
 }
 
 // RNG trampoline. Delegates to the caller-supplied RngFn (set via
-// CI::setRngFn). Returns 0 if no RNG was wired — MUID stays at the value
+// CI::setRngFn). Returns 0 if no RNG was wired, MUID stays at the value
 // seeded in begin(), which keeps the library link-safe on every platform
 // without pulling esp_random / get_rand_32 / Arduino random into the public
 // surface.

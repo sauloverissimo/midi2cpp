@@ -25,7 +25,7 @@ static int g_failed = 0;
 
 // TX capture: tests install a WriteFn that writes intercepted UMP to
 // g_captured_tx. Same shape as a real platform binding (Device::WriteFn ==
-// std::function<void(const uint32_t*, size_t)>) — tests prove the contract
+// std::function<void(const uint32_t*, size_t)>), tests prove the contract
 // the platforms also use.
 constexpr size_t CAPTURE_MAX = 512;
 extern uint32_t g_captured_tx[CAPTURE_MAX];

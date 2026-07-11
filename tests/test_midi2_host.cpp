@@ -1,4 +1,4 @@
-// tests/test_midi2_host.cpp — smoke for m2host skeleton.
+// tests/test_midi2_host.cpp, smoke for m2host skeleton.
 //
 // Exercises the API surface end-to-end at the call-site level: every
 // public method either returns a sensible default or invokes the
@@ -168,7 +168,7 @@ static void test_host_senders_refuse_without_write_fn(void) {
     TEST("Senders return false when write_fn is unset");
     m2host h;
     h.notifyDeviceMounted(0, 0x02, 1);
-    // No setWriteFn — every sender must refuse.
+    // No setWriteFn, every sender must refuse.
     CHECK(!h.noteOn(0, 0, 60, 0xC000),       "noteOn refused");
     CHECK(!h.noteOff(0, 0, 60),               "noteOff refused");
     CHECK(!h.cc(0, 0, 7, 0x80000000u),        "cc refused");

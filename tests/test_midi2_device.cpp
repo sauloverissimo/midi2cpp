@@ -635,13 +635,13 @@ static void test_setNowFn_isolated(void) {
     d.task();
     CHECK_EQ(g_captured_tx_len, 1u, "first heartbeat at t=0");
 
-    // Advance clock by 50ms — below interval, no fire.
+    // Advance clock by 50ms, below interval, no fire.
     capture_reset();
     d.setNowFn(test_now_fn); test_set_now(50);
     d.task();
     CHECK_EQ(g_captured_tx_len, 0u, "no fire at t=50 (interval=100)");
 
-    // Reach the interval — fire.
+    // Reach the interval, fire.
     capture_reset();
     d.setNowFn(test_now_fn); test_set_now(100);
     d.task();

@@ -5,7 +5,7 @@
 namespace midi2 {
 
 // ============================================================================
-// RxRing — single-producer / single-consumer ring of raw UMP packets.
+// RxRing, single-producer / single-consumer ring of raw UMP packets.
 //
 // This is the "stream core" that decouples the USB receive path from message
 // processing. The producer (feedRx, on the platform RX path) copies each UMP

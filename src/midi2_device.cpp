@@ -20,8 +20,8 @@ struct DeviceState {
     bool             jr_heartbeat_initialized;  // emit once on first task() after enable
 
     // Platform contract hooks (set by caller before/after begin()):
-    //   write_fn — outbound UMP (forwarded by every sendXxx)
-    //   now_fn   — monotonic ms clock (used only by JR heartbeat)
+    //   write_fn, outbound UMP (forwarded by every sendXxx)
+    //   now_fn  , monotonic ms clock (used only by JR heartbeat)
     Device::WriteFn  write_fn;
     Device::NowFn    now_fn;
 
@@ -145,7 +145,7 @@ midi2_proc_state* Device::procState() {
 }
 
 // Returns 0 if no clock function is installed. The JR heartbeat path checks
-// for this and skips firing — keeping the library safe to use on bare hosts
+// for this and skips firing, keeping the library safe to use on bare hosts
 // (unit tests, desktop tools) where no clock is wired.
 static uint32_t platform_now_ms(DeviceState* s) {
     return s->now_fn ? s->now_fn() : 0;
@@ -460,7 +460,7 @@ void Device::begin() {
     s->dispatch.on_cv1_program          = tramp_cv1_program;
     s->dispatch.on_cv1_chan_pressure    = tramp_cv1_chan_pressure;
     s->dispatch.on_cv1_pitch_bend       = tramp_cv1_pitch_bend;
-    // dispatch.on_sysex7 is intentionally left null — see comment near the
+    // dispatch.on_sysex7 is intentionally left null, see comment near the
     // SysEx7 trampolines. Reassembly goes via proc.on_sysex7 below.
     s->dispatch.on_note_on              = tramp_note_on;
     s->dispatch.on_note_off             = tramp_note_off;
@@ -520,7 +520,7 @@ void Device::task() {
     // was set via enableJRHeartbeat, emit a JR Timestamp every
     // interval_ms milliseconds. Keeps Linux ALSA polling alive on hosts
     // that drop idle endpoints. First task() after enable always fires
-    // once, regardless of clock — flag avoids re-firing when
+    // once, regardless of clock, flag avoids re-firing when
     // last_heartbeat_ms happens to be 0. Skipped when no clock is wired.
     if (s->jr_heartbeat_interval_ms > 0 && s->now_fn) {
         uint32_t now = platform_now_ms(s);
@@ -797,7 +797,7 @@ bool Device::sendPerNoteManagement(uint8_t group, uint8_t channel, uint8_t note,
 
 // ==================== Convenience senders (Arduino-style) ====================
 // Thin shims over the verbose senders. Group defaults to 0; MT 0x4
-// attribute fields default to 0. Zero runtime overhead — the compiler
+// attribute fields default to 0. Zero runtime overhead, the compiler
 // inlines these into a direct call to the verbose form.
 bool Device::noteOn(uint8_t channel, uint8_t note, uint16_t velocity) {
     return sendNoteOn(/*group*/ 0, channel, note, velocity);
@@ -977,7 +977,7 @@ bool Device::sendFbNameUpdate(uint8_t fbIdx, const char* name) {
 }
 
 // Start/End of Clip are endpoint-wide UMP Stream messages (M2-104 §7.1.10-11).
-// No group field — emitted to the endpoint as a whole. Backed by upstream
+// No group field, emitted to the endpoint as a whole. Backed by upstream
 // midi2_msg_stream_start_of_clip / midi2_msg_stream_end_of_clip helpers.
 bool Device::sendStartOfClip() {
     uint32_t words[4] = {0};
@@ -1044,7 +1044,7 @@ MIDI2CPP_SETTER(onAsnPerNoteController, cb_asn_per_note,         PerNoteCtrlCb)
 // a verbose-shaped one that fits the existing storage slot, so the
 // dispatch trampolines stay untouched and only one callback path runs at
 // a time. Setting the simple form overwrites a previously installed
-// verbose form (and vice versa) — "the latest setter wins".
+// verbose form (and vice versa), "the latest setter wins".
 void Device::onNoteOn(NoteSimpleCb cb) {
     st(_state)->cb_note_on =
         [cb = std::move(cb)](uint8_t /*g*/, uint8_t ch, uint8_t note, uint16_t vel,

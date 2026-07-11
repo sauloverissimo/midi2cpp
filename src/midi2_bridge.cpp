@@ -132,7 +132,7 @@ static void forward_ump_to_pc(BridgeState* s, uint8_t idx,
 static void push_fb_info(BridgeState* s, uint8_t idx) {
     if (idx >= s->numSlots) return;
     const uint8_t base = (uint8_t)(idx * s->groupsPerSlot);
-    // ui_hint=0x03 (Sender+Receiver): bridge slots are always bidirectional —
+    // ui_hint=0x03 (Sender+Receiver): bridge slots are always bidirectional -
     // the upstream device on the host port can both produce and consume UMP
     // relative to the downstream device-side endpoint.
     s->device.sendFbInfo(/*active*/      s->slots[idx].active,

@@ -126,7 +126,7 @@ public:
 
   // ==================== MT 0xD Flex Data senders ====================
   bool sendTempo(uint8_t group, uint32_t tenNsPerQuarter);
-  // num32ndNotes: SMF1 compat — 8 (= 8 thirty-seconds per quarter note) is the
+  // num32ndNotes: SMF1 compat, 8 (= 8 thirty-seconds per quarter note) is the
   // standard default; pass a different value only when matching a non-standard
   // tempo subdivision.
   bool sendTimeSignature(uint8_t group, uint8_t numerator, uint8_t denominator,
@@ -163,7 +163,7 @@ public:
   bool sendStartOfClip();
   bool sendEndOfClip();
 
-  // ==================== Callbacks — MT 0x0 Utility ====================
+  // ==================== Callbacks, MT 0x0 Utility ====================
   using UtilityCb = std::function<void(uint8_t group, uint16_t value)>;
   using NoArgCb   = std::function<void(uint8_t group)>;
 
@@ -173,11 +173,11 @@ public:
   void onDctpq(std::function<void(uint16_t tpq)> cb);
   void onDeltaClockstamp(std::function<void(uint32_t ticks)> cb);
 
-  // ==================== Callbacks — MT 0x1 System ====================
+  // ==================== Callbacks, MT 0x1 System ====================
   using SystemCb = std::function<void(uint8_t group, uint8_t status, uint8_t data1, uint8_t data2)>;
   void onSystem(SystemCb cb);
 
-  // ==================== Callbacks — MT 0x2 MIDI 1.0 ====================
+  // ==================== Callbacks, MT 0x2 MIDI 1.0 ====================
   using Note1Cb         = std::function<void(uint8_t g, uint8_t ch, uint8_t note, uint8_t vel)>;
   using Controller1Cb   = std::function<void(uint8_t g, uint8_t ch, uint8_t idx, uint8_t val)>;
   using Program1Cb      = std::function<void(uint8_t g, uint8_t ch, uint8_t prog)>;
@@ -195,11 +195,11 @@ public:
 
   void setUpscaleMt2(bool enabled);
 
-  // ==================== Callbacks — MT 0x3 SysEx7 ====================
+  // ==================== Callbacks, MT 0x3 SysEx7 ====================
   using SysEx7Cb = std::function<void(uint8_t group, const uint8_t* data, uint16_t len)>;
   void onSysEx7(SysEx7Cb cb);
 
-  // ==================== Callbacks — MT 0x4 MIDI 2.0 ====================
+  // ==================== Callbacks, MT 0x4 MIDI 2.0 ====================
   using NoteCb           = std::function<void(uint8_t g, uint8_t ch, uint8_t note, uint16_t vel,
                                               uint8_t attrType, uint16_t attrData)>;
   using ControllerCb32   = std::function<void(uint8_t g, uint8_t ch, uint8_t idx, uint32_t val)>;
@@ -242,11 +242,11 @@ public:
   void onAsnPerNoteController(PerNoteCtrlCb cb);
   void onPerNoteManagement(PerNoteMgmtCb cb);
 
-  // ==================== Callbacks — MT 0x5 SysEx8 ====================
+  // ==================== Callbacks, MT 0x5 SysEx8 ====================
   using SysEx8Cb = std::function<void(uint8_t group, uint8_t streamId, const uint8_t* data, uint16_t len)>;
   void onSysEx8(SysEx8Cb cb);
 
-  // ==================== Callbacks — MT 0xD Flex Data ====================
+  // ==================== Callbacks, MT 0xD Flex Data ====================
   using TempoCb     = std::function<void(uint8_t group, uint32_t tenNsPerQn)>;
   using TimeSigCb   = std::function<void(uint8_t group, uint8_t num, uint8_t denom)>;
   using MetronomeCb = std::function<void(uint8_t group, uint8_t primary, uint8_t acc1, uint8_t acc2,
@@ -263,7 +263,7 @@ public:
   void onChord(ChordCb cb);
   void onFlexText(FlexTextCb cb);
 
-  // ==================== Callbacks — MT 0xF UMP Stream ====================
+  // ==================== Callbacks, MT 0xF UMP Stream ====================
   using EndpointDiscoveryCb = std::function<void(uint8_t filter)>;
   using EndpointInfoCb      = std::function<void(uint8_t umpMaj, uint8_t umpMin,
                                                  bool staticFb, uint8_t numFb,
@@ -318,7 +318,7 @@ public:
 
   // Outbound UMP. Library calls fn(words, count) for every sendXxx() and for
   // the JR Timestamp heartbeat. The caller forwards to the platform's USB
-  // MIDI write API. Returning is implicit — back-pressure is reported via
+  // MIDI write API. Returning is implicit, back-pressure is reported via
   // the bool return of sendXxx() (set false from inside `fn` by tracking
   // via the captured context, or just queue and return).
   using WriteFn = std::function<void(const uint32_t* words, size_t count)>;

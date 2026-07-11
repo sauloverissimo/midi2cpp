@@ -93,7 +93,7 @@ static void test_sendFlexText(void) {
     CHECK(ok, "sendFlexText returned false");
     CHECK_EQ(g_captured_tx_len, 4u, "MT 0xD = 4 words");
     CHECK_EQ((g_captured_tx[0] >> 28) & 0xFu, 0xDu, "MT = 0xD");
-    // bank in low 16 bits of word 0 — exact layout depends on flex_w0_full
+    // bank in low 16 bits of word 0, exact layout depends on flex_w0_full
     PASS();
 }
 

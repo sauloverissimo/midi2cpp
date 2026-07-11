@@ -19,7 +19,7 @@
 namespace midi2 {
 
 // ============================================================================
-// Host — USB MIDI 2.0 host shape.
+// Host, USB MIDI 2.0 host shape.
 //
 // Wraps midi2 C99 for the host-side of the protocol: an embedded MCU with a
 // USB host port enumerates one or more attached MIDI 2.0 devices, queries
@@ -91,7 +91,7 @@ public:
     void task();
 
     // ------------------------------------------------------------------
-    // Platform contract — caller wires these to its USB host stack.
+    // Platform contract, caller wires these to its USB host stack.
     // ------------------------------------------------------------------
     using WriteFn = std::function<void(uint8_t idx,
                                         const uint32_t* words,
@@ -121,7 +121,7 @@ public:
     void setRngFn(RngFn fn);
 
     // Caller invokes these from its TinyUSB / native USB host callbacks
-    // (must be task context, not ISR — see header preamble).
+    // (must be task context, not ISR, see header preamble).
     //
     // notifyDeviceMounted populates DeviceIdentity with the descriptor /
     // mount-callback values and fires onDeviceConnected. If
@@ -137,7 +137,7 @@ public:
     void notifyDeviceUnmounted(uint8_t idx);
 
     // ------------------------------------------------------------------
-    // Identity tracking — per connected device.
+    // Identity tracking, per connected device.
     //
     // Populated as we observe UMP Stream Endpoint Discovery responses and
     // MIDI-CI Discovery Replies from the device. The caller can read at
@@ -169,7 +169,7 @@ public:
         // Populated by UMP Stream Product Instance ID notification (status 0x04)
         char     productInstanceId[64];
 
-        // CI Initiator state — host initiates Discovery, device replies.
+        // CI Initiator state, host initiates Discovery, device replies.
         // Pending tracking lets us match the inquiry's request id to the
         // reply, time out abandoned inquiries, and keep multiple devices
         // independent.
@@ -190,7 +190,7 @@ public:
     void     regenerateHostMuid();
 
     // ------------------------------------------------------------------
-    // Lifecycle callbacks (user-facing) — fire when the library determines
+    // Lifecycle callbacks (user-facing), fire when the library determines
     // a device transitioned through a meaningful state.
     // ------------------------------------------------------------------
     using DeviceConnectedCb    = std::function<void(uint8_t idx,
@@ -305,7 +305,7 @@ public:
     void onKeySignature(KeySigCb cb);
     void onChord(ChordCb cb);
 
-    // MT 0x0 Utility — JR Timestamp arrives from devices.
+    // MT 0x0 Utility, JR Timestamp arrives from devices.
     using JrTimestampCb = std::function<void(uint8_t idx, uint8_t group,
                                              uint16_t timestamp)>;
     void onJRTimestamp(JrTimestampCb cb);
@@ -335,7 +335,7 @@ public:
     bool pitchBend(uint8_t idx, uint8_t channel, uint32_t value);
 
     // ------------------------------------------------------------------
-    // CI Initiator — host queries connected devices.
+    // CI Initiator, host queries connected devices.
     //
     // v0.1 ships Discovery only; Profile / PE / PI initiator flows land
     // in v0.2 alongside m2bridge.
@@ -348,7 +348,7 @@ public:
     void setAutoDiscover(bool enabled);
 
     // ------------------------------------------------------------------
-    // Group remap — host can remap the group field on inbound UMPs from
+    // Group remap, host can remap the group field on inbound UMPs from
     // a specific device, useful when forwarding to a Multi-Group Endpoint
     // downstream (the bridge use case).
     // ------------------------------------------------------------------
