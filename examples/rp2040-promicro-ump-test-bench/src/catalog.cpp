@@ -4,8 +4,8 @@
  * Each entry follows the same shape:
  *   1. issue the midi.sendXxx() call (or midi2_board::pumpRaw for the
  *      five entries that have no midi2cpp sender: Endpoint Discovery,
- *      Stream Config Request, FB Discovery, plus the two intentional
- *      edge cases),
+ *      Stream Config Request, FB Discovery, plus boundary-value
+ *      entries),
  *   2. capture the same wire bytes via the corresponding midi2 C99
  *      midi2_msg_xxx builder, padded to 4 words for log alignment,
  *   3. emit one EMIT line per UMP packet (matching what reaches the
@@ -168,7 +168,7 @@ constexpr uint8_t kFlexPrimaryPerformer  = 0x09;
 constexpr uint8_t kFlexLyrics         = 0x01;
 constexpr uint8_t kFlexLyricsLanguage = 0x02;
 constexpr uint8_t kFlexRuby           = 0x03;
-constexpr uint8_t kFlexComment        = 0x05;
+constexpr uint8_t kFlexRubyLanguage   = 0x04;
 
 void emit_flex_text(uint8_t idx, midi2::m2device& midi,
                     uint8_t bank, uint8_t status,
@@ -344,12 +344,16 @@ void emit_fb_name_text(uint8_t idx, uint8_t fb_num, const char* text, const char
  * Identity constants used by §5.8 entries (mirror main.cpp).
  *--------------------------------------------------------------------*/
 const uint8_t  kBenchMfrId[3]     = {0x7D, 0x00, 0x00};
+// Identity echoed by the catalog's Stream vectors. MUST match the CI
+// identity in main.cpp and the tusb_config strings: a Stream notification
+// carrying different values rewrites the device identity in the host's
+// view mid-session and corrupts the initiator's device record.
 const uint16_t kBenchFamily       = 0x0001;
-const uint16_t kBenchModel        = 0x0001;
+const uint16_t kBenchModel        = 0x000D;   // = kModelId in main.cpp
 const uint32_t kBenchVersion      = 0x00010000;
-const char     kBenchEndpoint[]   = "UMP Reference Emitter";
-const char     kBenchProductInst[] = "UMPReferenceEmitter-bench-0001";
-const char     kBenchFbName[]     = "Test Bench Group 0";
+const char     kBenchEndpoint[]   = "RP2040 UMP Bench MIDI 2.0";   // = CFG_TUD_MIDI2_EP_NAME
+const char     kBenchProductInst[] = "UMPReferenceEmitter-bench-0001";  // = CFG_TUD_MIDI2_PRODUCT_ID
+const char     kBenchFbName[]     = "RP2040 UMP Bench MIDI 2.0";   // = FB name (EP name)
 
 /*--------------------------------------------------------------------+
  * Stub for not-yet-implemented entries.
@@ -427,7 +431,7 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
         case 33: emit_flex_text(33, midi, kFlexBankPerfText, kFlexLyrics,
                                 "Letra de teste com conteudo razoavelmente longo para multipacket",
                                 "perf lyrics (multi-packet)"); break;
-        case 34: emit_flex_text(34, midi, kFlexBankPerfText, kFlexComment,       "Bench note",       "perf comment");         break;
+        case 34: emit_flex_text(34, midi, kFlexBankPerfText, kFlexRubyLanguage, "ja-Latn",          "perf ruby_language");   break;
 
         /* ============================================================
          * §5.4 MIDI 2.0 Channel Voice (mt 0x4)
@@ -714,10 +718,11 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
             log_words(88, "stream config_notify protocol=2", w, 4);
         } break;
         case 89: {
-            // FB Discovery, no midi2cpp sender (host-side message).
-            uint32_t w[4]; midi2_msg_stream_fb_discovery(w, /*fb_num*/ 0xFF, /*filter*/ 0xFF);
+            // FB Discovery, no midi2cpp sender (host-side message). fb_num 0
+            // stays inside the declared Function Block range.
+            uint32_t w[4]; midi2_msg_stream_fb_discovery(w, /*fb_num*/ 0, /*filter*/ 0xFF);
             midi2_board::pumpRaw(w, 4);
-            log_words(89, "stream fb_discovery fb=0xFF filter=0xFF", w, 4);
+            log_words(89, "stream fb_discovery fb=0 filter=0xFF", w, 4);
         } break;
         case 90: {
             midi.sendFbInfo(/*active*/ true, /*fb_num*/ 0,
@@ -778,25 +783,18 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
          * §5.10 Edge cases
          * ============================================================ */
         case 99: {
-            // Set Tempo BPM=120 with bit 31 of word2 set (reserved bits).
+            // Set Tempo at the fastest spec-representable rate (10 ns units).
             uint32_t w[4];
-            midi2_msg_tempo(w, kCatalogGroup, /*ten_ns*/ 50000000u);
-            w[2] |= (UINT32_C(1) << 31);
+            midi2_msg_tempo(w, kCatalogGroup, /*ten_ns*/ 1u);
             midi2_board::pumpRaw(w, 4);
-            log_words(99, "edge: set_tempo with reserved bit set", w, 4);
+            log_words(99, "set_tempo minimum interval (boundary value)", w, 4);
         } break;
         case 100: {
-            // Flex Data bank 0x00 with status 0x42 (unassigned in M2-104 v1.1.2).
-            uint32_t w[4] = {0, 0, 0, 0};
-            w[0] = ((uint32_t)0xD << 28)             // mt 0xD
-                 | ((uint32_t)kCatalogGroup << 24)
-                 | ((uint32_t)0x00 << 22)            // form 0
-                 | ((uint32_t)0x01 << 20)            // address group-level
-                 | ((uint32_t)0x00 << 16)            // channel 0
-                 | ((uint32_t)0x00 << 8)             // statusBank 0x00
-                 |  (uint32_t)0x42;                  // status 0x42 (unassigned)
+            // Set Time Signature boundary: 16/16 with 8 thirty-second notes.
+            uint32_t w[4];
+            midi2_msg_time_sig(w, kCatalogGroup, /*num*/ 16, /*denom_exp*/ 4, /*n32*/ 8);
             midi2_board::pumpRaw(w, 4);
-            log_words(100, "edge: flex_data bank=0x00 status=0x42", w, 4);
+            log_words(100, "set_time_signature 16/16 boundary", w, 4);
         } break;
 
         default:

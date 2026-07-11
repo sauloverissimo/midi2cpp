@@ -60,6 +60,13 @@ amidi -l                        # IO  hw:N,1,0  Group 1 (Test Bench Group 0)
 
 **Linux**: any UMP-aware logger captures the auto-emit on plug. **Windows**: `midi enumerate midi-services-endpoints -i` lists `RP2040 UMP Bench MIDI 2.0`. `midi endpoint <id> monitor -c capture.txt -n` captures every UMP from auto-emit. Cross-check the EMIT log on UART against the captured `.txt` file; the bytes should be identical.
 
+## Deterministic catalog
+
+Every catalog entry is a spec-valid message (boundary values included: minimum
+tempo interval, 16/16 time signature, wildcard-filter FB Discovery on the
+declared block). A MIDI 2.0 Workbench session against it reports zero errors
+and zero warnings; anything else in a capture is a regression.
+
 ## Spec coverage
 
 Full UMP catalog. 101 of 101 entries implemented.

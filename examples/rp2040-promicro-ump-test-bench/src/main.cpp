@@ -22,8 +22,8 @@
  *
  *   USB VID:PID            0xCAFE:0x4078
  *   USB Manufacturer       "MIDI 2.0 Test Bench"
- *   USB Product            "UMP Reference Emitter"
- *   UMP Endpoint Name      "UMP Reference Emitter"
+ *   USB Product            "RP2040 UMP Bench MIDI 2.0"
+ *   UMP Endpoint Name      "RP2040 UMP Bench MIDI 2.0"
  *   UMP Product Instance   "UMPReferenceEmitter-bench-0001"
  *   Function Block Name    "Test Bench Group 0"
  *
@@ -181,7 +181,7 @@ int main() {
     std::printf("\r\n==================================================\r\n");
     std::printf("  rp2040-promicro-ump-test-bench  (VID:PID 0xCAFE:0x4078)\r\n");
     std::printf("  Manufacturer  : MIDI 2.0 Test Bench\r\n");
-    std::printf("  Product       : UMP Reference Emitter\r\n");
+    std::printf("  Product       : RP2040 UMP Bench MIDI 2.0\r\n");
     std::printf("  Catalog size  : %u entries (0..%u)\r\n",
                 (unsigned)ump_test_bench::kCatalogSize,
                 (unsigned)(ump_test_bench::kCatalogSize - 1));
@@ -192,7 +192,9 @@ int main() {
 
     midi2_board::init(midi, ci);
     midi.begin();
-    midi.enableJRHeartbeat(500);
+    // No periodic JR heartbeat: the catalog emits JR vectors deterministically,
+    // and a free-running heartbeat would land inside the multi-tick SysEx runs
+    // (entries 75-77), polluting the vectors it exists to demonstrate.
     ci.begin(kMfrId, kFamilyId, kModelId, kVersion);
     ci.addPropertyStatic("DeviceInfo",
         "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[13,0],\"versionId\":[0,0,4,0],"
