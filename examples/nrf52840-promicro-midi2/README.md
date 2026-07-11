@@ -71,15 +71,16 @@ timeout 15 aseqdump -p ${PORT}
 
 ## Spec coverage
 
-256 KB SRAM and 1 MB flash easily fit the full UMP + MIDI-CI surface, but this recipe is intentionally scoped to Channel Voice + Stream Discovery + a data-message coverage burst (SysEx7/SysEx8/MDS), plus the standard MIDI-CI surface (Discovery, Profile GM 1, Property Exchange with DeviceInfo/ChannelList/ProgramList, Process Inquiry MIDI report). Future variants (`nrf52840-sysex-bench`, `nice-nano-ble-midi2`) can extend the surface.
+256 KB SRAM and 1 MB flash easily fit the full UMP + MIDI-CI surface, but this recipe is intentionally scoped to Channel Voice + Stream Discovery + a data-message full-surface coverage burst (every message category, scenes A-J compressed), plus the standard MIDI-CI surface (Discovery, Profile GM 1, Property Exchange with DeviceInfo/ChannelList/ProgramList, Process Inquiry MIDI report). Future variants (`nrf52840-sysex-bench`, `nice-nano-ble-midi2`) can extend the surface.
 
 | UMP MT | Spec | Notes |
 |---|---|---|
-| 0x0 Utility | M2-104-UM §3 | JR heartbeat 500 ms |
-| 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | Per-Note Pitch Bend, NoteOn/Off, 32-bit CC, RPN, NRPN, Relative RPN, Relative NRPN |
+| 0x0 Utility | M2-104-UM §3 | JR heartbeat 500 ms; DCTPQ + Delta Clockstamp per cycle |
+| 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | full family per cycle: 16-bit velocity, 32-bit CC/PB/PolyP/ChanP, Program+Bank, RPN/NRPN + Relative, Per-Note PB/controllers/management, note attribute pitch_7_9 |
 | 0x3 SysEx7 | M2-104-UM 7.7 | Universal Identity Reply, auto-fragmented |
 | 0x5 SysEx8 + Mixed Data Set | M2-104-UM 7.8/7.10 | single stream id, single-chunk MDS |
-| 0xF UMP Stream | M2-104-UM §11 | full Endpoint + FB Discovery |
+| 0xD Flex Data | M2-104-UM §10 | Tempo, Time Signature, Key Signature, Metronome, Chord Name per cycle |
+| 0xF UMP Stream | M2-104-UM §11 | full Endpoint + FB Discovery; Start/End of Clip per cycle |
 
 MIDI-CI: Discovery + Profile Configuration (GM 1) + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry MIDI report, via the `m2ci` responder.
 

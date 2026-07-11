@@ -70,11 +70,14 @@ Minimal core plus the standard MIDI-CI surface (Discovery, Property Exchange wit
 
 | UMP MT | Spec | Notes |
 |---|---|---|
-| 0x0 Utility | M2-104-UM §3 | JR heartbeat, 500 ms |
-| 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | NoteOn/Off (16-bit velocity + attribute), per-note pitch bend, per-note controller, 32-bit CC, channel pitch bend, RPN/NRPN, Program + Bank, poly pressure |
+| 0x0 Utility | M2-104-UM §3 | JR heartbeat 500 ms; DCTPQ + Delta Clockstamp per cycle |
+| 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7 | full family per cycle: 16-bit velocity, 32-bit CC/PB/PolyP/ChanP, Program+Bank, RPN/NRPN + Relative, Per-Note PB/controllers/management, note attribute pitch_7_9 |
+| 0x3 SysEx7 | M2-104-UM 7.7 | Universal Identity Reply, auto-fragmented |
+| 0x5 SysEx8 + Mixed Data Set | M2-104-UM 7.8/7.10 | single stream id, single-chunk MDS |
+| 0xD Flex Data | M2-104-UM §10 | Tempo, Time Signature, Key Signature, Metronome, Chord Name per cycle |
 | 0xF UMP Stream | M2-104-UM §10 | Endpoint Discovery, Device Identity, Endpoint Name, Product Instance ID, Stream Config Notify, FB Info, FB Name |
 
-MIDI-CI: Discovery + Profile Configuration (GM 1) + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry MIDI report, via the `m2ci` responder. Data-message coverage burst each cycle (SysEx7, SysEx8, MDS). Not covered: MIDI 1.0 emission (Alt 0 present in the descriptor for compatibility but unused).
+MIDI-CI: Discovery + Profile Configuration (GM 1) + Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList) + Process Inquiry MIDI report, via the `m2ci` responder. Data-message coverage full-surface burst each cycle (every message category, scenes A-J compressed). Not covered: MIDI 1.0 emission (Alt 0 present in the descriptor for compatibility but unused).
 
 ## Showcase
 

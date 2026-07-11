@@ -109,6 +109,57 @@ static int32_t vibrato_pb(uint32_t elapsed_ms) {
     return tri;
 }
 
+// Full-surface coverage burst: every MIDI 2.0 message category the
+// conformance checklist observes, once per cycle. Compressed form of the
+// showcase scenes A-J.
+static void send_full_coverage(m2device& midi) {
+    // Flex Data suite (MT 0xD) + clip markers (MT 0xF)
+    midi.sendStartOfClip();
+    midi.sendTempo(0, 50000000u);         // 120 BPM
+    midi.sendTimeSignature(0, 4, 2);      // 4/4
+    midi.sendKeySignature(0, 0, false);   // C major
+    midi.sendMetronome(0, 24, 0, 0, 0, 0, 0);
+    ChordDescriptor chord{};
+    chord.address = 1; chord.tonicNote = 3; chord.chordType = 0x03;  // Cmaj7
+    midi.sendChordName(0, chord);
+
+    // Per-Note family (MT 0x4, MIDI 2.0 only)
+    midi.noteOn(0, 60, 0xC000);
+    midi.sendPerNotePitchBend(0, 0, 60, 0x90000000u);
+    midi.sendRegPerNoteController(0, 0, 60, 7, 0xC0000000u);
+    midi.sendAsnPerNoteController(0, 0, 60, 74, 0xA0000000u);
+    midi.sendPerNoteManagement(0, 0, 60, false, true);
+    midi.noteOff(0, 60);
+
+    // 32-bit resolution + Program with Bank + RPN/NRPN + attribute
+    midi.cc(0, 74, 0xFFFFFFFFu);
+    midi.sendPitchBend(0, 0, 0xC0000000u);
+    midi.sendPolyPressure(0, 0, 60, 0x80000000u);
+    midi.sendChannelPressure(0, 0, 0x60000000u);
+    midi.sendProgram(0, 0, 42, 0x10, 0x05, true);
+    midi.sendRpn(0, 0, 0, 0, 0x40000000u);
+    midi.sendNrpn(0, 0, 0x12, 0x34, 0xDEADBEEFu);
+    midi.sendRelRpn(0, 0, 0, 0, +0x01000000);
+    midi.sendRelNrpn(0, 0, 0x12, 0x34, -0x00800000);
+    midi.sendNoteOn(0, 0, 64, 0xC000, 0x03, (uint16_t)((64u << 9) | 256));  // pitch_7_9 +50c
+    midi.sendNoteOff(0, 0, 64, 0, 0x03, 0);
+
+    // Utility (MT 0x0)
+    midi.sendDctpq(480);
+    midi.sendDeltaClockstamp(240);
+
+    // Data messages: SysEx7 identity, SysEx8, one MDS chunk (mfr 0x7D)
+    static const uint8_t sx7[] = {0x7E, 0x7F, 0x06, 0x02, 0x7D, 0x01, 0x00, 0x40,
+                                  0x00, 0x04, 0x00, 0x00};
+    midi.sendSysEx7(0, sx7, sizeof sx7);
+    static const uint8_t sx8[] = {0x7D, 0x01, 0x02, 0x03, 0x04};
+    midi.sendSysEx8(0, 0, sx8, sizeof sx8);
+    static const uint8_t mdsData[] = {0x7D, 0x4D, 0x44, 0x53};
+    midi.sendMds(0, 1, mdsData, sizeof mdsData, 0x7D00);
+
+    midi.sendEndOfClip();
+}
+
 static void showcase_step(m2device& midi, Showcase& s) {
     if (!midi.isMounted() || midi.altSetting() != 1) return;
 
@@ -205,21 +256,11 @@ static void showcase_step(m2device& midi, Showcase& s) {
             break;
 
 
-        case Phase::DataCoverage: {
-            // MT 0x3/0x5 coverage: SysEx7 identity, then SysEx8 and a Mixed
-            // Data Set chunk (single stream id, manufacturer id 0x7D).
-            static const uint8_t sx7[] = {0x7E, 0x7F, 0x06, 0x02,
-                                          0x7D, 0x01, 0x00, 0x40,
-                                          0x00, 0x04, 0x00, 0x00};
-            midi.sendSysEx7(0, sx7, sizeof sx7);
-            static const uint8_t sx8[] = {0x7D, 0x01, 0x02, 0x03, 0x04};
-            midi.sendSysEx8(0, /*streamId*/ 0, sx8, sizeof sx8);
-            static const uint8_t mdsData[] = {0x7D, 0x4D, 0x44, 0x53};
-            midi.sendMds(0, /*mdsId*/ 1, mdsData, sizeof mdsData, /*mfrId*/ 0x7D00);
+        case Phase::DataCoverage:
+            send_full_coverage(midi);
             s.phase    = Phase::GapStart;
             s.phase_ms = now;
             break;
-        }
 
         case Phase::GapStart:
             s.phase    = Phase::Gap;
