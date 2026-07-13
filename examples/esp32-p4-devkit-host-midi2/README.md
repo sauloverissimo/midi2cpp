@@ -3,7 +3,7 @@
 
 USB MIDI 2.0 host on the **Waveshare ESP32-P4-WIFI6-DEV-KIT**. Plug an upstream MIDI 2.0 device into either of the two USB-A jacks (UTMI PHY, OTG_HS controller at 480 Mbps, routed through the onboard CH334F USB hub), routes UMP through `m2host`, prints decoded device topology + live UMP stream on the UART console (CH343 USB-Serial-JTAG bridge on the **ToUART** USB-C jack). ESP-IDF v5.4 build, no Arduino IDE.
 
-![esp32-p4-devkit-host-midi2 banner](board/banner.jpg)
+![esp32-p4-devkit-host-midi2 banner](board/banner.png)
 
 > Built against the TinyUSB [`experiment/midi-coexistence`](https://github.com/sauloverissimo/tinyusb/tree/experiment/midi-coexistence) branch on top of upstream master. The branch adds an alt-walk `bcdMSC` defer that lets `CFG_TUH_MIDI=1` and `CFG_TUH_MIDI2=1` coexist (each driver claims only its matching protocol version). Staged as a follow-up PR upstream.
 

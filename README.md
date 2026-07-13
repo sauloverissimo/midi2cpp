@@ -1,6 +1,6 @@
 # midi2cpp
 
-## C++ MIDI 2.0 platform. An idiomatic wrapper over the midi2 core. Build MIDI 2.0 devices, hosts, and bridges.
+**C++ MIDI 2.0 platform. An idiomatic wrapper over the midi2 core. Build MIDI 2.0 devices, hosts, and bridges.**
 
 ![midi2cpp](https://raw.githubusercontent.com/sauloverissimo/midi2cpp/main/logo_midi2cpp.png)
 
@@ -17,7 +17,7 @@
 
 ## The library
 
-midi2cpp is the layer where a sketch meets the protocol. Plug a board into the laptop, write five lines of C++, flash, and the device appears on the bus as a USB MIDI 2.0 endpoint with full Capability Inquiry, Property Exchange, and 32-bit resolution.
+midi2cpp is the layer where a sketch meets the protocol. Plug a board into the laptop, write one short sketch, flash, and the device appears on the bus as a USB MIDI 2.0 endpoint with full Capability Inquiry, Property Exchange, and 32-bit resolution.
 
 Underneath, [midi2](https://github.com/sauloverissimo/midi2) (the portable C99 core) handles parsing, dispatch, and reassembly. midi2cpp adds the C++ ergonomics: callbacks, board glue, ready-made USB descriptors. The board does the talking; the sketch tells it what to say.
 
@@ -25,93 +25,81 @@ No external library dependency: the midi2 core is bundled. Transport, clock, and
 
 ## Contents
 
-- [midi2cpp](#midi2cpp)
-  - [C++ MIDI 2.0 platform. An idiomatic wrapper over the midi2 core. Build MIDI 2.0 devices, hosts, and bridges.](#c-midi-20-platform-an-idiomatic-wrapper-over-the-midi2-core-build-midi-20-devices-hosts-and-bridges)
-  - [The library](#the-library)
-  - [Contents](#contents)
-  - [Quickstart](#quickstart)
-  - [What you get](#what-you-get)
-  - [Three shapes](#three-shapes)
-  - [Boards](#boards)
-    - [Recipes by build system](#recipes-by-build-system)
-  - [Install](#install)
-    - [Arduino IDE](#arduino-ide)
-    - [PlatformIO](#platformio)
-    - [ESP-IDF component](#esp-idf-component)
-    - [CMake FetchContent](#cmake-fetchcontent)
-    - [Git submodule](#git-submodule)
-    - [Manual vendor](#manual-vendor)
-  - [API at a glance](#api-at-a-glance)
-  - [Architecture](#architecture)
-  - [What this library is not](#what-this-library-is-not)
-  - [Sponsor](#sponsor)
-  - [About](#about)
-  - [Specifications and trademarks](#specifications-and-trademarks)
-  - [License](#license)
+- [Quickstart](#quickstart)
+- [What the library offers](#what-the-library-offers)
+- [Three shapes](#three-shapes)
+- [Boards](#boards)
+  - [Recipes by build system](#recipes-by-build-system)
+- [Install](#install)
+  - [Arduino IDE](#arduino-ide)
+  - [PlatformIO](#platformio)
+  - [ESP-IDF component](#esp-idf-component)
+  - [CMake FetchContent](#cmake-fetchcontent)
+  - [Git submodule](#git-submodule)
+  - [Manual vendor](#manual-vendor)
+- [API at a glance](#api-at-a-glance)
+- [Architecture](#architecture)
+- [What this library is not](#what-this-library-is-not)
+- [Sponsor](#sponsor)
+- [About](#about)
+- [Specifications and trademarks](#specifications-and-trademarks)
+- [License](#license)
 
 ## Quickstart
 
-`midi2cpp` is platform-agnostic: it parses, dispatches, and assembles UMP, and it leaves USB transport, clock, and entropy to the caller. The sketch wires four hooks to its platform's USB MIDI driver; the library does the rest.
+In MIDI 1.0 a note has 128 velocity levels, and bending one note of a chord bends the whole channel. MIDI 2.0 gives every note 65,536 dynamic levels, its own pitch bend, and its own controllers. This is what that looks like:
 
 ```cpp
 #include <midi2cpp.h>
 using namespace midi2;
 
 m2device midi;
-m2ci     ci(midi);
 
-// 1. Outbound UMP. Forward to the platform's USB MIDI write API.
-void plat_write(const uint32_t* words, size_t count) {
-  // tud_midi2_n_ump_write(0, words, count);                  // TinyUSB
-  // usbMIDI2.write(words, count);                            // Teensy (cores fork)
-  // ...
+// Outbound UMP: one line per board. TinyUSB shown; see the recipes below.
+size_t plat_write(const uint32_t* words, size_t count) {
+  return tud_midi2_n_ump_write(0, words, count);
 }
 
-// 2. Monotonic millisecond clock. Used by the JR Heartbeat.
-uint32_t plat_now() { return millis(); }
-
-// 3. Entropy source for MUID. Caller picks (esp_random / get_rand_32 / etc).
-uint32_t plat_rng() { return random(); }
-
 void setup() {
-  Serial.begin(115200);
-
   midi.setWriteFn(plat_write);
-  midi.setNowFn(plat_now);
-  midi.setMounted(true);
-  midi.setAltSetting(1);   // 1 = MIDI 2.0 stream
   midi.begin();
-  midi.enableJRHeartbeat(500);
-
-  ci.setRngFn(plat_rng);
-  static const uint8_t mfrId[3] = {0x7D, 0x00, 0x00};  // educational prefix
-  ci.begin(mfrId, /*family*/ 0x0001, /*model*/ 0x0001, /*version*/ 0x00010000);
-  ci.addPropertyStatic("DeviceInfo",
-    "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[1,0],"
-     "\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2cpp\","
-     "\"family\":\"Demo\",\"model\":\"Hello MIDI 2.0\",\"version\":\"0.0.1\"}");
-
-  midi.onNoteOn([](uint8_t /*g*/, uint8_t ch, uint8_t n, uint16_t v,
-                   uint8_t /*at*/, uint16_t /*ad*/) {
-    Serial.print("NoteOn ch="); Serial.print(ch);
-    Serial.print(" note=");      Serial.print(n);
-    Serial.print(" vel=");       Serial.println(v);
-  });
 }
 
 void loop() {
-  // 4. Inbound UMP. Pump RX from the platform's USB MIDI callback into the lib.
-  uint32_t in[16];
-  size_t n = /* read up to 16 UMP words from your USB driver */ 0;
-  if (n) midi.feedRx(in, n);
+  // A C major chord, each note with its own 16-bit dynamic.
+  midi.noteOn(0, 60, 0x8000);   // C4, mezzo-forte
+  midi.noteOn(0, 64, 0x6000);   // E4, a touch softer
+  midi.noteOn(0, 67, 0xC000);   // G4, singing on top
 
-  midi.task();   // dispatches reassembled SysEx, fires heartbeat
+  // Bend only the G. The C and the E hold still.
+  for (uint32_t bend = 0x80000000; bend < 0x90000000; bend += 0x00800000) {
+    midi.sendPerNotePitchBend(/*group*/ 0, /*channel*/ 0, /*note*/ 67, bend);
+    delay(15);
+  }
+
+  // Open the same note's own brightness (per-note controller 74).
+  midi.sendRegPerNoteController(0, 0, 67, 74, 0xFFFF0000);
+
+  midi.noteOff(0, 60);
+  midi.noteOff(0, 64);
+  midi.noteOff(0, 67);
+  delay(1000);
 }
 ```
 
-The four hooks (`setWriteFn`, `feedRx`, `setNowFn`, `setMounted` + `setAltSetting`) are the entire platform contract. When an injection point is left unset the corresponding feature degrades safely (no transport, frozen MUID, no heartbeat).
+Receiving is symmetric: 49 typed callbacks, one per message kind.
 
-## What you get
+```cpp
+midi.onNoteOn([](uint8_t ch, uint8_t note, uint16_t vel16) {
+  // vel16 spans the full 16-bit range; MIDI 1.0 inputs arrive upscaled.
+});
+```
+
+Every callback also has a verbose overload exposing Group and the MIDI 2.0 attribute fields; see [API at a glance](#api-at-a-glance).
+
+`midi2cpp` is platform-agnostic: it parses, dispatches, and assembles UMP, and leaves USB transport, clock, and entropy to the caller. The entire platform contract is four hooks (`setWriteFn`, `feedRx`, `setNowFn`, `setMounted` + `setAltSetting`); anything left unset degrades safely. [`hello-midi2-arduino`](examples/hello-midi2-arduino/hello-midi2-arduino.ino) is the complete compilable baseline, including the MIDI-CI responder package (Discovery, Profiles, Property Exchange, Process Inquiry) validated against the MIDI 2.0 Workbench, and the [board recipes](#boards) wire real transports.
+
+## What the library offers
 
 - USB MIDI 2.0 device, host, or both, depending on the board.
 - 49 typed UMP callbacks: notes, CCs, RPN/NRPN, per-note expression, Flex Data, Stream messages.
@@ -139,9 +127,9 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 | **Arduino Nano ESP32** | ESP32-S3 | ✅ | - | - | ✅ | TinyUSB | [`arduino-nano-esp32-midi2`](examples/arduino-nano-esp32-midi2) |
 | **Waveshare ESP32-P4-WIFI6-DEV-KIT** (device) | ESP32-P4 | ✅ | - | - | ✅ | TinyUSB | [`esp32-p4-devkit-usb-midi2`](examples/esp32-p4-devkit-usb-midi2), mandatory `LP_SYS.usb_ctrl` PHY swap |
 | **Waveshare ESP32-P4-WIFI6-DEV-KIT** (host / bridge) | ESP32-P4 | - | ✅ | ✅ | - | ![experimental](https://img.shields.io/badge/-experimental-yellow.svg) TinyUSB | [`esp32-p4-devkit-host-midi2`](examples/esp32-p4-devkit-host-midi2), [`esp32-p4-devkit-bridge-midi2`](examples/esp32-p4-devkit-bridge-midi2), [`esp32-p4-devkit-bridge2-midi2`](examples/esp32-p4-devkit-bridge2-midi2), experimental coexistence branch |
-| **LilyGo T-Display S3** | ESP32-S3 | ✅ | - | - | ✅ | TinyUSB | [`t-display-s3-midi2`](examples/t-display-s3-midi2), Tier A receiver, on-board ST7789 piano roll |
-| T-Display S3 AMOLED | ESP32-S3 | ✅ | ✅ | - | - | TinyUSB | direct consumer |
-| **Teensy 4.1** | i.MX RT1062 | ✅ | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) Teensyduino native + USBHost_t36 | [`teensy41-midi2`](examples/teensy41-midi2) (device), [`teensy41-control-surface`](examples/teensy41-control-surface), [`teensy41-host-midi2`](examples/teensy41-host-midi2), Teensyduino cores + USBHost_t36 forks |
+| **LilyGo T-Display S3** | ESP32-S3 | ✅ | - | - | ✅ | TinyUSB | [`t-display-s3-midi2`](examples/t-display-s3-midi2), full UMP receiver, on-board ST7789 piano roll |
+| T-Display S3 AMOLED | ESP32-S3 | ✅ | ✅ | - | - | TinyUSB | uses the library directly, no dedicated recipe yet |
+| **Teensy 4.1** | i.MX RT1062 | ✅ | ✅ | - | ✅ | ![override](https://img.shields.io/badge/-override-purple.svg) Teensyduino native + USBHost_t36 | [`teensy41-midi2`](examples/teensy41-midi2) (device), [`teensy41-control-surface`](examples/teensy41-control-surface), [`teensy41-host-midi2`](examples/teensy41-host-midi2), Teensyduino cores + USBHost_t36 forks |
 | **Daisy Seed** | STM32H750 | ✅ | ✅ | - | - | ![override](https://img.shields.io/badge/-override-purple.svg) libDaisy native | [`daisyseed-midi2`](examples/daisyseed-midi2) (device), [`daisyseed-host-midi2`](examples/daisyseed-host-midi2) (host), libDaisy fork, STM32 HAL stack |
 | **Raspberry Pi Pico** | RP2040 | ✅ | - | - | ✅ | TinyUSB | [`rp2040-midi2`](examples/rp2040-midi2) |
 | **Waveshare RP2040 Pi Zero** | RP2040 | ✅ | - | - | ✅ | TinyUSB | [`waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2) |
@@ -149,31 +137,31 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 | **RP2040 Pro Micro (Tenstar Robot)** | RP2040 | ✅ | - | - | ✅ | TinyUSB | [`rp2040-promicro-ump-test-bench`](examples/rp2040-promicro-ump-test-bench), deterministic UMP emitter for Windows MIDI Services testing |
 | **Waveshare RP2350-USB-A** | RP2350 | ✅ | ✅ | ✅ | ✅ | TinyUSB, PIO-USB on GP12/GP13 | [`waveshare-rp2350-usb-a-midi2`](examples/waveshare-rp2350-usb-a-midi2) (device), [`waveshare-rp2350-usb-a-bridge-midi2`](examples/waveshare-rp2350-usb-a-bridge-midi2) (bridge), R13 hardware mod for host mode |
 | **Raspberry Pi Pico 2** | RP2350 | ✅ | - | - | ✅ | TinyUSB | [`rp2350-pico2-midi2`](examples/rp2350-pico2-midi2) |
-| **ESP32-C6-DevKitC-1** | ESP32-C6 | ![WIP](https://img.shields.io/badge/-WIP-orange.svg) | - | - | - | BLE-MIDI 1.0 + ESP-NOW | [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2), Tier B wireless (BLE-MIDI + ESP-NOW), no USB-OTG |
-| **nRF52840 Pro Micro (Nice!Nano class)** | nRF52840 | ✅ | - | - | ✅ | TinyUSB | [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2), Tier B, TinyUSB native CMake build |
-| **Seeed XIAO SAMD21** | SAMD21 | ✅ | - | - | - | TinyUSB | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2), Tier C, TinyUSB native CMake build |
+| **ESP32-C6-DevKitC-1** | ESP32-C6 | ![WIP](https://img.shields.io/badge/-WIP-orange.svg) | - | - | - | BLE-MIDI 1.0 + ESP-NOW | [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2), wireless (BLE-MIDI + ESP-NOW), no USB-OTG |
+| **nRF52840 Pro Micro (Nice!Nano class)** | nRF52840 | ✅ | - | - | ✅ | TinyUSB | [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2), TinyUSB native CMake build |
+| **Seeed XIAO SAMD21** | SAMD21 | ✅ | - | - | - | TinyUSB | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2), TinyUSB native CMake build |
 | **T-PicoC3** (RP2040 side) | RP2040 + ESP32-C3 | ✅ | - | - | ✅ | TinyUSB | [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2), on-board LCD visualizer (LovyanGFX) |
-| **WeAct RA4M1 64-Pin Core Board** | RA4M1 | ✅ | - | - | - | TinyUSB | [`ra4m1-weact-device-midi2`](examples/ra4m1-weact-device-midi2), Tier C, board overlay for bootloader-less 0x0 flash |
-| **WeAct STM32F411 BlackPill** | STM32F411 | ✅ | - | - | ✅ | TinyUSB | [`weact-STM32F411CEU6-blackpill-device-midi2`](examples/weact-STM32F411CEU6-blackpill-device-midi2), Tier C, native OTG_FS, CMake build |
+| **WeAct RA4M1 64-Pin Core Board** | RA4M1 | ✅ | - | - | ✅ | TinyUSB | [`ra4m1-weact-device-midi2`](examples/ra4m1-weact-device-midi2), board overlay for bootloader-less 0x0 flash |
+| **WeAct STM32F411 BlackPill** | STM32F411 | ✅ | - | - | ✅ | TinyUSB | [`weact-STM32F411CEU6-blackpill-device-midi2`](examples/weact-STM32F411CEU6-blackpill-device-midi2), native OTG_FS, CMake build |
 
 **Workbench** ✅ marks a device recipe validated against the official [MIDI 2.0 Workbench](https://github.com/midi2-dev/MIDI2.0Workbench): it completes the self-certification checklist for the features it implements (MIDI-CI Discovery, Profile Configuration, Property Exchange, Process Inquiry, plus the UMP message categories the recipe emits). A blank cell means the recipe has not been run through the Workbench yet, not that it fails.
 
-Three dependencies pinned outside their upstream release: [Pico-PIO-USB](https://github.com/sekigon-gonnoc/Pico-PIO-USB) at SHA `675543b` (PR #186 "reduce handshake delay" not yet tagged, required for MIDI 2.0 host enumeration over PIO-USB), the Teensy cores fork [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0 with AS0 + AS1 alt settings, not yet submitted upstream) and the USBHost_t36 fork [`sauloverissimo/USBHost_t36`](https://github.com/sauloverissimo/USBHost_t36/tree/feature/midi2-host-base) branch `feature/midi2-host-base` (USB MIDI 2.0 host side, not yet submitted upstream). Each retires when the upstream release ships.
+The library itself carries no external dependencies; a handful of recipes pin theirs. The PIO-USB host recipes (`adafruit-feather-rp2040-host-midi2`, `adafruit-feather-rp2040-bridge-midi2`, `waveshare-rp2350-usb-a-bridge-midi2`) pin [Pico-PIO-USB](https://github.com/sekigon-gonnoc/Pico-PIO-USB) at upstream SHA `675543b`, the merge commit of PR #186 "reduce handshake delay", required for MIDI 2.0 host enumeration over PIO-USB (merged upstream, newer than the latest tagged release 0.7.2; the pin becomes a plain version bump once upstream tags a new release). The Teensy recipes build against two forks carrying code not yet submitted upstream: [`sauloverissimo/cores`](https://github.com/sauloverissimo/cores/tree/feature/usb-midi2-descriptors) branch `feature/usb-midi2-descriptors` (native USB MIDI 2.0 with AS0 + AS1 alt settings, used by `teensy41-midi2` and `teensy41-control-surface`) and [`sauloverissimo/USBHost_t36`](https://github.com/sauloverissimo/USBHost_t36/tree/feature/midi2-host-base) branch `feature/midi2-host-base` (USB MIDI 2.0 host side, used by `teensy41-host-midi2`). Each fork retires when its changes land upstream.
 
 ### Recipes by build system
 
-26 recipes ship under [`examples/`](examples/), grouped by build path:
+29 recipes ship under [`examples/`](examples/), grouped by build path:
 
 | Build system | Count | Recipes |
 |---|:-:|---|
 | **Pico SDK** | 9 | [`rp2040-midi2`](examples/rp2040-midi2), [`waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2), [`rp2350-pico2-midi2`](examples/rp2350-pico2-midi2), [`waveshare-rp2350-usb-a-midi2`](examples/waveshare-rp2350-usb-a-midi2), [`waveshare-rp2350-usb-a-bridge-midi2`](examples/waveshare-rp2350-usb-a-bridge-midi2), [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2), [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2), [`rp2040-promicro-ump-test-bench`](examples/rp2040-promicro-ump-test-bench), [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2) |
 | **ESP-IDF** | 7 | [`arduino-nano-esp32-midi2`](examples/arduino-nano-esp32-midi2), [`esp32-s3-devkitc-usb-midi2`](examples/esp32-s3-devkitc-usb-midi2), [`esp32-p4-devkit-usb-midi2`](examples/esp32-p4-devkit-usb-midi2), [`esp32-p4-devkit-host-midi2`](examples/esp32-p4-devkit-host-midi2), [`esp32-p4-devkit-bridge-midi2`](examples/esp32-p4-devkit-bridge-midi2), [`esp32-p4-devkit-bridge2-midi2`](examples/esp32-p4-devkit-bridge2-midi2), [`t-display-s3-midi2`](examples/t-display-s3-midi2) |
 | **PlatformIO + ESP32_Host_MIDI** | 3 | [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2), [`esp32-s3-devkitc-host-midi2`](examples/esp32-s3-devkitc-host-midi2), [`t-display-s3-shield-host-midi2`](examples/t-display-s3-shield-host-midi2) |
-| **TinyUSB native CMake** | 3 | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2), [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2), [`ra4m1-weact-device-midi2`](examples/ra4m1-weact-device-midi2) |
-| **Arduino IDE / arduino-cli** | 3 | [`teensy41-midi2`](examples/teensy41-midi2), [`teensy41-control-surface`](examples/teensy41-control-surface), [`teensy41-host-midi2`](examples/teensy41-host-midi2) |
+| **TinyUSB native CMake** | 4 | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2), [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2), [`ra4m1-weact-device-midi2`](examples/ra4m1-weact-device-midi2), [`weact-STM32F411CEU6-blackpill-device-midi2`](examples/weact-STM32F411CEU6-blackpill-device-midi2) |
+| **Arduino IDE / arduino-cli** | 4 | [`teensy41-midi2`](examples/teensy41-midi2), [`teensy41-control-surface`](examples/teensy41-control-surface), [`teensy41-host-midi2`](examples/teensy41-host-midi2), [`hello-midi2-arduino`](examples/hello-midi2-arduino) |
 | **libDaisy / Makefile** | 2 | [`daisyseed-midi2`](examples/daisyseed-midi2), [`daisyseed-host-midi2`](examples/daisyseed-host-midi2) |
 
-By role: 15 device, 5 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench.
+By role: 16 device, 6 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench, 1 transport-agnostic starter ([`hello-midi2-arduino`](examples/hello-midi2-arduino)).
 
 ## Install
 
@@ -250,7 +238,7 @@ git submodule add https://github.com/sauloverissimo/midi2cpp.git external/midi2c
 
 ### Manual vendor
 
-Download the [midi2cpp](https://github.com/sauloverissimo/midi2cpp) and [midi2](https://github.com/sauloverissimo/midi2) repositories side by side. Add `midi2/dist/` and `midi2cpp/src/` to includes. Compile `midi2/dist/midi2.c`, `midi2cpp/src/midi2_device.cpp`, `midi2cpp/src/midi2_ci.cpp`, and the host/bridge `.cpp` files you need alongside the project. No package manager required at build time, but the two repos must travel together.
+Download the [midi2cpp](https://github.com/sauloverissimo/midi2cpp) repository, add `midi2cpp/src/` to the include path, and compile `src/midi2.c` (the bundled midi2 core), `src/midi2_device.cpp`, `src/midi2_ci.cpp`, and the host/bridge `.cpp` files you need alongside the project. One repository, no package manager, nothing else to download.
 
 ## API at a glance
 
@@ -301,7 +289,7 @@ You can sponsor midi2cpp at [GitHub Sponsors](https://github.com/sponsors/saulov
 
 ## About
 
-midi2cpp is created and maintained by [Saulo Veríssimo](https://github.com/sauloverissimo). It is the C++17 sibling of midi2, originally extracted from USBMIDI2 work in arduino-esp32-uac and validated across the boards listed above.
+midi2cpp is created and maintained by [Saulo Veríssimo](https://github.com/sauloverissimo). It is the C++17 sibling of [midi2](https://github.com/sauloverissimo/midi2), the portable C99 core, and every recipe in this repository has been validated on the physical board it targets.
 
 ## Specifications and trademarks
 

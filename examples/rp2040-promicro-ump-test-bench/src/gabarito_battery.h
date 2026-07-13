@@ -2,7 +2,7 @@
 #define GABARITO_BATTERY_H
 
 /*
- * gabarito_battery.h - the midi2flow interpretation answer key.
+ * gabarito_battery.h - the gingoduino interpretation answer key.
  *
  * One source of truth for the *interpretation* gabarito: a paced, musical,
  * note-paired battery where every gesture has a KNOWN expected reading. It is
@@ -10,8 +10,8 @@
  * the check verifies:
  *
  *   - the device firmware (GABARITO_MODE=INTERP) plays each challenge live;
- *   - the offline replay check feeds the same schedule through GingoFlow +
- *     gingoduino and grades the interpretation, no hardware needed.
+ *   - the offline replay check feeds the same schedule through gingoduino
+ *     and grades the interpretation, no hardware needed.
  *
  * This is the opposite of the capture gabarito (the seq flood): that one is an
  * adversarial throughput test with intentionally unpaired notes; this one is a

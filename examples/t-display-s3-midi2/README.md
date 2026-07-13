@@ -5,7 +5,7 @@
 
 USB MIDI 2.0 device receiver on the **LilyGo T-Display S3** (ESP32-S3R8, 8 MB Octal PSRAM, 16 MB flash, ST7789 1.9" 320x170 IPS parallel 8-bit). Headless on the audio side, visual on the display side: the host sends UMP, the on-board piano roll mirrors note activity in real time. ESP-IDF v5.4 build, no Arduino IDE.
 
-![t-display-s3-midi2 banner](board/banner.jpg)
+![t-display-s3-midi2 banner](board/banner.png)
 
 This recipe is a **receiver showcase**: it does not emit notes, does not generate sound, does not synthesise audio. Its job is to be a well-formed USB MIDI 2.0 device, accept whatever a host (DAW, OS) sends over UMP, and visualise the activity on the on-board ST7789. The `piano_display` ESP-IDF component renders a 25-key roll plus an info bar (identity, USB lifecycle, per-category UMP counters) at ~60 fps from a dedicated FreeRTOS task pinned to core 1; the TinyUSB device task runs on core 0.
 
@@ -78,8 +78,6 @@ Drive notes from any MIDI 2.0 host and watch the on-board piano roll mirror them
 
 `amidi -p hw:N,1,0 -S "903C7F"` on Linux sends a MIDI 1.0 NoteOn (C4 at velocity `7F`) into the MIDI 2.0 alt setting; ALSA upscales the byte stream into UMP MT 0x2 and the receiver lights the centre key of the piano roll.
 
-![bench setup](monitor/stack.png)
-![Microsoft MIDI Services Console driving the receiver](monitor/windows.png)
 
 ## Spec coverage
 

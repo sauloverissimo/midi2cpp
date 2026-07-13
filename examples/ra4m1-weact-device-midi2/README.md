@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Device MIDI 2.0
 ## WeAct Studio RA4M1 64-Pin Core Board
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 USB MIDI 2.0 device on the [**WeAct RA4M1 64-Pin Core Board**](https://github.com/WeActStudio/WeActStudio.RA4M1_64Pin_CoreBoard) (Renesas R7FA4M1AB3CFM, Cortex-M4 at 48 MHz, 32 KB SRAM, 256 KB flash). Native CMake build via TinyUSB's `family_support.cmake` and the Renesas FSP, no Arduino IDE. PID `0x40F2` distinguishes this device from the other midi2cpp examples on the same host.
 
 ![ra4m1-weact-device-midi2 banner](board/properties.png)

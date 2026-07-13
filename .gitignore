@@ -35,3 +35,4 @@ compile_commands.json
 
 # MIDI 2.0 Workbench self-certification checklists (local only, not published)
 **/workbench-checklist.pdf
+__pycache__/
