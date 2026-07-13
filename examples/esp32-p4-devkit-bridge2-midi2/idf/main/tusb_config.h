@@ -68,7 +68,7 @@ extern "C" {
 // the built-in is bypassed below and the app sends Endpoint Name +
 // Product Instance ID itself, but the macros must still be defined for
 // the GTB descriptor + a few static fallbacks).
-#define CFG_TUD_MIDI2_EP_NAME              "ESP32P4Bridge2"
+#define CFG_TUD_MIDI2_EP_NAME              "ESP32-P4 Bridge2 MIDI 2.0"
 #define CFG_TUD_MIDI2_PRODUCT_ID           "ESP32P4Bridge2-0001"
 
 // Bridge needs per-FB group windows + dynamic FB Names; the built-in

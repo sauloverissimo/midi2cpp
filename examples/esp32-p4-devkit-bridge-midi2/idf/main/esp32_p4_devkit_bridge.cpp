@@ -81,7 +81,16 @@ namespace {
 void platform_dev_write_fn(const uint32_t* words, size_t count) {
     if (!tud_midi2_n_mounted(0)) return;
     if (tud_midi2_n_alt_setting(0) != 1) return;
-    tud_midi2_n_ump_write(0, words, (uint32_t)count);
+    // Whole-message write: a full FIFO mid-burst must not truncate a UMP.
+    // Yield to the TinyUSB task and retry (bounded ~100 ms: host gone).
+    uint32_t off = 0;
+    uint32_t spin = 0;
+    while (off < count) {
+        off += tud_midi2_n_ump_write(0, words + off, (uint32_t)(count - off));
+        if (off >= count) break;
+        vTaskDelay(1);
+        if (++spin > 100) return;
+    }
 }
 
 void platform_host_write_fn(uint8_t idx, const uint32_t* words, size_t count) {
@@ -144,7 +153,15 @@ void tinyusb_device_task(void* arg) {
 // write when the device side isn't mounted in UMP mode.
 uint32_t write_raw_ump_to_pc(const uint32_t* words, uint32_t count) {
     if (!tud_midi2_n_mounted(0) || tud_midi2_n_alt_setting(0) != 1) return 0;
-    return tud_midi2_n_ump_write(0, words, count);
+    uint32_t off = 0;
+    uint32_t spin = 0;
+    while (off < count) {
+        off += tud_midi2_n_ump_write(0, words + off, count - off);
+        if (off >= count) break;
+        vTaskDelay(1);
+        if (++spin > 100) break;      // bounded: host gone, report short
+    }
+    return off;
 }
 
 // Forward a buffer of UMPs from upstream slot `idx` to the PC,

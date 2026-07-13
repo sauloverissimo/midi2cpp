@@ -60,6 +60,26 @@ DEVICES = {
  "t-display-s3-midi2": ("idf/main/main.cpp", "idf/main/tusb_config.h", "idf/components/tinyusb/usb_descriptors.c"),
 }
 
+# bridge recipe -> (main file, extra glue file or None, tusb_config, usb_descriptors)
+# The device face of a bridge is a USB MIDI 2.0 device: identity and category
+# rules apply to it exactly as they do to the device recipes above.
+BRIDGES = {
+ "adafruit-feather-rp2040-bridge-midi2": ("src/main.cpp", "src/feather_bridge.cpp", "src/tusb_config.h", "src/usb_descriptors.c"),
+ "waveshare-rp2350-usb-a-bridge-midi2": ("src/main.cpp", "src/feather_bridge.cpp", "src/tusb_config.h", "src/usb_descriptors.c"),
+ "esp32-p4-devkit-bridge-midi2": ("idf/main/main.cpp", "idf/main/esp32_p4_devkit_bridge.cpp", "idf/main/tusb_config.h", "idf/components/tinyusb/usb_descriptors.c"),
+ "esp32-p4-devkit-bridge2-midi2": ("idf/main/main.cpp", "idf/main/esp32_p4_devkit_bridge2.cpp", "idf/main/tusb_config.h", "idf/components/tinyusb/usb_descriptors.c"),
+}
+
+# host recipe -> glue file holding the m2host bring-up
+HOSTS = {
+ "adafruit-feather-rp2040-host-midi2": "src/feather_host.cpp",
+ "daisyseed-host-midi2": "src/daisyseed_host_midi2.cpp",
+ "esp32-p4-devkit-host-midi2": "idf/main/esp32_p4_devkit_host.cpp",
+ "esp32-s3-devkitc-host-midi2": "pio/src/main.cpp",
+ "t-display-s3-shield-host-midi2": "pio/src/main.cpp",
+ "teensy41-host-midi2": "src/teensy41_host_midi2.cpp",
+}
+
 PE_BODY_MAX = 448   # midi2 lib reply body cap (sized to the advertised 512 maxSysex)
 
 
@@ -256,13 +276,106 @@ def audit(name, spec, product_ids, model_ids):
     return F
 
 
+def audit_bridge(name, spec, product_ids, model_ids):
+    mainf, gluef, tusbf, descf = spec
+    d = os.path.join(ROOT, name)
+    t = read(os.path.join(d, mainf)) or ""
+    glue = t + " " + (read(os.path.join(d, gluef)) or "")
+    F = []
+    if not t:
+        return [f"main file missing: {mainf}"]
+
+    # Device-face USB identity: same fleet conventions as the device recipes.
+    tc = read(os.path.join(d, tusbf)) or ""
+    ep = re.search(r'CFG_TUD_MIDI2_EP_NAME\s+"([^"]+)"', tc)
+    pid = re.search(r'CFG_TUD_MIDI2_PRODUCT_ID\s+"([^"]+)"', tc)
+    if not ep:
+        F.append("CFG_TUD_MIDI2_EP_NAME missing")
+    elif "MIDI 2.0" not in ep.group(1):
+        F.append(f"EP name lacks 'MIDI 2.0': {ep.group(1)!r}")
+    if not pid:
+        F.append("CFG_TUD_MIDI2_PRODUCT_ID missing")
+    else:
+        product_ids.setdefault(pid.group(1), []).append(name)
+
+    dc = read(os.path.join(d, descf)) or ""
+    if f'"{MANUFACTURER}"' not in dc:
+        F.append(f"usb_descriptors Manufacturer is not {MANUFACTURER!r}")
+
+    # FB/endpoint identity on the wire, by any of the three valid paths:
+    # driver GTB callback (#3738), an app-level Stream responder, or the
+    # m2bridge composed responder (lib-owned).
+    uses_m2bridge = bool(re.search(r'\bBridge\s+\w+|midi2::Bridge|m2bridge', t))
+    app_responder = "onEndpointDiscovery" in glue and "onFbDiscovery" in glue
+    if "tud_midi2_gtb_desc_cb" in glue:
+        if "MIDI2_GTB_BIDIRECTIONAL" not in glue:
+            F.append("GTB is not bidirectional")
+    elif not app_responder and not uses_m2bridge:
+        F.append("no FB identity path (gtb_desc_cb, app Stream responder or m2bridge)")
+
+    # MIDI-CI face (direct m2ci or composed via m2bridge). ci.begin defaults
+    # to ciCat 0x1C (Profile | PE | Process Inquiry): every advertised
+    # category must be backed, exactly as on the device recipes.
+    has_ci = "ci.begin" in t or re.search(r'\bBridge\s+\w+|midi2::Bridge|m2bridge', t)
+    if has_ci:
+        km = re.search(r'kModel\s*=\s*0x([0-9A-Fa-f]+)', t)
+        if km:
+            model_ids.setdefault(int(km.group(1), 16), []).append(name)
+        else:
+            F.append("kModel not found (fleet-unique model id unverifiable)")
+        if not resource_json(t, "DeviceInfo", "kDeviceInfo[]"):
+            F.append("MIDI-CI face without DeviceInfo (PE advertised by default ciCat)")
+        if "addProfile" not in t:
+            F.append("MIDI-CI face without a Profile (ciCat advertises Profile Configuration)")
+        if "setMidiReport" not in t:
+            F.append("MIDI-CI face without setMidiReport (ciCat advertises Process Inquiry)")
+
+    # Forwarding TX must not drop silently on a full FIFO: the write result
+    # feeds a bounded retry or a surfaced drop counter.
+    m = re.search(r'^\s*tud_midi2_n_ump_write\([^;]*\);\s*$', glue, re.M)
+    if m:
+        F.append("device-face forward ignores tud_midi2_n_ump_write result (silent drop on full FIFO)")
+    return F
+
+
+def audit_host(name, gluef):
+    d = os.path.join(ROOT, name)
+    t = read(os.path.join(d, gluef))
+    if t is None:
+        return [f"glue file missing: {gluef}"]
+    F = []
+    # Initiator MUID entropy: rng must be installed before the SAME object's
+    # begin() so the boot MUID seeds from it (same rule as the device fleet).
+    m = re.search(r'(\w+)(?:\.|->)setRngFn', t)
+    if not m:
+        F.append("no setRngFn (initiator MUID falls back to a fixed seed)")
+    else:
+        obj = m.group(1)
+        beg = re.search(rf'\b{re.escape(obj)}(?:\.|->)begin\(', t)
+        if beg and beg.start() < m.start():
+            F.append("setRngFn installed after begin() (boot MUID misses the rng)")
+    return F
+
+
 def main():
     product_ids = {}
     model_ids = {}
     total = 0
-    width = max(len(n) for n in DEVICES) + 2
+    width = max(len(n) for n in list(DEVICES) + list(BRIDGES) + list(HOSTS)) + 2
     for name, spec in DEVICES.items():
         findings = audit(name, spec, product_ids, model_ids)
+        total += len(findings)
+        print(f"{name:<{width}} {'OK' if not findings else f'{len(findings)} finding(s)'}")
+        for f in findings:
+            print(f"    - {f}")
+    for name, spec in BRIDGES.items():
+        findings = audit_bridge(name, spec, product_ids, model_ids)
+        total += len(findings)
+        print(f"{name:<{width}} {'OK' if not findings else f'{len(findings)} finding(s)'}")
+        for f in findings:
+            print(f"    - {f}")
+    for name, gluef in HOSTS.items():
+        findings = audit_host(name, gluef)
         total += len(findings)
         print(f"{name:<{width}} {'OK' if not findings else f'{len(findings)} finding(s)'}")
         for f in findings:

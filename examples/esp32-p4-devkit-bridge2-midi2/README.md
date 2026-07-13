@@ -87,7 +87,7 @@ Identical to the v1 sibling. No board modification required.
 ## Validation
 ![esp32-p4-devkit-bridge2-midi2 banner](monitor/stack.png)
 
-Plug the **USB-Device** USB-C into the host PC. Plug any USB MIDI 2.0 device into either USB-A jack. The PC should enumerate `cafe:4095 ESP32P4Bridge2` and expose a multi-FB MIDI 2.0 endpoint.
+Plug the **USB-Device** USB-C into the host PC. Plug any USB MIDI 2.0 device into either USB-A jack. The PC should enumerate `cafe:4095 ESP32-P4 Bridge2 MIDI 2.0` and expose a multi-FB MIDI 2.0 endpoint.
 
 - **Linux**: `lsusb | grep cafe:4095` shows `ESP32-P4 Bridge2 MIDI 2.0`. `aconnect -l` lists the four group ranges with the upstream Endpoint Name in parentheses (e.g. `Group 1 (RP2040PiZero)`). `aseqdump -p "ESP32P4Bridge2:1"` and `aseqdump -p "ESP32P4Bridge2:5"` show two upstream devices on disjoint groups in real time.
 - **Windows**: Microsoft MIDI Services Console shows `ESP32-P4 Bridge2 MIDI 2.0` with Native data format = UMP, MIDI 2.0 Protocol = True, Declared Function Block Count = 4. Each active FB carries the upstream Endpoint Name; inactive FBs read `(empty slot)`.
@@ -100,7 +100,7 @@ The UART console mirrors the lifecycle:
 Host UTMI PHY ready (rhport 1)
 Device INT PHY ready, full speed (rhport 0)
 Both TinyUSB tasks started (device on core 0, host on core 1)
-[bridge] PC sees ESP32P4Bridge2 (cafe:4095), 16 groups across 4 FBs.
+[bridge] PC sees ESP32-P4 Bridge2 MIDI 2.0 (cafe:4095), 16 groups across 4 FBs.
 
 [tuh-midi2] descriptor idx=0 bcdMSC=02.00
 [tuh-midi2] mount idx=0 proto=1 rxCables=1 alt=1
@@ -146,7 +146,7 @@ midi2cpp/examples/esp32-p4-devkit-bridge2-midi2/
     ├── external/                       (gitignored, populated by fetch_tinyusb.sh; symlinked from the host sibling)
     ├── components/tinyusb/
     │   ├── CMakeLists.txt              shim: registers the selected sources (device + host)
-    │   └── usb_descriptors.c           PID 0x4095, Product "ESP32P4Bridge2"
+    │   └── usb_descriptors.c           PID 0x4095, Product "ESP32-P4 Bridge2 MIDI 2.0"
     └── main/
         ├── CMakeLists.txt              idf_component_register, pulls midi2cpp + midi2_bridge from ../../../../src
         ├── idf_component.yml           managed deps (none beyond ESP-IDF >=5.4)

@@ -43,6 +43,10 @@ bool     ump_router_pop(ump_source_t src, uint32_t* out_words, uint8_t* out_coun
 
 uint32_t ump_router_drop_count(ump_source_t src);
 
+/* Count a drop that happened past the queue (e.g. a bounded TX retry that
+ * exhausted); folds into the same per-source counter. */
+void     ump_router_count_drop(ump_source_t src);
+
 #ifdef __cplusplus
 }
 #endif

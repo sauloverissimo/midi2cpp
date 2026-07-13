@@ -153,7 +153,20 @@ void forward_upstream_to_device() {
     if (!g_device_mounted) return;
     if (tud_midi2_n_alt_setting(0) != 1) return;
 
-    tud_midi2_n_ump_write(0, words, count);
+    // Write the whole message: a full FIFO mid-burst must not truncate a
+    // UMP. Pump tud_task() and retry (bounded); an exhausted retry counts
+    // as a drop on the source queue so surface_drops() reports it.
+    uint32_t off  = 0;
+    uint32_t spin = 0;
+    while (off < count) {
+        off += tud_midi2_n_ump_write(0, words + off, (uint32_t)(count - off));
+        if (off >= count) break;
+        tud_task();
+        if (++spin > 20000) {          // bounded: host gone or wedged
+            ump_router_count_drop(UMP_SOURCE_HOST);
+            return;
+        }
+    }
     if (g_on_fwd_upstream) g_on_fwd_upstream(words, count);
 }
 
@@ -280,7 +293,14 @@ bool send_to_pc(const uint32_t* words, uint8_t count) {
     if (!g_device_mounted) return false;
     if (tud_midi2_n_alt_setting(0) != 1) return false;
     if (count == 0 || count > 4 || words == nullptr) return false;
-    tud_midi2_n_ump_write(0, words, (uint32_t)count);
+    uint32_t off  = 0;
+    uint32_t spin = 0;
+    while (off < count) {
+        off += tud_midi2_n_ump_write(0, words + off, (uint32_t)(count - off));
+        if (off >= count) break;
+        tud_task();
+        if (++spin > 20000) return false;   // bounded: host gone or wedged
+    }
     return true;
 }
 

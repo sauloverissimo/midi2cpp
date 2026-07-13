@@ -51,7 +51,17 @@ namespace {
 size_t platform_dev_write_fn(const uint32_t* words, size_t count) {
     if (!tud_midi2_n_mounted(0)) return 0;
     if (tud_midi2_n_alt_setting(0) != 1) return 0;
-    return tud_midi2_n_ump_write(0, words, (uint32_t)count);
+    // Whole-message write: a full FIFO mid-burst must not truncate a UMP.
+    // Yield to the TinyUSB task and retry (bounded ~100 ms: host gone).
+    uint32_t off = 0;
+    uint32_t spin = 0;
+    while (off < count) {
+        off += tud_midi2_n_ump_write(0, words + off, (uint32_t)(count - off));
+        if (off >= count) break;
+        vTaskDelay(1);
+        if (++spin > 100) break;
+    }
+    return (size_t)off;
 }
 
 size_t platform_host_write_fn(uint8_t idx, const uint32_t* words, size_t count) {

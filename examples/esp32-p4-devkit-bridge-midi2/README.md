@@ -73,7 +73,7 @@ To override TinyUSB with a local working copy: `ln -sfn /path/to/your/tinyusb id
 
 ## Validation
 
-Plug the **USB-Device** USB-C into the host PC. Plug any USB MIDI 2.0 device into either USB-A jack. The PC should enumerate `cafe:4092 ESP32P4Bridge` and expose a MIDI 2.0 endpoint.
+Plug the **USB-Device** USB-C into the host PC. Plug any USB MIDI 2.0 device into either USB-A jack. The PC should enumerate `cafe:4092 ESP32-P4 Bridge MIDI 2.0` and expose a MIDI 2.0 endpoint.
 
 - **Linux**: `lsusb | grep cafe:4092` shows `ESP32-P4 Bridge MIDI 2.0`. `amidi -l` lists the bridge's MIDI 2.0 group. `aseqdump -p <bridge-port>` shows the upstream device's NoteOn / NoteOff / CC / PitchBend in real time.
 - **Windows**: Microsoft MIDI Services Console shows `ESP32-P4 Bridge MIDI 2.0` with Native data format = UMP, MIDI 2.0 Protocol = True.
@@ -86,7 +86,7 @@ The UART console mirrors the events:
 Host UTMI PHY ready (rhport 1)
 Device INT PHY ready, full speed (rhport 0)
 Both TinyUSB tasks started (device on core 0, host on core 1)
-[bridge] PC sees ESP32P4Bridge (cafe:4092)
+[bridge] PC sees ESP32-P4 Bridge MIDI 2.0 (cafe:4092)
 
 [host] device idx=0 connected, alt=1 (UMP)
 [ep] idx=0 UMP v1.1, 1 FB, MIDI2=1
@@ -118,7 +118,7 @@ Console output during operation:
 |---|---|
 | Boot | `[boot] esp32-p4-devkit-bridge-midi2` |
 | PHY init | `Host UTMI PHY ready (rhport 1)` / `Device INT PHY ready, full speed (rhport 0)` |
-| Device-side ready | `[bridge] PC sees ESP32P4Bridge (cafe:4092)` |
+| Device-side ready | `[bridge] PC sees ESP32-P4 Bridge MIDI 2.0 (cafe:4092)` |
 | Mount upstream | `[host] device idx=N connected, alt=A (UMP\|byte-stream)` |
 | Endpoint Info | `[ep] idx=N UMP vM.m, F FB, MIDI2=1` |
 | Endpoint Name | `[ep] idx=N Endpoint Name: <product>` |

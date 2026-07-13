@@ -35,10 +35,22 @@ static m2bridge g_bridge;
 // MIDI Association educational/non-commercial prefix.
 static constexpr uint8_t  kManufacturerId[3] = {0x7D, 0x00, 0x00};
 static constexpr uint16_t kFamily            = 0x0001;
-static constexpr uint16_t kModel             = 0x0001;
+static constexpr uint16_t kModel             = 0x0014;   // fleet-unique (devices use 0x0001..0x0012)
 static constexpr uint32_t kVersion           = 0x00010000;
-static constexpr const char* kEndpointName     = "ESP32P4Bridge2";
+static constexpr const char* kEndpointName     = "ESP32-P4 Bridge2 MIDI 2.0";
 static constexpr const char* kProductInstance = "ESP32P4Bridge2-0001";
+
+// MIDI-CI category backing for the composed CI (m2bridge defaults to
+// ciCat 0x1C = Profile | Property Exchange | Process Inquiry); every
+// advertised category answers.
+static const uint8_t kProfileId[5] = {0x7E, 0x00, 0x00, 0x01, 0x00};   // GM 1
+static const char kDeviceInfo[] =
+    "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[20,0],"
+     "\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
+     "\"family\":\"Bridge\",\"model\":\"ESP32-P4 Bridge2 MIDI 2.0\","
+     "\"version\":\"0.0.1\"}";
+static const char kChannelList[] = "[{\"title\":\"Bridge\",\"channel\":1}]";
+static const char kProgramList[] = "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]";
 
 extern "C" void app_main(void) {
     vTaskDelay(1);
@@ -53,6 +65,15 @@ extern "C" void app_main(void) {
     g_bridge.setProductInstanceId(kProductInstance);
 
     esp32_p4_devkit_bridge2::init(g_bridge);
+
+    g_bridge.ci().addProfile(kProfileId, /*alwaysOn*/ false);
+    g_bridge.ci().addPropertyStatic("DeviceInfo",  kDeviceInfo);
+    g_bridge.ci().addPropertyStatic("ChannelList", kChannelList);
+    g_bridge.ci().addPropertyStatic("ProgramList", kProgramList);
+    g_bridge.ci().setMidiReport(/*msg_data_control*/ 0x01,
+                                /*system bitmap*/    0x00000000FFFFFFFFull,
+                                /*channel bitmap*/   0xFFFFFFFFFFFFFFFFull,
+                                /*note bitmap*/      0xFFFFFFFFFFFFFFFFull);
 
     std::printf("[bridge] PC sees %s (cafe:4095), %u groups across %u FBs.\r\n",
                 kEndpointName,
