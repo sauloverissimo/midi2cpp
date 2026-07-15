@@ -13,6 +13,16 @@ inquiries as native UMP SysEx7 (MT 0x3) packets and verifies the replies:
   5. MIDI Message Report (FB 0x7F)    -> Reply 0x43 + End 0x44    [pInq2.7]
   6. MIDI Message Report (ch in use)  -> Reply 0x43 + End 0x44    [pInq2.7]
   7. MIDI Message Report (ch not in use) -> NAK (0x7F)            [pInq2.2]
+  8. Profile Inquiry                  -> Profile Inquiry Reply (0x21)
+  9. PE Capability                    -> PE Capability Reply (0x31)
+ 10. PE GET ResourceList              -> PE GET Reply (0x35)
+ 11. PI Capability                    -> PI Capability Reply (0x41)
+
+Checks 8-11 are addressed to the MUID captured from the Discovery Reply,
+the way the Workbench addresses them after Discovery; the first 7 use the
+broadcast MUID. When an addressed check gets no reply, the script retries
+it as broadcast and reports the difference (a responder that answers
+broadcast but not its own MUID points at destination filtering).
 
 Why native UMP: the kernel's legacy MIDI 1.0 -> UMP converter corrupts SysEx
 payload bytes, so testing MIDI-CI through the legacy rawmidi port (amidi)
@@ -118,7 +128,7 @@ def drain(fd, collector, raw):
             return
 
 
-def transact(fd, name, ci_bytes, expect, wait_s):
+def transact(fd, name, ci_bytes, expect, wait_s, replies_out=None):
     collector = Sysex7Collector()
     raw = bytearray()
     os.write(fd, sysex7_ump(ci_bytes))
@@ -133,6 +143,8 @@ def transact(fd, name, ci_bytes, expect, wait_s):
         if replies and all(any(r[3] == e for r in replies) for e in expect):
             break
         time.sleep(0.01)
+    if replies_out is not None:
+        replies_out.extend(replies)
     print(f"=== {name} ===")
     if not replies:
         print("  NO CI REPLY")
@@ -194,13 +206,22 @@ def main():
     fd = os.open(device, os.O_RDWR | os.O_NONBLOCK)
     try:
         enable_ump_mode(fd)
-        hdr = lambda subid, dev=0x7F: \
-            [0x7E, dev, 0x0D, subid, 0x02] + SRC_MUID + BROADCAST
+        hdr = lambda subid, dev=0x7F, dst=None: \
+            [0x7E, dev, 0x0D, subid, 0x02] + SRC_MUID + (dst or BROADCAST)
 
         results = []
+        disc_replies = []
         disc = hdr(0x70) + [0x7D, 0, 0, 0, 0, 1, 0, 0, 0, 3, 0] + \
                [0x00, 0x00, 0x10, 0x00, 0x00, 0x00]
-        results.append(transact(fd, "Discovery", disc, [0x71], args.timeout))
+        results.append(transact(fd, "Discovery", disc, [0x71], args.timeout,
+                                replies_out=disc_replies))
+        # Device MUID from the Discovery Reply source field (bytes 5..8),
+        # reused verbatim as the destination of the addressed inquiries.
+        dev_muid = None
+        for r in disc_replies:
+            if r[3] == 0x71 and len(r) >= 9:
+                dev_muid = r[5:9]
+                break
 
         off = hdr(0x23) + profile + [0x00, 0x00]
         results.append(transact(fd, "Set Profile Off (listed)", off, [0x24],
@@ -225,6 +246,32 @@ def main():
                                     "not in use)",
                                 hdr(0x42, ch_not_in_use) + mm_body, [0x7F],
                                 args.timeout))
+
+        # Category inquiries, addressed to the discovered MUID (the way the
+        # Workbench sends them after Discovery). On silence, retry broadcast
+        # to tell destination filtering apart from a dead responder.
+        def addressed(name, subid, payload, expect, dev=0x7F):
+            msg = hdr(subid, dev, dst=dev_muid) + payload
+            ok = transact(fd, f"{name} (to MUID)", msg, expect, args.timeout)
+            if not ok:
+                bok = transact(fd, f"{name} (broadcast retry)",
+                               hdr(subid, dev) + payload, expect, args.timeout)
+                if bok:
+                    print("  NOTE: answers broadcast but not its own MUID")
+            return ok
+
+        if dev_muid is None:
+            print("\nno Discovery Reply MUID; skipping addressed inquiries")
+        else:
+            results.append(addressed("Profile Inquiry", 0x20, [], [0x21]))
+            results.append(addressed("PE Capability", 0x30,
+                                     [0x04, 0x00, 0x00], [0x31]))
+            rl = list(b'{"resource":"ResourceList"}')
+            pe_get = [0x01, len(rl) & 0x7F, (len(rl) >> 7) & 0x7F] + rl + \
+                     [0x01, 0x00, 0x01, 0x00, 0x00, 0x00]
+            results.append(addressed("PE GET ResourceList", 0x34,
+                                     pe_get, [0x35]))
+            results.append(addressed("PI Capability", 0x40, [], [0x41]))
 
         print(f"\nTOTAL: {sum(results)}/{len(results)} PASS")
         return 0 if all(results) else 1
