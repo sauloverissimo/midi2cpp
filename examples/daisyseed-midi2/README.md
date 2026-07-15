@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Device MIDI 2.0
 ## Daisy Seed (STM32H750)
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 Full-spec USB MIDI 2.0 device on the **Daisy Seed** (STM32H750, Cortex-M7 @ 480 MHz). First libDaisy recipe in midi2cpp. The libDaisy fork carries USB MIDI 2.0 descriptors and raw UMP I/O only; all MIDI 2.0 logic lives in the recipe via `midi2::Device`. libDaisy makefile build, no Arduino IDE.
 
 ![daisyseed-midi2 banner](monitor/banner.png)
@@ -55,7 +57,14 @@ timeout 7 amidi -p ${PORT} -d
 ls /dev/snd/umpC*D0            # raw UMP endpoint
 ```
 
-Hardware validated 2026-05-28 on Linux ALSA: enumerates `0483:5740` as `Daisy Seed MIDI 2.0`, `/dev/snd/umpC*D0` present, `Group 1` visible to ALSA, the showcase voice messages confirmed via downscaled `amidi` capture (NoteOn/Off, CC 1 / CC 74, Pitch Bend, Channel Pressure, Program). Windows MIDI Services Console shows native data format `Universal MIDI Packet`, `MIDI 2.0 Protocol = True`.
+Hardware validated on Linux ALSA: enumerates `0483:5740` as `Daisy Seed MIDI 2.0`, `/dev/snd/umpC*D0` present, `Group 1` visible to ALSA, the showcase voice messages confirmed via downscaled `amidi` capture (NoteOn/Off, CC 1 / CC 74, Pitch Bend, Channel Pressure, Program). Windows MIDI Services Console shows native data format `Universal MIDI Packet`, `MIDI 2.0 Protocol = True`.
+
+**MIDI 2.0 Workbench compliant.** Validated against the official MIDI 2.0
+Workbench (midi2-dev): Discovery v2, Profile Configuration, Process Inquiry
+and Property Exchange over native UMP, with the interoperability checklist
+completed on hardware. USB RX is decoupled from interrupt context through a
+lock-free ring, so multi-packet MIDI-CI transactions survive sustained
+inquiry bursts.
 
 Pair with the sibling host recipe [`daisyseed-host-midi2`](../daisyseed-host-midi2/) on a second Daisy Seed: plug this device into the host's USB-A jack and the host decodes the full showcase stream over `m2host`.
 

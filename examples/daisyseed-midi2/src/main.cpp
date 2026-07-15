@@ -13,21 +13,6 @@
 #include "daisy_seed.h"
 #include "daisyseed_midi2.h"
 
-// DBG-RX7 instrumentation (temporary): device RX diagnostics from libDaisy,
-// exfiltrated over MIDI TX (CC 110-114 on channel 15) so the Workbench can
-// read them. Remove once the RX bug is pinpointed.
-extern "C" {
-extern volatile uint32_t usbd_dbg_dataout_count;  // OUT packets reaching USB class
-extern volatile uint32_t usbd_dbg_rxcb_count;     // ReceiveCallback invocations
-extern volatile uint32_t usbd_dbg_last_rxlen;     // last RxLength
-extern volatile uint8_t  usbd_dbg_last_alt;       // usbd_midi2_alt_setting at DataOut
-extern volatile uint8_t  usbd_dbg_rxactive;       // RxActive() at last callback
-extern volatile uint32_t usbd_dbg_cdcrecv_count;  // CDC_Receive_FS invocations
-extern volatile uint8_t  usbd_dbg_cb_is_dummy;    // rx_callback_fs == dummy?
-extern volatile uint32_t usbd_dbg_preprecv_count; // USBD_LL_PrepareReceive (OUT re-arm) calls
-extern volatile uint8_t  usbd_dbg_preprecv_status;// last HAL_PCD_EP_Receive status (0/1/2/3)
-}
-
 static daisy::DaisySeed   hw;
 static daisyseed::Backend backend;
 static midi2::m2ci        ci(backend.device());
@@ -104,27 +89,12 @@ int main(void) {
                      0xFFFFFFFFFFFFFFFFull, 0xFFFFFFFFFFFFFFFFull);
 
     uint32_t last_demo = 0;
-    uint32_t last_dbg  = 0;
     uint8_t  demo_note = 60;
 
     for (;;) {
         backend.task();
 
         uint32_t now = daisy::System::GetNow();
-
-        // DBG-RX7: report device RX counters over MIDI (channel 15, CC 110-114)
-        if (now - last_dbg >= 1000) {
-            midi.sendCC(0, 15, 110, usbd_dbg_dataout_count);          // OUT reached class?
-            midi.sendCC(0, 15, 111, (uint32_t)usbd_dbg_last_alt);     // alt (0/1/0xFF)
-            midi.sendCC(0, 15, 112, usbd_dbg_rxcb_count);             // ReceiveCallback ran?
-            midi.sendCC(0, 15, 113, (uint32_t)usbd_dbg_rxactive);     // RxActive (0/1/0xFF)
-            midi.sendCC(0, 15, 114, usbd_dbg_last_rxlen);             // last RxLength
-            midi.sendCC(0, 15, 115, usbd_dbg_cdcrecv_count);          // CDC_Receive_FS count
-            midi.sendCC(0, 15, 116, (uint32_t)usbd_dbg_cb_is_dummy);  // callback == dummy?
-            midi.sendCC(0, 15, 117, usbd_dbg_preprecv_count);         // OUT re-arm (PrepareReceive) count
-            midi.sendCC(0, 15, 118, (uint32_t)usbd_dbg_preprecv_status);// last HAL EP_Receive status
-            last_dbg = now;
-        }
 
         if (now - last_demo >= 5000) {
             // 16-bit velocity NoteOn (MIDI 2.0), 200 ms sustain

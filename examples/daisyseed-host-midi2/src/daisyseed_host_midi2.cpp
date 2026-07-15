@@ -16,9 +16,12 @@ daisy::MidiUsbTransport s_transport;
 daisyseed_host::Backend* s_backend = nullptr;
 bool s_transport_up = false;
 
-// UMP from the plugged device. Feed it straight into midi2::Host (single
-// producer: the libDaisy USB host runs in the main-loop context here, so
-// feedRx and task() share one thread, satisfying the Host SPSC contract).
+// UMP from the plugged device. Feed it straight into midi2::Host: the ST
+// USBH middleware is a polled state machine (USBH_MIDI_Process fires this
+// callback from USBH_Process, pumped by Process() in task()), so feedRx
+// and task() share the main-loop thread and the Host SPSC contract holds.
+// This differs from the device glue, where the class callback runs in USB
+// interrupt context and RX must go through the ring.
 void UmpRxCb(const uint32_t* words, uint8_t count, void* /*ctx*/)
 {
     if(s_backend)
