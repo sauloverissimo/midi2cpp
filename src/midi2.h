@@ -830,7 +830,11 @@ static inline void midi2_msg_stream_endpoint_info(uint32_t *w,
        | MIDI2_BIT_IF(tx_jr, 0);
 }
 
-/* Device Identity Notification */
+/* Device Identity Notification (M2-104 Figure 14). Same field encoding as
+ * the MIDI 1.0 Device Inquiry reply: manufacturer_id packs the 3 SysEx id
+ * bytes as id1<<16|id2<<8|id3 (w[1] top byte reserved), family and model
+ * are 14-bit values sent as 7-bit LSB/MSB pairs, version is 28 bits sent
+ * as 4x7 bits LSB-first. */
 static inline void midi2_msg_stream_device_identity(uint32_t *w,
                                                       uint32_t manufacturer_id,
                                                       uint16_t family_id,
@@ -838,9 +842,15 @@ static inline void midi2_msg_stream_device_identity(uint32_t *w,
                                                       uint32_t version_id) {
   memset(w, 0, 16);
   w[0] = midi2_msg_build_stream_w0(0, MIDI2_STREAM_DEVICE_IDENTITY);
-  w[1] = (manufacturer_id & 0x00FFFFFF) << 8;
-  w[2] = ((uint32_t)family_id << 16) | (uint32_t)model_id;
-  w[3] = version_id;
+  w[1] = manufacturer_id & 0x007F7F7F;
+  w[2] = (((uint32_t)family_id & 0x7F) << 24)
+       | ((((uint32_t)family_id >> 7) & 0x7F) << 16)
+       | (((uint32_t)model_id & 0x7F) << 8)
+       |  (((uint32_t)model_id >> 7) & 0x7F);
+  w[3] = ((version_id & 0x7F) << 24)
+       | (((version_id >> 7) & 0x7F) << 16)
+       | (((version_id >> 14) & 0x7F) << 8)
+       |  ((version_id >> 21) & 0x7F);
 }
 
 /* Stream Configuration Request (status 0x05).
@@ -1539,12 +1549,15 @@ static inline void midi2_ci_write_28(uint8_t *p, uint32_t v) {
  *--------------------------------------------------------------------*/
 
 /* Discovery / Discovery Reply: device identification fields at offset 13.
- * Manufacturer ID: 3 bytes, literal SysEx ID bytes (all <= 0x7F).
+ * Manufacturer ID: 3 bytes on the wire in SysEx ID order, id byte 1 first
+ * (all <= 0x7F). Packed form is id1<<16 | id2<<8 | id3; the educational
+ * prefix 0x7D packs as 0x7D0000. Same convention across the library
+ * (see midi2_msg_stream_device_identity).
  * Family/Model: 2 bytes each, 7-bit LSB-first (14-bit value).
  * SW Revision: 4 bytes, 7-bit LSB-first (28-bit value).
  * These match the "Device Inquiry" Universal SysEx format (section 5.5.1). */
 static inline uint32_t midi2_ci_get_mfr_id(const uint8_t *d) {
-  return (uint32_t)d[13] | ((uint32_t)d[14] << 8) | ((uint32_t)d[15] << 16);
+  return ((uint32_t)d[13] << 16) | ((uint32_t)d[14] << 8) | (uint32_t)d[15];
 }
 static inline uint16_t midi2_ci_get_family(const uint8_t *d) {
   return midi2_ci_read_14(&d[16]);
@@ -1605,10 +1618,12 @@ static inline uint16_t midi2_ci_build_discovery(
     uint8_t ci_category, uint32_t max_sysex, uint8_t output_path_id) {
   uint16_t p = midi2_ci_build_header(buf, 0x7F, MIDI2_CI_DISCOVERY, version,
                                         src_muid, MIDI2_CI_BROADCAST_MUID);
-  /* Device Manufacturer (3 bytes SysEx ID) */
-  buf[p++] = (uint8_t)((mfr_id >> 0) & 0x7F);
-  buf[p++] = (uint8_t)((mfr_id >> 8) & 0x7F);
+  /* Device Manufacturer: 3 SysEx ID bytes on the wire in ID order
+   * (id byte 1 first). Packed form is id1<<16 | id2<<8 | id3, the same
+   * convention as midi2_msg_stream_device_identity. */
   buf[p++] = (uint8_t)((mfr_id >> 16) & 0x7F);
+  buf[p++] = (uint8_t)((mfr_id >> 8) & 0x7F);
+  buf[p++] = (uint8_t)((mfr_id >> 0) & 0x7F);
   /* Device Family (2 bytes LSB first) */
   buf[p++] = (uint8_t)(family & 0x7F);
   buf[p++] = (uint8_t)((family >> 7) & 0x7F);
@@ -1638,9 +1653,9 @@ static inline uint16_t midi2_ci_build_discovery_reply(
     uint8_t output_path_id, uint8_t function_block) {
   uint16_t p = midi2_ci_build_header(buf, 0x7F, MIDI2_CI_DISCOVERY_REPLY, version,
                                         src_muid, dst_muid);
-  buf[p++] = (uint8_t)((mfr_id >> 0) & 0x7F);
-  buf[p++] = (uint8_t)((mfr_id >> 8) & 0x7F);
   buf[p++] = (uint8_t)((mfr_id >> 16) & 0x7F);
+  buf[p++] = (uint8_t)((mfr_id >> 8) & 0x7F);
+  buf[p++] = (uint8_t)((mfr_id >> 0) & 0x7F);
   buf[p++] = (uint8_t)(family & 0x7F);
   buf[p++] = (uint8_t)((family >> 7) & 0x7F);
   buf[p++] = (uint8_t)(model & 0x7F);
@@ -3036,7 +3051,10 @@ void midi2_ci_init_ex(midi2_ci_state *state, uint32_t muid_seed,
                        midi2_ci_property *properties, uint8_t max_properties,
                        midi2_ci_subscriber *subscribers, uint8_t max_subscribers);
 
-/** Configure device identity. Safe to call with NULL state (no-op). */
+/** Configure device identity. manufacturer_id packs the 3 SysEx ID bytes
+ *  as id1<<16 | id2<<8 | id3 (educational prefix 0x7D packs as 0x7D0000),
+ *  the same convention used by midi2_msg_stream_device_identity.
+ *  Safe to call with NULL state (no-op). */
 void midi2_ci_set_identity(midi2_ci_state *state,
                              uint32_t manufacturer_id, uint16_t family_id,
                              uint16_t model_id, uint32_t version_id);
@@ -3617,10 +3635,17 @@ static void dispatch_stream(midi2_dispatch *dp, const uint32_t *w) {
 
     case MIDI2_STREAM_DEVICE_IDENTITY:
       if (dp->on_device_identity) {
-        uint32_t mfr    = (w[1] >> 8) & 0x00FFFFFF;
-        uint16_t family = (uint16_t)(w[2] >> 16);
-        uint16_t model  = (uint16_t)(w[2] & 0xFFFF);
-        uint32_t ver    = w[3];
+        /* M2-104 Figure 14: id bytes in w[1] low 3 bytes, family/model as
+         * 7-bit LSB/MSB pairs, version as 4x7 bits LSB-first. */
+        uint32_t mfr    = w[1] & 0x007F7F7F;
+        uint16_t family = (uint16_t)(((w[2] >> 24) & 0x7F)
+                        | (((w[2] >> 16) & 0x7F) << 7));
+        uint16_t model  = (uint16_t)(((w[2] >> 8) & 0x7F)
+                        | ((w[2] & 0x7F) << 7));
+        uint32_t ver    = ((w[3] >> 24) & 0x7F)
+                        | (((w[3] >> 16) & 0x7F) << 7)
+                        | (((w[3] >> 8) & 0x7F) << 14)
+                        | ((w[3] & 0x7F) << 21);
         dp->on_device_identity(mfr, family, model, ver, dp->context);
       }
       break;
@@ -4029,15 +4054,19 @@ void midi2_proc_send_sysex7(uint8_t group, const uint8_t *data, uint16_t length,
     return;
   }
 
+  /* A short write means the sink is full; stop rather than continue and
+   * leave a gap in the middle of the message. The receiver resynchronizes
+   * on the next Start packet. */
+
   /* Start */
   midi2_msg_sysex7_packet(w, group, MIDI2_SYSEX7_START, data, 6);
-  write_fn(w, 2, context);
+  if (write_fn(w, 2, context) < 2) return;
   offset = 6;
 
   /* Continue */
   while (offset + 6 < length) {
     midi2_msg_sysex7_packet(w, group, MIDI2_SYSEX7_CONTINUE, data + offset, 6);
-    write_fn(w, 2, context);
+    if (write_fn(w, 2, context) < 2) return;
     offset += 6;
   }
 
@@ -4113,7 +4142,7 @@ void midi2_proc_send_fb_name(uint8_t fb_idx, const char *name,
       uint8_t shift = (uint8_t)(24u - ((i - 1u) % 4u) * 8u);
       msg[widx] |= ((uint32_t)p[i] << shift);
     }
-    write_fn(msg, 4, context);
+    if (write_fn(msg, 4, context) < 4) return;   /* sink full: stop, no gaps */
     offset += n;
   }
 }
@@ -4153,7 +4182,7 @@ static void stream_text_emit(stream_text_builder_fn builder,
     uint8_t form = midi2_proc_stream_form(is_first, is_last);
     uint32_t msg[4];
     builder(msg, form, (const uint8_t *)(text + offset), n);
-    write_fn(msg, 4, context);
+    if (write_fn(msg, 4, context) < 4) return;   /* sink full: stop, no gaps */
     offset += n;
   }
 }
@@ -4217,7 +4246,7 @@ void midi2_proc_send_sysex8(uint8_t group, uint8_t stream_id,
     uint32_t msg[4];
     midi2_msg_sysex8_packet(msg, group, status, stream_id,
                              data + offset, n);
-    write_fn(msg, 4, context);
+    if (write_fn(msg, 4, context) < 4) return;   /* sink full: stop, no gaps */
     offset += n;
   }
 }
