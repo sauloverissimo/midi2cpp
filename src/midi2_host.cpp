@@ -72,6 +72,12 @@ struct HostState {
     // them). task() runs with the bus settled.
     bool discover_pending[Host::MAX_DEVICES];
 
+    // Discovery retry: the first mounted device's replies can race the
+    // host stack bring-up and vanish. While the endpoint name is still
+    // empty, re-send the discovery bundle a bounded number of times.
+    uint32_t discover_sent_at[Host::MAX_DEVICES];
+    uint8_t  discover_tries[Host::MAX_DEVICES];
+
     // Stream core: inbound RX ring. feedRx (producer) enqueues raw UMP here
     // off the RX path; task() (consumer) drains it and runs the decode.
     RxRing<MIDI2CPP_HOST_RX_RING> rx;
@@ -533,13 +539,30 @@ void Host::notifyDeviceMounted(uint8_t idx,
     if (s->cb_device_connected) s->cb_device_connected(idx, id);
 
     // Discovery runs on the next task() tick, off the mount callback path.
-    if (s->auto_discover) s->discover_pending[idx] = true;
+    if (s->auto_discover) {
+        s->discover_pending[idx] = true;
+        s->discover_tries[idx]   = 0;
+        s->discover_sent_at[idx] = 0;
+    }
 }
 
 void Host::runPendingDiscovery(uint8_t idx) {
     auto* s = st(_state);
-    if (!s->discover_pending[idx] || !s->identities[idx].mounted) return;
+    if (!s->identities[idx].mounted) return;
+
+    if (!s->discover_pending[idx]) {
+        // Retry window: replies to the first attempt can be lost while the
+        // host stack settles (seen on the first mounted device). While the
+        // endpoint name has not arrived, re-send after a pause, bounded.
+        if (s->identities[idx].endpointName[0] != '\0') return;
+        if (s->discover_tries[idx] == 0 || s->discover_tries[idx] >= 5) return;
+        if (!s->now_fn) return;
+        uint32_t now = s->now_fn();
+        if ((uint32_t)(now - s->discover_sent_at[idx]) < 300u) return;
+    }
     s->discover_pending[idx] = false;
+    s->discover_sent_at[idx] = s->now_fn ? s->now_fn() : 0;
+    s->discover_tries[idx]   = (uint8_t)(s->discover_tries[idx] + 1);
 
     // UMP Stream Endpoint Discovery: ask for all 5 notification categories
     // (Endpoint Info / Device Identity / Endpoint Name / Product Instance
