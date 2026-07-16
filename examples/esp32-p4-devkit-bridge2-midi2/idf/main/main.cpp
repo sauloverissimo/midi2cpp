@@ -57,6 +57,10 @@ extern "C" void app_main(void) {
     std::printf("\r\n[boot] esp32-p4-devkit-bridge2-midi2 (m2bridge)\r\n");
     std::fflush(stdout);
 
+    // 3 device slots (groups 1-12) + the bridge's own Function Block on
+    // groups 13-16, where its MIDI-CI is discoverable without competing
+    // with the forwarded devices.
+    g_bridge.setNumSlots(3);
     g_bridge.setManufacturerId(kManufacturerId);
     g_bridge.setFamily(kFamily);
     g_bridge.setModel(kModel);
@@ -75,10 +79,13 @@ extern "C" void app_main(void) {
                                 /*channel bitmap*/   0xFFFFFFFFFFFFFFFFull,
                                 /*note bitmap*/      0xFFFFFFFFFFFFFFFFull);
 
-    std::printf("[bridge] PC sees %s (cafe:4095), %u groups across %u FBs.\r\n",
+    unsigned slot_groups = (unsigned)(g_bridge.numSlots() * g_bridge.groupsPerSlot());
+    unsigned own_fb      = (slot_groups < 16) ? 1u : 0u;
+    std::printf("[bridge] PC sees %s (cafe:4095), 16 groups across %u FBs "
+                "(%u device slots + %u bridge FB).\r\n",
                 kEndpointName,
-                (unsigned)(g_bridge.numSlots() * g_bridge.groupsPerSlot()),
-                (unsigned)g_bridge.numSlots());
+                (unsigned)g_bridge.numSlots() + own_fb,
+                (unsigned)g_bridge.numSlots(), own_fb);
     std::printf("[bridge] Plug MIDI 2.0 or MIDI 1.0 devices into a USB-A jack.\r\n");
     std::fflush(stdout);
 

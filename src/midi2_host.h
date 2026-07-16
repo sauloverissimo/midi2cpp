@@ -163,11 +163,16 @@ public:
         uint16_t modelId;
         uint32_t version;
 
-        // Populated by UMP Stream Endpoint Name notification (status 0x03)
+        // Populated by UMP Stream Endpoint Name notification (status 0x03).
+        // The Complete flag is false while a multi-packet text is still
+        // being assembled; consumers that key on the text (e.g. slot
+        // bindings) must wait for it.
         char     endpointName[64];
+        bool     endpointNameComplete;
 
         // Populated by UMP Stream Product Instance ID notification (status 0x04)
         char     productInstanceId[64];
+        bool     productInstanceIdComplete;
 
         // CI Initiator state, host initiates Discovery, device replies.
         // Pending tracking lets us match the inquiry's request id to the

@@ -29,6 +29,7 @@ idf_component_register(
         tinyusb
         driver
         esp_timer
+        nvs_flash
     PRIV_REQUIRES
         usb
 )

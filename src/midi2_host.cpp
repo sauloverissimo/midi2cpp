@@ -258,10 +258,21 @@ void tramp_stream_text(uint16_t status, uint8_t format,
     auto& id = c->host->identities[c->idx];
     char* dst = nullptr;
     size_t cap = 0;
-    if (status == 0x03)      { dst = id.endpointName;       cap = sizeof(id.endpointName); }
-    else if (status == 0x04) { dst = id.productInstanceId;  cap = sizeof(id.productInstanceId); }
-    else                     { return; }   // FB Name uses tramp_fb_name below
+    bool* complete = nullptr;
+    if (status == 0x03) {
+        dst = id.endpointName;
+        cap = sizeof(id.endpointName);
+        complete = &id.endpointNameComplete;
+    } else if (status == 0x04) {
+        dst = id.productInstanceId;
+        cap = sizeof(id.productInstanceId);
+        complete = &id.productInstanceIdComplete;
+    } else {
+        return;   // FB Name uses tramp_fb_name below
+    }
     if (!dst) return;
+    // format: 0 = complete, 1 = start, 2 = continue, 3 = end.
+    *complete = (format == 0 || format == 3);
     // UMP Stream text uses 4-format multi-packet (M2-104-UM §7.1.5/7.1.7):
     //   0 = complete (one packet), 1 = start, 2 = continue, 3 = end.
     // Reset the buffer on complete/start; append on continue/end. Offset
@@ -558,7 +569,9 @@ void Host::runPendingDiscovery(uint8_t idx) {
         if (s->discover_tries[idx] == 0 || s->discover_tries[idx] >= 5) return;
         if (!s->now_fn) return;
         uint32_t now = s->now_fn();
-        if ((uint32_t)(now - s->discover_sent_at[idx]) < 300u) return;
+        // M2-101 5.5.5: an initiator shall wait at least 3 seconds for
+        // Discovery replies before timing out; pace the retries to match.
+        if ((uint32_t)(now - s->discover_sent_at[idx]) < 3000u) return;
     }
     s->discover_pending[idx] = false;
     s->discover_sent_at[idx] = s->now_fn ? s->now_fn() : 0;

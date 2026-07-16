@@ -9,15 +9,25 @@
 // nibble of every forwarded UMP so the host PC sees a coherent view of
 // up to kNumSlots devices in a single endpoint.
 //
-// Layout (kNumSlots = 4, kGroupsPerSlot = 4 default):
+// Layout (numSlots = 3, groupsPerSlot = 4):
 //
 //   slot 0 -> Group 1..4   (Function Block 0)
 //   slot 1 -> Group 5..8   (Function Block 1)
 //   slot 2 -> Group 9..12  (Function Block 2)
-//   slot 3 -> Group 13..16 (Function Block 3)
+//   bridge -> Group 13..16 (Function Block 3, the bridge's own)
 //
-// Each Function Block carries a name pulled from the upstream
-// Endpoint Name; an empty slot reports "(empty slot)".
+// Groups left over after the slot windows become one extra Function
+// Block owned by the bridge itself, where its own MIDI-CI responder is
+// discoverable. A topology that spends all 16 groups on slots (4 x 4)
+// has no bridge FB and the bridge stays CI-silent.
+//
+// Slots are assigned by device identity, not enumeration order: the
+// Function Block number is the stable handle a PC learns for a device
+// (M2-104 7.1.8), so a board keeps its FB across boots. The binding
+// key is the complete Product Instance Id (else Endpoint Name); the
+// platform persists bindings via onSlotBindingChanged and re-seeds
+// them at boot via bindSlot. Each Function Block carries a name pulled
+// from the upstream Endpoint Name; an empty slot reports "(empty slot)".
 //
 // MIDI 1.0 alt 0 upstream devices are bridged via an internal
 // ByteStreamConverter per slot; the bytes the platform feeds via
@@ -38,7 +48,11 @@
 //   Bridge::feedHostRx(idx, words, count)    drain RX from upstream MIDI 2.0
 //   Bridge::feedHostMidi1Bytes(idx, b, n)    drain bytes from upstream MIDI 1.0
 //
-//   Bridge::slotSetActive(idx, active, alt)  called from upstream mount/unmount
+//   Bridge::host().notifyDeviceMounted(...)  upstream MIDI 2.0 mount; the
+//                                            Bridge places the device on
+//                                            its identity-bound slot
+//   Bridge::slotSetActive(slot, active, alt) platform-managed MIDI 1.0
+//                                            slots only
 //   Bridge::setDeviceMounted(bool)           PC-side mount mirror
 //   Bridge::setDeviceAltSetting(uint8_t)     PC-side alt mirror
 //
@@ -131,17 +145,13 @@ public:
     void begin();
     void task();
 
-    // ----- Slot lifecycle, called by the platform from upstream USB
-    // mount / unmount events.
+    // ----- Platform-managed slot lifecycle, for upstream devices the
+    // Bridge cannot identify itself: MIDI 1.0 alt 0 mounts, where the
+    // platform picks the slot and feeds bytes via feedHostMidi1Bytes.
     //
-    // alt = 0 means MIDI 1.0 byte stream (caller will feed via
-    //          feedHostMidi1Bytes); alt = 1 means UMP (feedHostRx).
-    //
-    // For MIDI 2.0 upstream devices the platform should ALSO call
-    // host().notifyDeviceMounted() so m2 Host's auto-discover sends
-    // Endpoint Discovery + CI Discovery Inquiry. That path then fires
-    // host().onIdentityUpdated(), which the Bridge intercepts to copy
-    // the Endpoint Name into the slot and push an FB Name update.
+    // MIDI 2.0 devices do NOT go through here: the platform calls
+    // host().notifyDeviceMounted() and the Bridge places the device on
+    // its identity-bound slot once the UMP Stream identity arrives.
     void slotSetActive(uint8_t idx, bool active, uint8_t alt);
 
     // ----- Raw RX feeders. Per-packet iteration and group rewrite are
@@ -161,6 +171,23 @@ public:
     // through the inner Device.
     void setDeviceMounted(bool mounted);
     void setDeviceAltSetting(uint8_t alt);
+
+    // ----- Identity-bound slots. The Function Block number is the
+    // stable handle a PC learns for a device (M2-104 7.1.8: active
+    // state changes "without affecting the Function Block number"),
+    // so slots are assigned by device identity, not by enumeration
+    // order. The key is the Product Instance Id when the device
+    // reports one, else the Endpoint Name. A device whose identity
+    // never arrives gets an ephemeral slot after a settle timeout
+    // (not persisted). The platform pre-seeds bindings at boot
+    // (bindSlot) and persists changes via onSlotBindingChanged.
+    using SlotBindingChangedFn = std::function<void(uint8_t slot,
+                                                    const char* key)>;
+    void bindSlot(uint8_t slot, const char* key);
+    void onSlotBindingChanged(SlotBindingChangedFn fn);
+    const char* slotBinding(uint8_t slot) const;   // "" = unbound
+    int8_t slotForHostIdx(uint8_t idx) const;      // -1 = not placed
+    bool slotActive(uint8_t slot) const;
 
 private:
     void* _state;  // pimpl

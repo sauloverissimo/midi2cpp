@@ -8,12 +8,14 @@
  *   - The LP_SYS.usb_ctrl PHY swap on the device side (mandatory on
  *     the Waveshare WIFI6 dev kit, see esp32-p4-devkit-usb-midi2 D-024)
  *   - TinyUSB device + host driver install
+ *   - NVS persistence for the bridge's identity->slot bindings, so
+ *     every board keeps its Function Block across power cycles
  *   - Wiring between TinyUSB and midi2::m2bridge via:
  *       * the bridge's downstream + upstream write functions
- *       * the bridge's slotSetActive / feedHostRx / feedHostMidi1Bytes
- *         from tuh_midi(2)_*_cb callbacks
- *       * device-side RX drained from tud_midi2_n_ump_read into
- *         bridge.feedDeviceRx
+ *       * host().notifyDeviceMounted / feedHostRx for MIDI 2.0 mounts
+ *         (the bridge places each device on its identity-bound slot);
+ *         slotSetActive / feedHostMidi1Bytes for legacy MIDI 1.0
+ *       * device-side RX ring drained into bridge.feedDeviceRx
  *
  * Compared to the v1 sibling at ../../esp32-p4-devkit-bridge-midi2,
  * this file shrinks substantially: every shared invariant (slot table,
@@ -22,6 +24,8 @@
  */
 #include "esp32_p4_devkit_bridge2.h"
 
+#include "midi2_rx_ring.h"
+
 #include <cstdio>
 
 #include "freertos/FreeRTOS.h"
@@ -29,6 +33,8 @@
 #include "esp_log.h"
 #include "esp_random.h"
 #include "esp_timer.h"
+#include "nvs.h"
+#include "nvs_flash.h"
 #include "esp_private/usb_phy.h"
 #include "soc/lp_system_struct.h"
 #include "tusb.h"
@@ -129,8 +135,14 @@ int8_t g_midi1_slot_map[midi2::Bridge::MAX_SLOTS] = {-1, -1, -1, -1};
 bool   g_slot_busy[midi2::Bridge::MAX_SLOTS]      = {false, false, false, false};
 
 uint8_t alloc_slot_from_top() {
-    for (int8_t i = midi2::Bridge::MAX_SLOTS - 1; i >= 0; --i) {
-        if (!g_slot_busy[(uint8_t)i]) return (uint8_t)i;
+    // Bound by the configured topology, not MAX_SLOTS: groups past
+    // numSlots * groupsPerSlot belong to the bridge's own FB. MIDI 2.0
+    // devices place themselves by identity inside the bridge, so also
+    // skip any slot the bridge reports active.
+    for (int8_t i = (int8_t)g_bridge->numSlots() - 1; i >= 0; --i) {
+        if (!g_slot_busy[(uint8_t)i] && !g_bridge->slotActive((uint8_t)i)) {
+            return (uint8_t)i;
+        }
     }
     return 0xFF;
 }
@@ -144,6 +156,43 @@ void init(midi2::m2bridge& bridge) {
     bridge.setUpstreamWriteFn(platform_host_write_fn);
     bridge.setNowFn(platform_now_fn);
     bridge.setRngFn(platform_rng_fn);
+
+    // Identity->slot bindings persist in NVS so every board keeps its
+    // Function Block number across power cycles.
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+    if (err == ESP_OK) {
+        nvs_handle_t h;
+        if (nvs_open("m2bridge", NVS_READONLY, &h) == ESP_OK) {
+            for (uint8_t i = 0; i < bridge.numSlots(); ++i) {
+                char k[8];
+                char v[64];
+                size_t len = sizeof(v);
+                std::snprintf(k, sizeof(k), "slot%u", (unsigned)i);
+                if (nvs_get_str(h, k, v, &len) == ESP_OK && v[0]) {
+                    bridge.bindSlot(i, v);
+                    std::printf("[bridge] slot %u bound to '%s' (NVS)\r\n",
+                                (unsigned)i, v);
+                }
+            }
+            nvs_close(h);
+        }
+        bridge.onSlotBindingChanged([](uint8_t slot, const char* key) {
+            nvs_handle_t wh;
+            if (nvs_open("m2bridge", NVS_READWRITE, &wh) != ESP_OK) return;
+            char k[8];
+            std::snprintf(k, sizeof(k), "slot%u", (unsigned)slot);
+            if (nvs_set_str(wh, k, key) == ESP_OK) nvs_commit(wh);
+            nvs_close(wh);
+            std::printf("[bridge] slot %u bound to '%s' (saved)\r\n",
+                        (unsigned)slot, key);
+        });
+    } else {
+        ESP_LOGW(TAG, "NVS unavailable (%d), slot bindings are RAM-only", (int)err);
+    }
 
     bridge.begin();
 
@@ -173,12 +222,22 @@ void init(midi2::m2bridge& bridge) {
     ESP_LOGI(TAG, "Both TinyUSB tasks started (device on core 0, host on core 1)");
 }
 
+// SPSC ring: tud_midi2_rx_cb (producer, TinyUSB task context) -> task()
+// (consumer). Decoding in the callback runs the stream/CI responders and
+// their TX inside the very task that drains the FIFO; move bytes in the
+// callback, decide here. 64 slots fit a paginated PE GET.
+static midi2::RxRing<64> s_dev_rx_ring;
+
 void task(midi2::m2bridge& bridge) {
-    // Refresh device mount/alt; RX drain on both sides happens in
-    // tud_midi2_rx_cb / tuh_midi2_rx_cb below.
+    // Refresh device mount/alt; raw RX is enqueued in tud_midi2_rx_cb and
+    // decoded here, off the USB task.
     bool mounted = tud_midi2_n_mounted(0);
     bridge.setDeviceMounted(mounted);
     bridge.setDeviceAltSetting(mounted ? tud_midi2_n_alt_setting(0) : 0);
+    midi2::RxRing<64>::Slot slot;
+    while (s_dev_rx_ring.pop(slot)) {
+        bridge.feedDeviceRx(slot.ump, slot.words);
+    }
     bridge.task();
 }
 
@@ -189,13 +248,27 @@ void task(midi2::m2bridge& bridge) {
  *--------------------------------------------------------------------*/
 extern "C" {
 
+// UMP word count per Message Type, same table the bridge core uses.
+static const uint8_t kMtWordCount[16] = {
+    1, 1, 1, 2,   // 0,1,2,3
+    2, 4, 1, 1,   // 4,5,6,7
+    2, 2, 2, 3,   // 8,9,A,B
+    3, 4, 4, 4    // C,D,E,F
+};
+
 void tud_midi2_rx_cb(uint8_t itf) {
     if (!esp32_p4_devkit_bridge2::g_bridge) return;
     uint32_t buf[16];
     for (;;) {
         uint32_t n = tud_midi2_n_ump_read(itf, buf, 16);
         if (n == 0) break;
-        esp32_p4_devkit_bridge2::g_bridge->feedDeviceRx(buf, n);
+        uint32_t i = 0;
+        while (i < n) {
+            uint8_t wc = kMtWordCount[(buf[i] >> 28) & 0x0F];
+            if (i + wc > n) break;
+            esp32_p4_devkit_bridge2::s_dev_rx_ring.push(0, &buf[i], wc);
+            i += wc;
+        }
     }
 }
 
@@ -248,14 +321,13 @@ void tuh_midi2_mount_cb(uint8_t idx, const tuh_midi2_mount_cb_t* m) {
     if (idx >= midi2::Bridge::MAX_SLOTS) return;
 
     // m2 Host populates DeviceIdentity + fires onDeviceConnected, which
-    // the Bridge intercepts to flip slot.active and push FB Info / FB
-    // Name. The bridge's own slot table follows the m2 Host idx 1:1
-    // for MIDI 2.0 devices.
+    // the Bridge intercepts to place the device on its identity-bound
+    // slot and push FB Info / FB Name (slot != idx in general; the
+    // bridge owns the mapping, g_slot_busy only tracks MIDI 1.0 slots).
     uint16_t bcd = esp32_p4_devkit_bridge2::g_bcdMSC[idx];
     esp32_p4_devkit_bridge2::g_bridge->host().notifyDeviceMounted(
         idx, m->protocol_version, m->rx_cable_count,
         m->alt_setting_active, bcd);
-    esp32_p4_devkit_bridge2::g_slot_busy[idx] = true;
 }
 
 void tuh_midi2_rx_cb(uint8_t idx, uint32_t /*xferred_bytes*/) {
@@ -275,7 +347,6 @@ void tuh_midi2_umount_cb(uint8_t idx) {
     if (!esp32_p4_devkit_bridge2::g_bridge) return;
     if (idx >= midi2::Bridge::MAX_SLOTS) return;
     esp32_p4_devkit_bridge2::g_bridge->host().notifyDeviceUnmounted(idx);
-    esp32_p4_devkit_bridge2::g_slot_busy[idx] = false;
 }
 
 // Legacy MIDI 1.0 host callbacks (CFG_TUH_MIDI=4). The

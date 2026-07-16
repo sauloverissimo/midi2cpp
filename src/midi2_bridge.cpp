@@ -78,14 +78,23 @@ struct BridgeState {
     Slot                  slots[Bridge::MAX_SLOTS];
     ByteStreamConverter*  byteConv[Bridge::MAX_SLOTS] = {};
 
-    // Reverse map for MIDI 1.0 host idx -> bridge slot, so an upstream
-    // legacy device that arrives via tuh_midi_*_cb gets a slot from the
-    // top of the table without colliding with MIDI 2.0 mounts that take
-    // low-numbered slots via host().notifyDeviceMounted().
-    int8_t midi1SlotMap[Bridge::MAX_SLOTS];
+    // Identity-bound slot placement. hostIdxToSlot / slotToHostIdx carry
+    // the live host idx <-> slot indirection; binding[] holds the
+    // persistent identity key per slot; ephemeral[] marks slots placed
+    // without an identity (never persisted).
+    char     binding[Bridge::MAX_SLOTS][64] = {};
+    bool     ephemeral[Bridge::MAX_SLOTS]   = {};
+    int8_t   hostIdxToSlot[MIDI2CPP_HOST_MAX_DEVICES];
+    int8_t   slotToHostIdx[Bridge::MAX_SLOTS];
+    uint32_t mountedAtMs[MIDI2CPP_HOST_MAX_DEVICES] = {};
+    Bridge::SlotBindingChangedFn binding_changed;
 
     bool begun = false;
 };
+
+// A device that never reports an identity gets an ephemeral slot after
+// this long (identity normally arrives well under a second after mount).
+static const uint32_t kPlaceTimeoutMs = 3000;
 
 // Static_cast helper for the opaque pimpl pointer.
 static inline BridgeState* st(void* p) {
@@ -102,9 +111,11 @@ static inline BridgeState* st(void* p) {
 // ---------------------------------------------------------------------
 static void forward_ump_to_pc(BridgeState* s, uint8_t idx,
                               const uint32_t* words, size_t count) {
-    if (idx >= s->numSlots) return;
+    if (idx >= MIDI2CPP_HOST_MAX_DEVICES) return;
     if (!s->downstream_write) return;
-    const uint8_t base = (uint8_t)(idx * s->groupsPerSlot);
+    int8_t slot = s->hostIdxToSlot[idx];
+    if (slot < 0) return;   // not placed yet: nothing to forward into
+    const uint8_t base = (uint8_t)((uint8_t)slot * s->groupsPerSlot);
 
     size_t i = 0;
     while (i < count) {
@@ -154,17 +165,144 @@ static void push_fb_name(BridgeState* s, uint8_t idx) {
     s->device.sendFbNameUpdate(idx, name);
 }
 
+// ---------------------------------------------------------------------
+// Identity-bound slot placement.
+// ---------------------------------------------------------------------
+
+// Only a COMPLETE text can be a binding key: multi-packet names fire
+// identity updates per fragment, and a key cut mid-stream would change
+// from boot to boot.
+static const char* identity_key(const Host::DeviceIdentity& id) {
+    if (id.productInstanceId[0] && id.productInstanceIdComplete)
+        return id.productInstanceId;
+    if (id.endpointName[0] && id.endpointNameComplete)
+        return id.endpointName;
+    return nullptr;
+}
+
+static void occupy_slot(BridgeState* s, uint8_t slot, uint8_t idx) {
+    const auto& id = s->host.identity(idx);
+    s->hostIdxToSlot[idx]  = (int8_t)slot;
+    s->slotToHostIdx[slot] = (int8_t)idx;
+    s->slots[slot].active  = true;
+    s->slots[slot].alt     = id.altSettingActive;
+    if (id.endpointName[0]) {
+        std::snprintf(s->slots[slot].name, sizeof(s->slots[slot].name),
+                      "%s", id.endpointName);
+    }
+    push_fb_info(s, slot);
+    push_fb_name(s, slot);
+}
+
+static void set_binding(BridgeState* s, uint8_t slot, const char* key) {
+    std::snprintf(s->binding[slot], sizeof(s->binding[slot]), "%s", key);
+    s->ephemeral[slot] = false;
+    if (s->binding_changed) s->binding_changed(slot, s->binding[slot]);
+}
+
+// Slot for an identified device: its existing binding when free, else
+// the first unbound free slot (binding created), else the first bound
+// but free slot (binding replaced).
+static int8_t slot_for_key(BridgeState* s, const char* key) {
+    for (uint8_t i = 0; i < s->numSlots; ++i) {
+        if (s->slotToHostIdx[i] < 0 && !s->slots[i].active &&
+            std::strcmp(s->binding[i], key) == 0) {
+            return (int8_t)i;
+        }
+    }
+    for (uint8_t i = 0; i < s->numSlots; ++i) {
+        if (s->slotToHostIdx[i] < 0 && !s->slots[i].active &&
+            s->binding[i][0] == '\0') {
+            set_binding(s, i, key);
+            return (int8_t)i;
+        }
+    }
+    for (uint8_t i = 0; i < s->numSlots; ++i) {
+        if (s->slotToHostIdx[i] < 0 && !s->slots[i].active) {
+            set_binding(s, i, key);
+            return (int8_t)i;
+        }
+    }
+    return -1;
+}
+
+static void try_place(BridgeState* s, uint8_t idx) {
+    if (s->hostIdxToSlot[idx] >= 0) return;
+    if (!s->host.isDeviceMounted(idx)) return;
+
+    const char* key = identity_key(s->host.identity(idx));
+    if (key) {
+        int8_t slot = slot_for_key(s, key);
+        if (slot >= 0) occupy_slot(s, (uint8_t)slot, idx);
+        return;
+    }
+
+    // Identity absent. Without a clock, place immediately at the first
+    // free slot (legacy order-based behaviour); with one, wait out the
+    // settle window first. Ephemeral placement prefers unbound slots so
+    // it never squats on someone's reserved Function Block.
+    if (s->now &&
+        (uint32_t)(s->now() - s->mountedAtMs[idx]) < kPlaceTimeoutMs) {
+        return;
+    }
+    for (int pass = 0; pass < 2; ++pass) {
+        for (uint8_t i = 0; i < s->numSlots; ++i) {
+            if (s->slotToHostIdx[i] >= 0 || s->slots[i].active) continue;
+            if (pass == 0 && s->binding[i][0] != '\0') continue;
+            s->ephemeral[i] = true;
+            occupy_slot(s, i, idx);
+            return;
+        }
+    }
+}
+
+// Groups left over after the slot windows belong to the bridge itself:
+// its MIDI-CI answers there (feedDeviceRx never forwards them), so a
+// topology that reserves groups gets one extra Function Block, active
+// and named after the endpoint, where the bridge itself is discoverable.
+// A 16-group topology (4x4) has no leftover: the endpoint is fully
+// delegated and the bridge stays CI-silent.
+static uint8_t bridge_fb_first_group(const BridgeState* s) {
+    return (uint8_t)(s->numSlots * s->groupsPerSlot);
+}
+
+static uint8_t bridge_fb_num_groups(const BridgeState* s) {
+    uint8_t first = bridge_fb_first_group(s);
+    return (uint8_t)(first < 16 ? 16 - first : 0);
+}
+
+static void push_bridge_fb_info(BridgeState* s) {
+    uint8_t ng = bridge_fb_num_groups(s);
+    if (ng == 0) return;
+    s->device.sendFbInfo(/*active*/      true,
+                         /*fb_num*/      s->numSlots,
+                         /*direction*/   0x03,
+                         /*ui_hint*/     0x03,
+                         /*first_group*/ bridge_fb_first_group(s),
+                         /*num_groups*/  ng,
+                         /*midi_ci_ver*/ 0x02,
+                         /*sysex8*/      false,
+                         /*protocol*/    0x02);
+}
+
+static void push_bridge_fb_name(BridgeState* s) {
+    if (bridge_fb_num_groups(s) == 0) return;
+    s->device.sendFbNameUpdate(s->numSlots, s->endpointName);
+}
+
 static void install_stream_responder(BridgeState* s) {
     s->device.onEndpointDiscovery([s](uint8_t filter) {
         if (filter & 0x01) {
+            uint8_t num_fb = (uint8_t)(s->numSlots
+                                       + (bridge_fb_num_groups(s) ? 1 : 0));
             s->device.sendEndpointInfo(/*ump_ver_major*/ 1,
                                        /*ump_ver_minor*/ 1,
                                        /*static_fb*/    false,
-                                       /*num_fb*/       s->numSlots,
+                                       /*num_fb*/       num_fb,
                                        /*midi2*/        true,
                                        /*midi1*/        true,
                                        /*rx_jr*/        false,
-                                       /*tx_jr*/        true);
+                                       /*tx_jr*/        false);
         }
         if (filter & 0x02) {
             s->device.sendDeviceIdentity(s->manufacturerId,
@@ -181,9 +319,14 @@ static void install_stream_responder(BridgeState* s) {
                 if (filter & 0x01) push_fb_info(s, i);
                 if (filter & 0x02) push_fb_name(s, i);
             }
+            if (filter & 0x01) push_bridge_fb_info(s);
+            if (filter & 0x02) push_bridge_fb_name(s);
         } else if (fbNum < s->numSlots) {
             if (filter & 0x01) push_fb_info(s, fbNum);
             if (filter & 0x02) push_fb_name(s, fbNum);
+        } else if (fbNum == s->numSlots) {
+            if (filter & 0x01) push_bridge_fb_info(s);
+            if (filter & 0x02) push_bridge_fb_name(s);
         }
     });
 
@@ -193,31 +336,42 @@ static void install_stream_responder(BridgeState* s) {
 }
 
 static void install_host_callbacks(BridgeState* s) {
-    s->host.onDeviceConnected([s](uint8_t idx, const Host::DeviceIdentity& id) {
-        if (idx < s->numSlots) {
-            s->slots[idx].active = true;
-            s->slots[idx].alt    = id.altSettingActive;
-            push_fb_info(s, idx);
-            push_fb_name(s, idx);
-        }
+    s->host.onDeviceConnected([s](uint8_t idx, const Host::DeviceIdentity&) {
+        if (idx >= MIDI2CPP_HOST_MAX_DEVICES) return;
+        s->mountedAtMs[idx] = s->now ? s->now() : 0;
+        try_place(s, idx);   // places immediately when identity is known
     });
     s->host.onDeviceDisconnected([s](uint8_t idx) {
-        if (idx < s->numSlots) {
-            s->slots[idx].active = false;
-            s->slots[idx].name[0] = '\0';
-            if (s->byteConv[idx]) s->byteConv[idx]->reset();
-            push_fb_info(s, idx);
-            push_fb_name(s, idx);
-        }
+        if (idx >= MIDI2CPP_HOST_MAX_DEVICES) return;
+        int8_t slot = s->hostIdxToSlot[idx];
+        if (slot < 0) return;
+        s->hostIdxToSlot[idx]   = -1;
+        s->slotToHostIdx[slot]  = -1;
+        s->slots[slot].active   = false;
+        s->slots[slot].name[0]  = '\0';
+        push_fb_info(s, (uint8_t)slot);
+        push_fb_name(s, (uint8_t)slot);
     });
     s->host.onIdentityUpdated([s](uint8_t idx, const Host::DeviceIdentity& id) {
-        if (idx >= s->numSlots) return;
+        if (idx >= MIDI2CPP_HOST_MAX_DEVICES) return;
+        int8_t slot = s->hostIdxToSlot[idx];
+        if (slot < 0) {
+            try_place(s, idx);
+            return;
+        }
+        // An ephemeral placement adopts its slot once the identity shows
+        // up late, so the next boot finds it in the same place.
+        const char* key = identity_key(id);
+        if (key && s->ephemeral[(uint8_t)slot]) {
+            set_binding(s, (uint8_t)slot, key);
+        }
         if (!id.endpointName[0]) return;
         // snprintf instead of strncpy avoids -Werror=stringop-truncation
         // when the source happens to be exactly cap-1 bytes long.
-        std::snprintf(s->slots[idx].name, sizeof(s->slots[idx].name),
+        std::snprintf(s->slots[(uint8_t)slot].name,
+                      sizeof(s->slots[(uint8_t)slot].name),
                       "%s", id.endpointName);
-        push_fb_name(s, idx);
+        push_fb_name(s, (uint8_t)slot);
     });
 }
 
@@ -227,7 +381,8 @@ static void install_host_callbacks(BridgeState* s) {
 
 Bridge::Bridge() {
     auto* s = new BridgeState{};
-    for (auto& m : s->midi1SlotMap) m = -1;
+    for (auto& m : s->hostIdxToSlot) m = -1;
+    for (auto& m : s->slotToHostIdx) m = -1;
     _state = s;
 }
 
@@ -341,8 +496,39 @@ void Bridge::begin() {
 
 void Bridge::task() {
     auto* s = st(_state);
+    // Devices still waiting for an identity get placed here, either as
+    // soon as the identity lands or ephemerally after the timeout.
+    for (uint8_t i = 0; i < MIDI2CPP_HOST_MAX_DEVICES; ++i) {
+        if (s->hostIdxToSlot[i] < 0) try_place(s, i);
+    }
     s->device.task();
     s->host.task();
+}
+
+void Bridge::bindSlot(uint8_t slot, const char* key) {
+    auto* s = st(_state);
+    if (slot >= s->numSlots || !key) return;
+    std::snprintf(s->binding[slot], sizeof(s->binding[slot]), "%s", key);
+    s->ephemeral[slot] = false;
+}
+
+void Bridge::onSlotBindingChanged(SlotBindingChangedFn fn) {
+    st(_state)->binding_changed = std::move(fn);
+}
+
+const char* Bridge::slotBinding(uint8_t slot) const {
+    auto* s = st(_state);
+    return (slot < Bridge::MAX_SLOTS) ? s->binding[slot] : "";
+}
+
+int8_t Bridge::slotForHostIdx(uint8_t idx) const {
+    auto* s = st(_state);
+    return (idx < MIDI2CPP_HOST_MAX_DEVICES) ? s->hostIdxToSlot[idx] : -1;
+}
+
+bool Bridge::slotActive(uint8_t slot) const {
+    auto* s = st(_state);
+    return slot < s->numSlots && s->slots[slot].active;
 }
 
 void Bridge::slotSetActive(uint8_t idx, bool active, uint8_t alt) {
@@ -369,7 +555,32 @@ void Bridge::feedDeviceRx(const uint32_t* words, size_t count) {
         uint8_t mt = (uint8_t)((words[i] >> 28) & 0x0F);
         uint8_t wc = kMtWordCount[mt];
         if (i + wc > count) break;
-        s->device.feedRx(&words[i], wc);
+
+        // Downstream routing, the mirror of forward_ump_to_pc: PC-side
+        // traffic addressed to an ACTIVE slot's group window (CVM, SysEx7
+        // MIDI-CI, SysEx8, Flex) is rewritten into the device's local
+        // groups and forwarded upstream, exclusively: broadcast MIDI-CI
+        // (Discovery) is not MUID-filterable, so feeding the internal
+        // face too would stamp the bridge's own MUID into every
+        // forwarded block. The bridge's CI answers only on groups
+        // outside active windows; Stream (0xF) and utility (0x0) are
+        // groupless and always stay with the bridge.
+        bool routed = false;
+        if (mt != 0x0 && mt != 0xE && mt != 0xF && s->upstream_write) {
+            uint8_t in_group = (uint8_t)((words[i] >> 24) & 0x0F);
+            uint8_t slot     = (uint8_t)(in_group / s->groupsPerSlot);
+            if (slot < s->numSlots && s->slots[slot].active &&
+                s->slotToHostIdx[slot] >= 0) {
+                uint32_t out[4];
+                out[0] = (words[i] & 0xF0FFFFFFu)
+                       | ((uint32_t)(in_group % s->groupsPerSlot) << 24);
+                for (uint8_t w = 1; w < wc; ++w) out[w] = words[i + w];
+                s->upstream_write((uint8_t)s->slotToHostIdx[slot], out, wc);
+                routed = true;
+            }
+        }
+
+        if (!routed) s->device.feedRx(&words[i], wc);
         i += wc;
     }
 }
