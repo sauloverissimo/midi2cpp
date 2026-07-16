@@ -356,6 +356,8 @@ public:
     void clearInboundGroupRemap(uint8_t idx);
 
 private:
+    // Deferred discovery runner, called from task() per device slot.
+    void runPendingDiscovery(uint8_t idx);
     void* _state;   // opaque pimpl: HostState
 };
 

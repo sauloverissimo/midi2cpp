@@ -66,6 +66,12 @@ struct HostState {
     // Auto-discover toggle (default true; set on construction)
     bool auto_discover;
 
+    // Discovery deferred to task(): sending inside the mount callback races
+    // the USB stack's configuration epilogue on some hosts (a failed first
+    // TX leaves the inquiries parked in the FIFO with nothing to flush
+    // them). task() runs with the bus settled.
+    bool discover_pending[Host::MAX_DEVICES];
+
     // Stream core: inbound RX ring. feedRx (producer) enqueues raw UMP here
     // off the RX path; task() (consumer) drains it and runs the decode.
     RxRing<MIDI2CPP_HOST_RX_RING> rx;
@@ -437,6 +443,11 @@ void Host::begin() {
 void Host::task() {
     auto* s = st(_state);
 
+    // Deferred per-device discovery (armed by notifyDeviceMounted).
+    for (uint8_t i = 0; i < MAX_DEVICES; ++i) {
+        runPendingDiscovery(i);
+    }
+
     // Drain the RX ring: this is where inbound UMP is actually decoded and
     // dispatched, off the platform RX path. Apply the optional inbound group
     // remap (MT 0x2..0x5 word0) just before feeding the proc.
@@ -521,27 +532,34 @@ void Host::notifyDeviceMounted(uint8_t idx,
 
     if (s->cb_device_connected) s->cb_device_connected(idx, id);
 
-    if (s->auto_discover) {
-        // Send UMP Stream Endpoint Discovery: ask for all 5 notification
-        // categories (Endpoint Info / Device Identity / Endpoint Name /
-        // Product Instance ID / Stream Config). filter = 0x1F covers them.
-        if (s->write_fn) {
-            uint32_t words[4] = {0};
-            midi2_msg_stream_endpoint_discovery(words, /*ump_ver_major*/ 1,
-                                                  /*ump_ver_minor*/ 1,
-                                                  /*filter*/ 0x1F);
-            s->write_fn(idx, words, 4);
+    // Discovery runs on the next task() tick, off the mount callback path.
+    if (s->auto_discover) s->discover_pending[idx] = true;
+}
 
-            // Also FB Discovery for FB 0xFF (all FBs), info + name bits.
-            uint32_t fbw[4] = {0};
-            midi2_msg_stream_fb_discovery(fbw, /*fb_num*/ 0xFF,
-                                            /*filter*/ 0x03);
-            s->write_fn(idx, fbw, 4);
-        }
-        // CI Discovery Inquiry, populates ciMuid and the manufacturer
-        // bundle when the device replies.
-        sendDiscoveryInquiry(idx);
+void Host::runPendingDiscovery(uint8_t idx) {
+    auto* s = st(_state);
+    if (!s->discover_pending[idx] || !s->identities[idx].mounted) return;
+    s->discover_pending[idx] = false;
+
+    // UMP Stream Endpoint Discovery: ask for all 5 notification categories
+    // (Endpoint Info / Device Identity / Endpoint Name / Product Instance
+    // Id / Stream Config). filter = 0x1F covers them.
+    if (s->write_fn) {
+        uint32_t words[4] = {0};
+        midi2_msg_stream_endpoint_discovery(words, /*ump_ver_major*/ 1,
+                                              /*ump_ver_minor*/ 1,
+                                              /*filter*/ 0x1F);
+        s->write_fn(idx, words, 4);
+
+        // Also FB Discovery for FB 0xFF (all FBs), info + name bits.
+        uint32_t fbw[4] = {0};
+        midi2_msg_stream_fb_discovery(fbw, /*fb_num*/ 0xFF,
+                                        /*filter*/ 0x03);
+        s->write_fn(idx, fbw, 4);
     }
+    // CI Discovery Inquiry, populates ciMuid and the manufacturer bundle
+    // when the device replies.
+    sendDiscoveryInquiry(idx);
 }
 
 void Host::notifyDeviceUnmounted(uint8_t idx) {
