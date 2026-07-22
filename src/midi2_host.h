@@ -163,6 +163,11 @@ public:
         uint16_t modelId;
         uint32_t version;
 
+        // True once ANY Stream reply arrived from this device; gates
+        // the discovery retry so a device without an Endpoint Name is
+        // not re-interrogated forever.
+        bool     sawStreamReply;
+
         // Populated by UMP Stream Endpoint Name notification (status 0x03).
         // The Complete flag is false while a multi-packet text is still
         // being assembled; consumers that key on the text (e.g. slot

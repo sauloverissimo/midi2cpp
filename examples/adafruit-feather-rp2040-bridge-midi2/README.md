@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Bridge MIDI 2.0
 ## Adafruit Feather RP2040 USB Bridge
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 Transparent USB MIDI 2.0 bridge on the **Adafruit Feather RP2040 USB Host**. Runs TinyUSB host on USB-A (PIO-USB GP16 / GP17) and TinyUSB device on USB-C (native USB) in the same firmware, forwarding UMP between them so any MIDI 2.0 device plugged into USB-A appears on the PC as a 16-group MIDI 2.0 endpoint named `Feather RP2040 Bridge MIDI 2.0`. Pico SDK build, no Arduino IDE.
 
 ![adafruit-feather-rp2040-bridge-midi2 banner](board/banner.png)

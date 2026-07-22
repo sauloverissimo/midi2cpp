@@ -1,6 +1,8 @@
 # [midi2cpp](../..) | Bridge MIDI 2.0
 ## Waveshare ESP32-P4-WIFI6-DEV-KIT (m2bridge variant)
 
+[![Compliant with MIDI 2.0 Workbench](https://img.shields.io/badge/MIDI%202.0%20Workbench-compliant-0d9488?labelColor=17151f)](https://github.com/midi2-dev/MIDI2.0Workbench)
+
 Dual-stack USB MIDI 2.0 bridge: UTMI host PHY on the USB-A jacks, INT device PHY on the USB-Device USB-C jack, `midi2::m2bridge` in between. All bridge logic lives in [`src/midi2_bridge.cpp`](../../src/midi2_bridge.cpp); the recipe is platform glue. PID `0x4095`.
 
 ![esp32-p4-devkit-bridge2-midi2 banner](board/banner.png)

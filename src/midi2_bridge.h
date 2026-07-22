@@ -191,6 +191,11 @@ public:
                                          uint8_t count)>;
     void onTraffic(TrafficFn fn);
     void bindSlot(uint8_t slot, const char* key);
+
+    // Settle window for devices that report no identity: they get a
+    // free slot after this long (default 3000 ms; 0 = place at mount,
+    // the legacy order-based behaviour). Set before begin().
+    void setPlacementTimeoutMs(uint32_t ms);
     void onSlotBindingChanged(SlotBindingChangedFn fn);
     const char* slotBinding(uint8_t slot) const;   // "" = unbound
     int8_t slotForHostIdx(uint8_t idx) const;      // -1 = not placed

@@ -724,6 +724,224 @@ static void test_bridge_traffic_tap_observes_both_directions(void) {
     PASS();
 }
 
+// ---- Review fixes: guards, single-owner bindings, MIDI 1.0 windows ----
+
+static void test_bridge_high_host_idx_is_not_slot_bound(void) {
+    TEST("host idx >= numSlots still flows: idx is not a slot number");
+    capture_reset();
+    upstream_reset();
+    test_set_now(1000);
+    m2bridge br;
+    make_bridge_n(br, 3);   // 3 slots, host idx space is 4
+
+    mount_midi2(br, 3);
+    send_pid(br, 3, "DEV-HIGH");
+    CHECK_EQ(br.slotForHostIdx(3), 0, "idx 3 placed on free slot 0");
+
+    capture_reset();
+    uint32_t note_on[2];
+    make_note_on(note_on, 0, 0, 60, 0xFFFF);
+    br.feedHostRx(3, note_on, 2);
+    uint8_t g = 0xFF;
+    CHECK(find_first_note_on(&g), "traffic from host idx 3 reaches the PC");
+    CHECK_EQ(g, 0u, "in slot 0's window");
+    PASS();
+}
+
+static void test_bridge_slotSetActive_cannot_touch_placed_slots(void) {
+    TEST("slotSetActive is a no-op on identity-placed slots");
+    capture_reset();
+    upstream_reset();
+    test_set_now(1000);
+    m2bridge br;
+    make_bridge(br);
+    mount_on_slot(br, 0, 0, "DEV-A");
+    upstream_reset();
+
+    br.slotSetActive(0, false, 0);   // platform mistake: not its slot
+    CHECK(br.slotActive(0), "placed slot stays active");
+    uint32_t note_on[2];
+    make_note_on(note_on, 0, 0, 60, 0xFFFF);
+    br.feedDeviceRx(note_on, 2);
+    CHECK(g_upstream_tx_len == 2, "PC->device routing survives");
+    PASS();
+}
+
+static void test_bridge_midi1_window_never_answers_bridge_ci(void) {
+    TEST("active MIDI 1.0 window: no internal CI reply, no upstream leak");
+    capture_reset();
+    upstream_reset();
+    test_set_now(1000);
+    m2bridge br;
+    make_bridge(br);
+    br.slotSetActive(1, true, /*alt*/ 0);   // platform-managed MIDI 1.0
+    capture_reset();
+    upstream_reset();
+
+    uint32_t ump[16];
+    size_t n = make_ci_discovery_ump(/*group*/ 5, ump, 16);
+    br.feedDeviceRx(ump, n);
+    CHECK(g_upstream_tx_len == 0, "nothing forwarded upstream");
+    CHECK(!downstream_has_sysex7(), "bridge CI silent inside a device window");
+    PASS();
+}
+
+static void test_bridge_binding_single_owner(void) {
+    TEST("adopting a key clears its previous binding (single owner)");
+    capture_reset();
+    upstream_reset();
+    test_set_now(1000);
+    m2bridge br;
+    make_bridge(br);
+    br.bindSlot(0, "DEV-K");
+
+    static int cb_count;
+    static uint8_t cb_slots[8];
+    static char cb_keys[8][16];
+    cb_count = 0;
+    br.onSlotBindingChanged([](uint8_t slot, const char* key) {
+        if (cb_count < 8) {
+            cb_slots[cb_count] = slot;
+            std::snprintf(cb_keys[cb_count], 16, "%s", key);
+            ++cb_count;
+        }
+    });
+
+    // Device mounts with no identity, ephemeral placement skips bound
+    // slot 0; its identity DEV-K then arrives late.
+    mount_midi2(br, 0);
+    test_set_now(4200);
+    br.task();
+    CHECK_EQ(br.slotForHostIdx(0), 1, "ephemeral placement on slot 1");
+    send_pid(br, 0, "DEV-K");
+
+    CHECK(std::strcmp(br.slotBinding(1), "DEV-K") == 0, "slot 1 adopted the key");
+    CHECK(br.slotBinding(0)[0] == '\0', "slot 0's stale binding cleared");
+    bool cleared_persisted = false;
+    for (int i = 0; i < cb_count; ++i) {
+        if (cb_slots[i] == 0 && cb_keys[i][0] == '\0') cleared_persisted = true;
+    }
+    CHECK(cleared_persisted, "the clear was surfaced to the persistence hook");
+    PASS();
+}
+
+static void test_bridge_binding_upgrades_to_product_instance_id(void) {
+    TEST("name-keyed binding upgrades once the Product Instance Id completes");
+    capture_reset();
+    upstream_reset();
+    test_set_now(1000);
+    m2bridge br;
+    make_bridge(br);
+
+    mount_midi2(br, 0);
+    uint32_t w[4];
+    make_stream_text(w, 0x003, "Board X");   // endpoint name first
+    br.feedHostRx(0, w, 4);
+    br.task();
+    CHECK_EQ(br.slotForHostIdx(0), 0, "placed by name key");
+    CHECK(std::strcmp(br.slotBinding(0), "Board X") == 0, "keyed on the name");
+
+    send_pid(br, 0, "PID-X");                 // preferred key arrives late
+    CHECK(std::strcmp(br.slotBinding(0), "PID-X") == 0,
+          "binding upgraded to the stable Product Instance Id");
+    PASS();
+}
+
+static void test_bridge_fb_name_waits_for_complete_text(void) {
+    TEST("FB Name is not pushed from a mid-assembly name fragment");
+    capture_reset();
+    upstream_reset();
+    test_set_now(1000);
+    m2bridge br;
+    make_bridge(br);
+    mount_on_slot(br, 0, 0, "DEV-A");
+    capture_reset();
+
+    // Start fragment (format 1): text incomplete.
+    uint32_t w[4];
+    make_stream_text(w, 0x003, "Truncated Name");
+    w[0] |= (0x1u << 26);                     // format = start
+    br.feedHostRx(0, w, 4);
+    uint32_t w0 = 0, w1 = 0;
+    CHECK(!find_stream_msg(/*FB Name*/ 0x012, 0, &w0, &w1),
+          "no FB Name push while the text is incomplete");
+    PASS();
+}
+
+static void test_bridge_midi1_cable_lifts_into_group(void) {
+    TEST("MIDI 1.0 cable nibble maps into the slot's group window");
+    capture_reset();
+    upstream_reset();
+    test_set_now(1000);
+    m2bridge br;
+    make_bridge(br);
+    br.slotSetActive(1, true, /*alt*/ 0);
+    capture_reset();
+
+    // USB-MIDI 1.0 packet: cable 2, CIN 0x9 (NoteOn), 90 3C 40.
+    uint8_t pkt[4] = { (uint8_t)((2 << 4) | 0x9), 0x90, 0x3C, 0x40 };
+    br.feedHostMidi1Bytes(1, pkt, 4);
+
+    bool found = false;
+    for (size_t i = 0; i < g_captured_tx_len; ++i) {
+        uint32_t w0c = g_captured_tx[i];
+        if (((w0c >> 28) & 0xF) == 0x2 && ((w0c >> 20) & 0xF) == 0x9) {
+            found = true;
+            CHECK_EQ((w0c >> 24) & 0x0F, 6u, "slot 1 base 4 + cable 2 = group 6");
+        }
+    }
+    CHECK(found, "cable 2 NoteOn uplifted to MT 0x2");
+    PASS();
+}
+
+static void test_bridge_placement_timeout_zero_is_immediate(void) {
+    TEST("setPlacementTimeoutMs(0): identity-less device forwards at mount");
+    capture_reset();
+    upstream_reset();
+    test_set_now(1000);
+    m2bridge br;
+    br.setNumSlots(4);
+    br.setGroupsPerSlot(4);
+    br.setDownstreamWriteFn(bridge_capture_downstream);
+    br.setUpstreamWriteFn(bridge_capture_upstream);
+    br.setNowFn(test_now_fn);
+    br.setRngFn([] { return 0xCAFEBABEu; });
+    br.setPlacementTimeoutMs(0);
+    br.begin();
+    br.setDeviceMounted(true);
+    br.setDeviceAltSetting(1);
+
+    mount_midi2(br, 0);
+    CHECK(br.slotForHostIdx(0) >= 0, "placed immediately with timeout 0");
+    PASS();
+}
+
+static void test_host_retry_stops_after_any_stream_reply(void) {
+    TEST("discovery retry stops once the device answered, name or not");
+    capture_reset();
+    upstream_reset();
+    test_set_now(1000);
+    m2bridge br;
+    make_bridge(br);
+
+    mount_midi2(br, 0);
+    size_t after_first_bundle = g_upstream_tx_len;
+    CHECK(after_first_bundle > 0, "first discovery bundle went out");
+
+    // Device answers Endpoint Info (status 0x001) but has NO name.
+    uint32_t ep_info[4] = { (0xFu << 28) | (0x001u << 16) | (0x01u << 8) | 0x01u,
+                            (0x04u << 24) | (0x3u << 8), 0, 0 };
+    br.feedHostRx(0, ep_info, 4);
+    br.task();
+    size_t after_reply = g_upstream_tx_len;
+
+    test_set_now(4800);   // well past the 3 s retry pacing
+    br.task();
+    CHECK(g_upstream_tx_len == after_reply,
+          "no re-sent bundle for a device that already replied");
+    PASS();
+}
+
 int main(void) {
     std::printf("\n[m2bridge]\n");
 
@@ -737,6 +955,15 @@ int main(void) {
     test_bridge_downstream_route_cvm();
     test_bridge_downstream_route_sysex7();
     test_bridge_downstream_skips_stream_and_inactive();
+    test_bridge_high_host_idx_is_not_slot_bound();
+    test_bridge_slotSetActive_cannot_touch_placed_slots();
+    test_bridge_midi1_window_never_answers_bridge_ci();
+    test_bridge_binding_single_owner();
+    test_bridge_binding_upgrades_to_product_instance_id();
+    test_bridge_fb_name_waits_for_complete_text();
+    test_bridge_midi1_cable_lifts_into_group();
+    test_bridge_placement_timeout_zero_is_immediate();
+    test_host_retry_stops_after_any_stream_reply();
     test_bridge_downstream_active_window_is_exclusive();
     test_bridge_downstream_inactive_window_reaches_bridge_ci();
     test_bridge_own_fb_advertised_when_groups_remain();

@@ -90,12 +90,11 @@ struct BridgeState {
     Bridge::SlotBindingChangedFn binding_changed;
     Bridge::TrafficFn            traffic_tap;
 
+    // Settle window for identity-less devices (0 = place at mount).
+    uint32_t placeTimeoutMs = 3000;
+
     bool begun = false;
 };
-
-// A device that never reports an identity gets an ephemeral slot after
-// this long (identity normally arrives well under a second after mount).
-static const uint32_t kPlaceTimeoutMs = 3000;
 
 // Static_cast helper for the opaque pimpl pointer.
 static inline BridgeState* st(void* p) {
@@ -197,6 +196,15 @@ static void occupy_slot(BridgeState* s, uint8_t slot, uint8_t idx) {
 }
 
 static void set_binding(BridgeState* s, uint8_t slot, const char* key) {
+    // Single owner: a key lives on exactly one slot. Clear (and persist
+    // the clear of) any other slot still holding it, or stale entries
+    // accumulate and the device's FB drifts across boots.
+    for (uint8_t i = 0; i < s->numSlots; ++i) {
+        if (i != slot && std::strcmp(s->binding[i], key) == 0) {
+            s->binding[i][0] = '\0';
+            if (s->binding_changed) s->binding_changed(i, "");
+        }
+    }
     std::snprintf(s->binding[slot], sizeof(s->binding[slot]), "%s", key);
     s->ephemeral[slot] = false;
     if (s->binding_changed) s->binding_changed(slot, s->binding[slot]);
@@ -205,10 +213,11 @@ static void set_binding(BridgeState* s, uint8_t slot, const char* key) {
 // Slot for an identified device: its existing binding when free, else
 // the first unbound free slot (binding created), else the first bound
 // but free slot (binding replaced).
-static int8_t slot_for_key(BridgeState* s, const char* key) {
+static int8_t slot_for_key(BridgeState* s, const char* key, const char* alt) {
     for (uint8_t i = 0; i < s->numSlots; ++i) {
         if (s->slotToHostIdx[i] < 0 && !s->slots[i].active &&
-            std::strcmp(s->binding[i], key) == 0) {
+            (std::strcmp(s->binding[i], key) == 0 ||
+             (alt && std::strcmp(s->binding[i], alt) == 0))) {
             return (int8_t)i;
         }
     }
@@ -232,9 +241,16 @@ static void try_place(BridgeState* s, uint8_t idx) {
     if (s->hostIdxToSlot[idx] >= 0) return;
     if (!s->host.isDeviceMounted(idx)) return;
 
-    const char* key = identity_key(s->host.identity(idx));
+    const auto& id = s->host.identity(idx);
+    const char* key = identity_key(id);
     if (key) {
-        int8_t slot = slot_for_key(s, key);
+        // A binding made under the other key (name vs Product Instance
+        // Id, whichever completed first on an earlier boot) still finds
+        // its slot; the binding upgrades to the preferred key later.
+        const char* alt = (id.endpointName[0] && id.endpointNameComplete &&
+                           std::strcmp(id.endpointName, key) != 0)
+                            ? id.endpointName : nullptr;
+        int8_t slot = slot_for_key(s, key, alt);
         if (slot >= 0) occupy_slot(s, (uint8_t)slot, idx);
         return;
     }
@@ -243,8 +259,8 @@ static void try_place(BridgeState* s, uint8_t idx) {
     // free slot (legacy order-based behaviour); with one, wait out the
     // settle window first. Ephemeral placement prefers unbound slots so
     // it never squats on someone's reserved Function Block.
-    if (s->now &&
-        (uint32_t)(s->now() - s->mountedAtMs[idx]) < kPlaceTimeoutMs) {
+    if (s->now && s->placeTimeoutMs != 0 &&
+        (uint32_t)(s->now() - s->mountedAtMs[idx]) < s->placeTimeoutMs) {
         return;
     }
     for (int pass = 0; pass < 2; ++pass) {
@@ -361,15 +377,23 @@ static void install_host_callbacks(BridgeState* s) {
             try_place(s, idx);
             return;
         }
-        // An ephemeral placement adopts its slot once the identity shows
-        // up late, so the next boot finds it in the same place.
+        // Adopt or upgrade the binding: an ephemeral placement takes the
+        // key once it shows up, and a name-keyed binding upgrades to the
+        // Product Instance Id when that completes, so every device
+        // converges on its stable key regardless of reply order.
         const char* key = identity_key(id);
-        if (key && s->ephemeral[(uint8_t)slot]) {
+        if (key && std::strcmp(s->binding[(uint8_t)slot], key) != 0 &&
+            (s->ephemeral[(uint8_t)slot] ||
+             (id.endpointName[0] && id.endpointNameComplete &&
+              std::strcmp(s->binding[(uint8_t)slot], id.endpointName) == 0))) {
             set_binding(s, (uint8_t)slot, key);
         }
-        if (!id.endpointName[0]) return;
-        // snprintf instead of strncpy avoids -Werror=stringop-truncation
-        // when the source happens to be exactly cap-1 bytes long.
+        // Push the FB Name only for a COMPLETE text that actually
+        // changed: identity updates fire per fragment, and hosts that
+        // snapshot names must never see a mid-assembly string.
+        if (!id.endpointName[0] || !id.endpointNameComplete) return;
+        if (std::strcmp(s->slots[(uint8_t)slot].name, id.endpointName) == 0)
+            return;
         std::snprintf(s->slots[(uint8_t)slot].name,
                       sizeof(s->slots[(uint8_t)slot].name),
                       "%s", id.endpointName);
@@ -514,6 +538,10 @@ void Bridge::bindSlot(uint8_t slot, const char* key) {
     s->ephemeral[slot] = false;
 }
 
+void Bridge::setPlacementTimeoutMs(uint32_t ms) {
+    st(_state)->placeTimeoutMs = ms;
+}
+
 void Bridge::onSlotBindingChanged(SlotBindingChangedFn fn) {
     st(_state)->binding_changed = std::move(fn);
 }
@@ -540,6 +568,9 @@ bool Bridge::slotActive(uint8_t slot) const {
 void Bridge::slotSetActive(uint8_t idx, bool active, uint8_t alt) {
     auto* s = st(_state);
     if (idx >= s->numSlots) return;
+    // Identity-placed slots belong to the bridge's own placement; the
+    // platform only manages slots it allocated itself (MIDI 1.0).
+    if (s->slotToHostIdx[idx] >= 0) return;
     s->slots[idx].active = active;
     s->slots[idx].alt    = alt;
     if (!active) {
@@ -575,14 +606,19 @@ void Bridge::feedDeviceRx(const uint32_t* words, size_t count) {
         if (mt != 0x0 && mt != 0xE && mt != 0xF && s->upstream_write) {
             uint8_t in_group = (uint8_t)((words[i] >> 24) & 0x0F);
             uint8_t slot     = (uint8_t)(in_group / s->groupsPerSlot);
-            if (slot < s->numSlots && s->slots[slot].active &&
-                s->slotToHostIdx[slot] >= 0) {
-                uint32_t out[4];
-                out[0] = (words[i] & 0xF0FFFFFFu)
-                       | ((uint32_t)(in_group % s->groupsPerSlot) << 24);
-                for (uint8_t w = 1; w < wc; ++w) out[w] = words[i + w];
-                s->upstream_write((uint8_t)s->slotToHostIdx[slot], out, wc);
-                if (s->traffic_tap) s->traffic_tap(false, out, wc);
+            if (slot < s->numSlots && s->slots[slot].active) {
+                if (s->slotToHostIdx[slot] >= 0) {
+                    uint32_t out[4];
+                    out[0] = (words[i] & 0xF0FFFFFFu)
+                           | ((uint32_t)(in_group % s->groupsPerSlot) << 24);
+                    for (uint8_t w = 1; w < wc; ++w) out[w] = words[i + w];
+                    s->upstream_write((uint8_t)s->slotToHostIdx[slot], out, wc);
+                    if (s->traffic_tap) s->traffic_tap(false, out, wc);
+                }
+                // An active window always belongs to its device. A
+                // platform-managed MIDI 1.0 slot has no UMP return path
+                // yet, so its PC traffic is dropped here rather than
+                // leaking into the bridge's own responder.
                 routed = true;
             }
         }
@@ -595,7 +631,8 @@ void Bridge::feedDeviceRx(const uint32_t* words, size_t count) {
 void Bridge::feedHostRx(uint8_t idx, const uint32_t* words, size_t count) {
     auto* s = st(_state);
     if (!words || count == 0) return;
-    if (idx >= s->numSlots) return;
+    // idx is a HOST DEVICE index, not a slot: bound by the host table.
+    if (idx >= MIDI2CPP_HOST_MAX_DEVICES) return;
 
     // Forward (raw, with group rewrite into the slot's window) BEFORE
     // feeding m2 Host: the forward path is fast and host.feedRx may
@@ -622,14 +659,33 @@ void Bridge::feedHostMidi1Bytes(uint8_t idx, const uint8_t* bytes, size_t count)
     auto* conv = s->byteConv[idx];
     if (!conv) return;
 
-    // Bytes arrive as USB-MIDI 1.0 packets (4-byte CIN-encoded). Decode
-    // CIN to get the count of MIDI bytes per packet.
+    // Bytes arrive as USB-MIDI 1.0 packets (4-byte CIN-encoded). Channel
+    // voice packets are lifted straight to MT 0x2 with the CABLE nibble
+    // mapped into the slot's group window, so a multi-port interface
+    // keeps its ports apart. Byte-stream parsing (running status, SysEx)
+    // runs on cable 0 only: one converter per slot cannot survive
+    // interleaved cables, so other cables' non-CVM traffic is dropped.
+    const uint8_t base = (uint8_t)(idx * s->groupsPerSlot);
     size_t off = 0;
     while (off + 4 <= count) {
-        uint8_t cin = bytes[off] & 0x0F;
-        uint8_t bcount = kCinByteCount[cin];
-        for (uint8_t b = 0; b < bcount; ++b) {
-            (void)conv->feed(bytes[off + 1 + b]);
+        uint8_t cable = (uint8_t)(bytes[off] >> 4);
+        uint8_t cin   = (uint8_t)(bytes[off] & 0x0F);
+        if (cin >= 0x8 && cin <= 0xE) {
+            uint8_t group = (uint8_t)(base + (cable % s->groupsPerSlot));
+            uint32_t w = ((uint32_t)0x2 << 28)
+                       | ((uint32_t)group << 24)
+                       | ((uint32_t)bytes[off + 1] << 16)
+                       | ((uint32_t)bytes[off + 2] << 8)
+                       |  (uint32_t)bytes[off + 3];
+            if (s->downstream_write) {
+                (void)s->downstream_write(&w, 1);
+                if (s->traffic_tap) s->traffic_tap(true, &w, 1);
+            }
+        } else if (cable == 0) {
+            uint8_t bcount = kCinByteCount[cin];
+            for (uint8_t b = 0; b < bcount; ++b) {
+                (void)conv->feed(bytes[off + 1 + b]);
+            }
         }
         off += 4;
     }

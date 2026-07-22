@@ -18,6 +18,7 @@
 #include "bsp/board_api.h"
 
 #include "feather_bridge.h"
+#include "midi2_rx_ring.h"
 #include "display.h"
 
 namespace {
@@ -192,13 +193,24 @@ const char kDeviceInfo[] =
 const char kChannelList[] = "[{\"title\":\"Bridge\",\"channel\":1}]";
 const char kProgramList[] = "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]";
 
+// The traffic tap runs inside the USB RX path: it must only enqueue.
+// Rendering (blocking I2C flush, ~20 ms a frame) happens in the main
+// loop, at most one message per tick.
+static midi2::RxRing<32> g_tap_ring;
+
 void install_callbacks() {
     g_bridge.onTraffic([](bool to_pc, const uint32_t* words, uint8_t count) {
-        char line[32];
-        format_ump(words, count, to_pc ? '>' : '<', 0, line, sizeof(line));
-        display_log(line, to_pc ? COLOR_UPSTREAM : COLOR_DOWNSTREAM);
+        g_tap_ring.push(to_pc ? 1 : 0, words, count);
         if (to_pc) ++g_count_upstream; else ++g_count_downstream;
     });
+}
+
+void render_tap_tick() {
+    midi2::RxRing<32>::Slot rec;
+    if (!g_tap_ring.pop(rec)) return;
+    char line[32];
+    format_ump(rec.ump, rec.words, rec.idx ? '>' : '<', 0, line, sizeof(line));
+    display_log(line, rec.idx ? COLOR_UPSTREAM : COLOR_DOWNSTREAM);
 }
 
 // ----------------------------------------------------------------------------
@@ -306,6 +318,7 @@ int main() {
 
     while (true) {
         feather_bridge::task(g_bridge);
+        render_tap_tick();
 
         uint32_t now = (uint32_t)(time_us_64() / 1000ULL);
         bool pc_present       = feather_bridge::downstream_present();

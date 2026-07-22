@@ -229,6 +229,7 @@ void tramp_endpoint_info(uint8_t ump_maj, uint8_t ump_min, bool static_fb,
                           bool /*rx_jr*/, bool /*tx_jr*/, void* ctx) {
     auto* c = static_cast<HostDispatchContext*>(ctx);
     auto& id = c->host->identities[c->idx];
+    id.sawStreamReply = true;
     id.umpVerMajor           = ump_maj;
     id.umpVerMinor           = ump_min;
     id.numFunctionBlocks     = num_fb;
@@ -242,6 +243,7 @@ void tramp_device_identity(uint32_t mfr_id, uint16_t fam, uint16_t mod,
                             uint32_t ver, void* ctx) {
     auto* c = static_cast<HostDispatchContext*>(ctx);
     auto& id = c->host->identities[c->idx];
+    id.sawStreamReply = true;
     // Unpack 24-bit packed manufacturer id (MSB-first, M2-104 §7.1.6).
     id.manufacturerId[0] = (uint8_t)((mfr_id >> 16) & 0xFF);
     id.manufacturerId[1] = (uint8_t)((mfr_id >>  8) & 0xFF);
@@ -256,6 +258,7 @@ void tramp_stream_text(uint16_t status, uint8_t format,
                         const uint8_t* data, uint8_t len, void* ctx) {
     auto* c = static_cast<HostDispatchContext*>(ctx);
     auto& id = c->host->identities[c->idx];
+    id.sawStreamReply = true;
     char* dst = nullptr;
     size_t cap = 0;
     bool* complete = nullptr;
@@ -565,7 +568,7 @@ void Host::runPendingDiscovery(uint8_t idx) {
         // Retry window: replies to the first attempt can be lost while the
         // host stack settles (seen on the first mounted device). While the
         // endpoint name has not arrived, re-send after a pause, bounded.
-        if (s->identities[idx].endpointName[0] != '\0') return;
+        if (s->identities[idx].sawStreamReply) return;
         if (s->discover_tries[idx] == 0 || s->discover_tries[idx] >= 5) return;
         if (!s->now_fn) return;
         uint32_t now = s->now_fn();

@@ -46,17 +46,44 @@ midi2::m2bridge* g_bridge = nullptr;
 // stream (uplift path), 1 = UMP.
 uint8_t g_alt_setting[MIDI2CPP_HOST_MAX_DEVICES] = {0};
 
+// Platform-managed slot per MIDI 1.0 host idx (-1 = none allocated).
+int8_t g_midi1_slot[MIDI2CPP_HOST_MAX_DEVICES] = {-1, -1, -1, -1};
+
+// USB suspend mirror: mounted stays true while the PC sleeps, so the
+// write path needs its own gate or every message burns the retry spin.
+volatile bool g_suspended = false;
+
+// A MIDI 1.0 device takes a slot the bridge neither placed nor reserved
+// for an identity; without one it stays unbridged.
+int8_t alloc_midi1_slot(midi2::m2bridge& br) {
+    for (int pass = 0; pass < 2; ++pass) {
+        for (int8_t i = (int8_t)br.numSlots() - 1; i >= 0; --i) {
+            if (br.slotActive((uint8_t)i)) continue;
+            if (pass == 0 && br.slotBinding((uint8_t)i)[0] != '\0') continue;
+            return i;
+        }
+    }
+    return -1;
+}
+
 // SPSC ring: tud_midi2_rx_cb / tud_midi2_stream_msg_cb (producers, USB
 // task context on this single-core loop) -> task() (consumer). Decode
 // must not run inside the callback that drains the FIFO (the Stream/CI
 // responders transmit from there). 64 slots fit a paginated PE GET.
 midi2::RxRing<64> g_dev_rx_ring;
 
+// Host-side RX ring, drained ONE message per task() tick: batch drain
+// saturated the device TX FIFO on this hardware and the wire stalled
+// even though the write call returned success, so upstream forwarding
+// is paced. idx tags the source; the MIDI 1.0 flag rides bit 7.
+midi2::RxRing<128> g_host_rx_ring;
+
 uint32_t now_ms() {
     return (uint32_t)(time_us_64() / 1000ULL);
 }
 
 size_t platform_dev_write_fn(const uint32_t* words, size_t count) {
+    if (g_suspended) return 0;
     if (!tud_midi2_n_mounted(0)) return 0;
     if (tud_midi2_n_alt_setting(0) != 1) return 0;
     // Whole-message write: a full FIFO mid-burst must not truncate a
@@ -161,6 +188,17 @@ void task(midi2::m2bridge& bridge) {
     while (g_dev_rx_ring.pop(slot)) {
         bridge.feedDeviceRx(slot.ump, slot.words);
     }
+    // ONE upstream message per tick, see g_host_rx_ring above.
+    midi2::RxRing<128>::Slot up;
+    if (g_host_rx_ring.pop(up)) {
+        if (up.idx & 0x80) {
+            bridge.feedHostMidi1Bytes((uint8_t)(up.idx & 0x7F),
+                                      reinterpret_cast<const uint8_t*>(up.ump),
+                                      up.words * 4);
+        } else {
+            bridge.feedHostRx(up.idx, up.ump, up.words);
+        }
+    }
     bridge.task();
 
 #if MIDI2CPP_BRIDGE_WATCHDOG_MS > 0
@@ -196,9 +234,11 @@ void tuh_midi2_mount_cb(uint8_t idx, const tuh_midi2_mount_cb_t* m) {
     if (!feather_bridge::g_bridge) return;
     feather_bridge::g_alt_setting[idx] = m->alt_setting_active;
     if (m->alt_setting_active == 0) {
-        // MIDI 1.0 byte stream: platform-managed slot 0, bytes flow via
-        // feedHostMidi1Bytes in tuh_midi2_rx_cb below.
-        feather_bridge::g_bridge->slotSetActive(0, true, 0);
+        // MIDI 1.0 byte stream: platform-managed slot, allocated where
+        // the bridge neither placed nor reserved a device.
+        int8_t s = feather_bridge::alloc_midi1_slot(*feather_bridge::g_bridge);
+        feather_bridge::g_midi1_slot[idx] = s;
+        if (s >= 0) feather_bridge::g_bridge->slotSetActive((uint8_t)s, true, 0);
         return;
     }
     feather_bridge::g_bridge->host().notifyDeviceMounted(
@@ -210,7 +250,9 @@ void tuh_midi2_umount_cb(uint8_t idx) {
     if (idx >= MIDI2CPP_HOST_MAX_DEVICES) return;
     if (!feather_bridge::g_bridge) return;
     if (feather_bridge::g_alt_setting[idx] == 0) {
-        feather_bridge::g_bridge->slotSetActive(0, false, 0);
+        int8_t s = feather_bridge::g_midi1_slot[idx];
+        feather_bridge::g_midi1_slot[idx] = -1;
+        if (s >= 0) feather_bridge::g_bridge->slotSetActive((uint8_t)s, false, 0);
     } else {
         feather_bridge::g_bridge->host().notifyDeviceUnmounted(idx);
     }
@@ -227,18 +269,31 @@ void tuh_midi2_rx_cb(uint8_t idx, uint32_t /*xferred_bytes*/) {
         uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
         if (n == 0) break;
         if (feather_bridge::g_alt_setting[idx] == 0) {
-            // Each word is a USB-MIDI 1.0 cable event; the bridge's
-            // ByteStreamConverter uplifts it (RP2040 is little-endian,
-            // the in-memory bytes ARE the packet bytes).
-            feather_bridge::g_bridge->feedHostMidi1Bytes(
-                0, reinterpret_cast<const uint8_t*>(buf), n * 4);
+            // Each word is one USB-MIDI 1.0 cable event (little-endian:
+            // the in-memory bytes ARE the packet bytes). Enqueue per
+            // packet, tagged with the allocated slot and the MIDI 1.0
+            // bit, so forwarding stays paced.
+            int8_t s = feather_bridge::g_midi1_slot[idx];
+            if (s < 0) continue;
+            for (uint32_t i = 0; i < n; ++i) {
+                feather_bridge::g_host_rx_ring.push((uint8_t)(0x80 | s), &buf[i], 1);
+            }
         } else {
-            feather_bridge::g_bridge->feedHostRx(idx, buf, n);
+            uint32_t i = 0;
+            while (i < n) {
+                uint8_t wc = midi2_msg_word_count((uint8_t)((buf[i] >> 28) & 0x0F));
+                if (wc == 0 || i + wc > n) break;
+                feather_bridge::g_host_rx_ring.push(idx, &buf[i], wc);
+                i += wc;
+            }
         }
     }
 }
 
 void tuh_midi2_tx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {}
+
+void tud_suspend_cb(bool /*remote_wakeup_en*/) { feather_bridge::g_suspended = true; }
+void tud_resume_cb(void)                       { feather_bridge::g_suspended = false; }
 
 }  // extern "C"
 

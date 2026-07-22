@@ -54,7 +54,12 @@ uint16_t        g_bcdMSC[midi2::Bridge::MAX_SLOTS] = {0x0200, 0x0200, 0x0200, 0x
 
 namespace {
 
+// USB suspend mirror: mounted stays true while the PC sleeps, so the
+// write path needs its own gate or every message burns the retry spin.
+volatile bool g_suspended = false;
+
 size_t platform_dev_write_fn(const uint32_t* words, size_t count) {
+    if (g_suspended) return 0;
     if (!tud_midi2_n_mounted(0)) return 0;
     if (tud_midi2_n_alt_setting(0) != 1) return 0;
     // Whole-message write: a full FIFO mid-burst must not truncate a UMP.
@@ -270,6 +275,13 @@ void tud_midi2_rx_cb(uint8_t itf) {
             i += wc;
         }
     }
+}
+
+void tud_suspend_cb(bool /*remote_wakeup_en*/) {
+    esp32_p4_devkit_bridge2::g_suspended = true;
+}
+void tud_resume_cb(void) {
+    esp32_p4_devkit_bridge2::g_suspended = false;
 }
 
 void tud_midi2_set_itf_cb(uint8_t itf, uint8_t alt) {
