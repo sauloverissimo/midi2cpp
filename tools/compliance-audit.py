@@ -66,7 +66,6 @@ DEVICES = {
 BRIDGES = {
  "adafruit-feather-rp2040-bridge-midi2": ("src/main.cpp", "src/feather_bridge.cpp", "src/tusb_config.h", "src/usb_descriptors.c"),
  "waveshare-rp2350-usb-a-bridge-midi2": ("src/main.cpp", "src/feather_bridge.cpp", "src/tusb_config.h", "src/usb_descriptors.c"),
- "esp32-p4-devkit-bridge-midi2": ("idf/main/main.cpp", "idf/main/esp32_p4_devkit_bridge.cpp", "idf/main/tusb_config.h", "idf/components/tinyusb/usb_descriptors.c"),
  "esp32-p4-devkit-bridge2-midi2": ("idf/main/main.cpp", "idf/main/esp32_p4_devkit_bridge2.cpp", "idf/main/tusb_config.h", "idf/components/tinyusb/usb_descriptors.c"),
 }
 
@@ -305,7 +304,7 @@ def audit_bridge(name, spec, product_ids, model_ids):
     # FB/endpoint identity on the wire, by any of the three valid paths:
     # driver GTB callback (#3738), an app-level Stream responder, or the
     # m2bridge composed responder (lib-owned).
-    uses_m2bridge = bool(re.search(r'\bBridge\s+\w+|midi2::Bridge|m2bridge', t))
+    uses_m2bridge = bool(re.search(r'midi2::Bridge\b|midi2::m2bridge\b|\bm2bridge\b', t))
     app_responder = "onEndpointDiscovery" in glue and "onFbDiscovery" in glue
     if "tud_midi2_gtb_desc_cb" in glue:
         if "MIDI2_GTB_BIDIRECTIONAL" not in glue:
@@ -313,10 +312,18 @@ def audit_bridge(name, spec, product_ids, model_ids):
     elif not app_responder and not uses_m2bridge:
         F.append("no FB identity path (gtb_desc_cb, app Stream responder or m2bridge)")
 
+    # m2bridge slots are identity-bound (stable FB numbers across boots);
+    # a recipe that never wires the persistence hook silently reverts to
+    # per-boot arrival order. A single-slot bridge is exempt: with one
+    # slot the placement is trivially stable.
+    if (uses_m2bridge and "onSlotBindingChanged" not in glue
+            and not re.search(r'setNumSlots\s*\(\s*1\s*\)', glue)):
+        F.append("m2bridge without binding persistence (onSlotBindingChanged)")
+
     # MIDI-CI face (direct m2ci or composed via m2bridge). ci.begin defaults
     # to ciCat 0x1C (Profile | PE | Process Inquiry): every advertised
     # category must be backed, exactly as on the device recipes.
-    has_ci = "ci.begin" in t or re.search(r'\bBridge\s+\w+|midi2::Bridge|m2bridge', t)
+    has_ci = "ci.begin" in t or re.search(r'midi2::Bridge\b|midi2::m2bridge\b|\bm2bridge\b', t)
     if has_ci:
         km = re.search(r'kModel\s*=\s*0x([0-9A-Fa-f]+)', t)
         if km:

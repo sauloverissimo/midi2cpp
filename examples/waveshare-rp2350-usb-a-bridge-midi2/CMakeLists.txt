@@ -70,9 +70,12 @@ set(MIDI2CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 # ---------------------------------------------------------------------------
 add_executable(waveshare-rp2350-usb-a-bridge-midi2-showcase
     ${MIDI2CPP_ROOT}/src/midi2.c
+    ${MIDI2CPP_ROOT}/src/midi2_device.cpp
+    ${MIDI2CPP_ROOT}/src/midi2_host.cpp
+    ${MIDI2CPP_ROOT}/src/midi2_ci.cpp
+    ${MIDI2CPP_ROOT}/src/midi2_bridge.cpp
     src/main.cpp
     src/feather_bridge.cpp
-    src/ump_router.c
     src/usb_descriptors.c
     src/display.c
 )
@@ -81,6 +84,7 @@ target_include_directories(waveshare-rp2350-usb-a-bridge-midi2-showcase PRIVATE 
 target_link_libraries(waveshare-rp2350-usb-a-bridge-midi2-showcase
     PRIVATE
         pico_stdlib
+        pico_rand               # get_rand_32, MUID entropy
         hardware_i2c            # optional SSD1306 over I2C1
         tinyusb_device
         tinyusb_host

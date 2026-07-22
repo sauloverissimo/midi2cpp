@@ -1,30 +1,36 @@
 /*
- * feather_bridge.cpp: dual-stack TinyUSB platform glue for the bridge.
+ * feather_bridge.cpp: dual-stack TinyUSB platform glue for m2bridge.
  *
  * Runs the host stack on rhport 1 (PIO-USB GP12/GP13) and the device
- * stack on rhport 0 (native USB-C) in the same firmware. Forwards UMP
- * between them through ump_router with single-message drain to avoid
- * saturating the destination TX FIFO.
+ * stack on rhport 0 (native USB-C) in the same firmware. All bridge
+ * behaviour lives in midi2::m2bridge; this file wires the TinyUSB
+ * callbacks into it:
  *
- * MIDI 1.0 fallback (alt=0 on the upstream device) is handled by
- * cable_event_to_ump: each USB-MIDI 1.0 cable event of CIN 0x8..0xE
- * becomes a UMP MT 0x2 carrying the same group/status/data.
+ *   - device write fn: whole-message write with bounded tud_task pump
+ *     (a batch drain saturates the destination TX FIFO on this board)
+ *   - tud_midi2_rx_cb -> RX ring -> task() -> bridge.feedDeviceRx
+ *   - tud_midi2_stream_msg_cb -> same ring (MT 0xF), returns HANDLED /
+ *     NEGOTIATED_* so the driver's built-in responder stays silent and
+ *     the bridge's multi-FB Stream responder owns the surface
+ *   - tuh_midi2 mount/unmount -> host().notifyDeviceMounted/Unmounted
+ *     (identity-bound slot placement inside the bridge)
+ *   - MIDI 1.0 alt 0 upstream: slotSetActive + feedHostMidi1Bytes
+ *     (the bridge's ByteStreamConverter does the uplift)
  *
- * Hot-swap watchdog mirrors feather_host.cpp: tuh_deinit + tusb_init
- * after the upstream device has been gone for MIDI2CPP_BRIDGE_WATCHDOG_MS.
+ * Hot-swap watchdog: tuh_deinit + tusb_init after the upstream device
+ * has been gone for MIDI2CPP_BRIDGE_WATCHDOG_MS.
  */
 #include "feather_bridge.h"
 
 #include "pico/stdlib.h"
 #include "pico/time.h"
+#include "pico/rand.h"
 #include "bsp/board_api.h"
 #include "tusb.h"
 #include "class/midi/midi2_host.h"
 #include "class/midi/midi2_device.h"
 
-extern "C" {
-#include "midi2.h"  /* midi2_msg_word_count */
-}
+#include "midi2_rx_ring.h"
 
 #ifndef MIDI2CPP_BRIDGE_WATCHDOG_MS
 #define MIDI2CPP_BRIDGE_WATCHDOG_MS 3000
@@ -34,181 +40,56 @@ namespace feather_bridge {
 
 namespace {
 
-// Per-idx state tracked from TinyUSB callbacks. Single-threaded loop,
-// no synchronization needed.
-uint8_t  g_alt_setting[MAX_HOST_DEVICES] = {0};
-bool     g_idx_mounted[MAX_HOST_DEVICES] = {false};
-uint8_t  g_active_idx                    = 0xFF;  // 0xFF = none
-bool     g_device_mounted                = false;
+midi2::m2bridge* g_bridge = nullptr;
 
-HostMountFn       g_on_host_mount;
-HostUnmountFn     g_on_host_unmount;
-ForwardFn         g_on_fwd_upstream;
-ForwardFn         g_on_fwd_downstream;
-DeviceLifecycleFn g_on_device_mount;
-DeviceLifecycleFn g_on_device_unmount;
-DropFn            g_on_drop;
+// Per-idx alt setting from the mount callback: 0 = MIDI 1.0 byte
+// stream (uplift path), 1 = UMP.
+uint8_t g_alt_setting[MIDI2CPP_HOST_MAX_DEVICES] = {0};
 
-uint32_t g_last_drops_host   = 0;
-uint32_t g_last_drops_device = 0;
-
-#if MIDI2CPP_BRIDGE_WATCHDOG_MS > 0
-bool     g_had_device      = false;
-uint32_t g_devices_lost_ms = 0;
-#endif
+// SPSC ring: tud_midi2_rx_cb / tud_midi2_stream_msg_cb (producers, USB
+// task context on this single-core loop) -> task() (consumer). Decode
+// must not run inside the callback that drains the FIFO (the Stream/CI
+// responders transmit from there). 64 slots fit a paginated PE GET.
+midi2::RxRing<64> g_dev_rx_ring;
 
 uint32_t now_ms() {
     return (uint32_t)(time_us_64() / 1000ULL);
 }
 
-// USB-MIDI 1.0 cable event word (LE: [CIN|Cable, status, data1, data2])
-// to UMP MT 0x2 (1 word, packed: [0x2 | group | status | data1 | data2]).
-// Returns false if the CIN is not a Channel Voice message we know how
-// to lift; the bridge drops those in v0.1 (System Common, SysEx7, etc.).
-bool cable_event_to_ump(uint32_t cable_event, uint32_t* ump_out) {
-    uint8_t b0    = (uint8_t)(cable_event       & 0xFF);
-    uint8_t b1    = (uint8_t)((cable_event >> 8)  & 0xFF);
-    uint8_t b2    = (uint8_t)((cable_event >> 16) & 0xFF);
-    uint8_t b3    = (uint8_t)((cable_event >> 24) & 0xFF);
-    uint8_t cin   = b0 & 0x0F;
-    uint8_t cable = (b0 >> 4) & 0x0F;
-
-    if (cin < 0x8 || cin > 0xE) return false;
-
-    *ump_out = ((uint32_t)0x2 << 28)
-             | ((uint32_t)(cable & 0x0F) << 24)
-             | ((uint32_t)b1 << 16)
-             | ((uint32_t)b2 << 8)
-             | (uint32_t)b3;
-    return true;
-}
-
-// Drain RX from one mounted upstream idx and queue each UMP message
-// on UMP_SOURCE_HOST for downstream forwarding. Respects word_count
-// per MT so a multi-word read is split into individual messages.
-void drain_upstream_rx(uint8_t idx) {
-    uint32_t buf[16];
-    while (true) {
-        uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
-        if (n == 0) break;
-
-        if (g_alt_setting[idx] == 0) {
-            // MIDI 1.0 alt=0: each word is a USB cable event, lift to UMP.
-            for (uint32_t i = 0; i < n; i++) {
-                uint32_t ump;
-                if (!cable_event_to_ump(buf[i], &ump)) continue;
-                ump_router_push(UMP_SOURCE_HOST, &ump, 1);
-            }
-        } else {
-            // MIDI 2.0 alt>=1: words are UMP. Walk by word_count.
-            uint32_t i = 0;
-            while (i < n) {
-                uint8_t mt = (uint8_t)((buf[i] >> 28) & 0x0F);
-                uint8_t wc = midi2_msg_word_count(mt);
-                if (wc == 0 || i + wc > n) break;
-                ump_router_push(UMP_SOURCE_HOST, &buf[i], wc);
-                i += wc;
-            }
-        }
-    }
-}
-
-// Drain RX from the device side (PC→bridge) and queue each UMP message
-// on UMP_SOURCE_DEVICE for upstream forwarding. v0.1 only forwards
-// when the device side is in alt=1 (UMP); alt=0 PC traffic is dropped.
-void drain_downstream_rx() {
-    if (tud_midi2_n_alt_setting(0) != 1) return;
-    uint32_t buf[16];
-    while (true) {
-        uint32_t n = tud_midi2_n_ump_read(0, buf, 16);
-        if (n == 0) break;
-        uint32_t i = 0;
-        while (i < n) {
-            uint8_t mt = (uint8_t)((buf[i] >> 28) & 0x0F);
-            uint8_t wc = midi2_msg_word_count(mt);
-            if (wc == 0 || i + wc > n) break;
-            ump_router_push(UMP_SOURCE_DEVICE, &buf[i], wc);
-            i += wc;
-        }
-    }
-}
-
-// Pop one UMP from UMP_SOURCE_HOST and write it to the device side
-// (PC). Drain a single message per call: in earlier production
-// firmware on a similar dual-stack RP2040 setup, batch drain saturated
-// the destination TX FIFO and the wire transmission stalled even
-// though the write call returned success.
-//
-// We always pop, even when the destination is not ready (PC unmounted
-// or in alt=0 USB-MIDI 1.0 mode), and silently drop the message in
-// those cases. Buffering is the wrong contract here: a transparent
-// bridge should not deliver UMP late once the link comes back up.
-// Without this drain the ring buffer fills within seconds while the
-// PC negotiates alt 1 and the on_drop callback fires.
-void forward_upstream_to_device() {
-    uint32_t words[4];
-    uint8_t  count;
-    if (!ump_router_pop(UMP_SOURCE_HOST, words, &count)) return;
-
-    if (!g_device_mounted) return;
-    if (tud_midi2_n_alt_setting(0) != 1) return;
-
-    // Write the whole message: a full FIFO mid-burst must not truncate a
-    // UMP. Pump tud_task() and retry (bounded); an exhausted retry counts
-    // as a drop on the source queue so surface_drops() reports it.
+size_t platform_dev_write_fn(const uint32_t* words, size_t count) {
+    if (!tud_midi2_n_mounted(0)) return 0;
+    if (tud_midi2_n_alt_setting(0) != 1) return 0;
+    // Whole-message write: a full FIFO mid-burst must not truncate a
+    // UMP. Pump tud_task() and retry, bounded (host gone or wedged).
     uint32_t off  = 0;
     uint32_t spin = 0;
     while (off < count) {
         off += tud_midi2_n_ump_write(0, words + off, (uint32_t)(count - off));
         if (off >= count) break;
         tud_task();
-        if (++spin > 20000) {          // bounded: host gone or wedged
-            ump_router_count_drop(UMP_SOURCE_HOST);
-            return;
-        }
+        if (++spin > 20000) break;
     }
-    if (g_on_fwd_upstream) g_on_fwd_upstream(words, count);
+    return (size_t)off;
 }
 
-// Pop one UMP from UMP_SOURCE_DEVICE and write it to the active
-// upstream idx. v0.1 only forwards to MIDI 2.0 upstreams (alt>=1);
-// MIDI 1.0 upstreams would need UMP→cable conversion, deferred.
-//
-// Same drain-on-not-ready rule as forward_upstream_to_device: we pop
-// unconditionally and drop on the floor when the upstream is absent
-// or in MIDI 1.0 mode, to keep the ring buffer healthy.
-void forward_downstream_to_upstream() {
-    uint32_t words[4];
-    uint8_t  count;
-    if (!ump_router_pop(UMP_SOURCE_DEVICE, words, &count)) return;
-
-    if (g_active_idx == 0xFF) return;
-    if (g_alt_setting[g_active_idx] == 0) return;  // v0.1: skip MIDI 1.0
-    if (!tuh_midi2_mounted(g_active_idx)) return;
-
-    tuh_midi2_ump_write(g_active_idx, words, count);
-    tuh_midi2_write_flush(g_active_idx);
-    if (g_on_fwd_downstream) g_on_fwd_downstream(words, count);
+size_t platform_host_write_fn(uint8_t idx, const uint32_t* words, size_t count) {
+    if (!tuh_midi2_mounted(idx)) return 0;
+    if (g_alt_setting[idx] == 0) return 0;  // no UMP->byte-stream path yet
+    size_t n = tuh_midi2_ump_write(idx, words, (uint32_t)count);
+    tuh_midi2_write_flush(idx);
+    return n;
 }
 
-void surface_drops() {
-    if (!g_on_drop) return;
-    uint32_t h = ump_router_drop_count(UMP_SOURCE_HOST);
-    uint32_t d = ump_router_drop_count(UMP_SOURCE_DEVICE);
-    if (h != g_last_drops_host) {
-        g_last_drops_host = h;
-        g_on_drop(UMP_SOURCE_HOST, h);
-    }
-    if (d != g_last_drops_device) {
-        g_last_drops_device = d;
-        g_on_drop(UMP_SOURCE_DEVICE, d);
-    }
-}
+uint32_t platform_now_fn() { return now_ms(); }
+uint32_t platform_rng_fn() { return get_rand_32(); }
 
 #if MIDI2CPP_BRIDGE_WATCHDOG_MS > 0
+bool     g_had_device      = false;
+uint32_t g_devices_lost_ms = 0;
+
 void watchdog_tick(uint32_t t_ms) {
     bool any = false;
-    for (uint8_t i = 0; i < MAX_HOST_DEVICES; ++i) {
+    for (uint8_t i = 0; i < MIDI2CPP_HOST_MAX_DEVICES; ++i) {
         if (tuh_midi2_mounted(i)) { any = true; break; }
     }
     if (any) {
@@ -236,28 +117,30 @@ void watchdog_tick(uint32_t t_ms) {
 
 }  // namespace
 
-void init() {
+void init(midi2::m2bridge& bridge) {
+    g_bridge = &bridge;
+
     board_init();
 
     // The Waveshare RP2350-USB-A wires USB-A 5V directly from the
     // USB-C VBUS through a poly fuse; no software-controlled power
-    // gate. Nothing to do here for this board, but keep the call
-    // site so future boards with a power gate can drop their pin
-    // here without touching the rest of init().
+    // gate on this board.
 
-    ump_router_init();
+    bridge.setDownstreamWriteFn(platform_dev_write_fn);
+    bridge.setUpstreamWriteFn(platform_host_write_fn);
+    bridge.setNowFn(platform_now_fn);
+    bridge.setRngFn(platform_rng_fn);
+    bridge.begin();
 
-    // Bring up device side first (rhport 0, native USB). The PC will
-    // attempt to enumerate as soon as USB-C is plugged in.
+    // Device side first (rhport 0, native USB): the PC enumerates as
+    // soon as USB-C is plugged in.
     tusb_rhport_init_t dev_init = {
         .role  = TUSB_ROLE_DEVICE,
         .speed = TUSB_SPEED_FULL,
     };
     tusb_init(BOARD_TUD_RHPORT, &dev_init);
 
-    // Bring up host side (rhport 1, PIO-USB on GP12/GP13 for the
-    // Waveshare RP2350-USB-A; the actual pin is set via
-    // PICO_DEFAULT_PIO_USB_DP_PIN in CMakeLists.txt).
+    // Host side (rhport 1, PIO-USB on GP12/GP13, pin set in CMakeLists).
     tusb_rhport_init_t host_init = {
         .role  = TUSB_ROLE_HOST,
         .speed = TUSB_SPEED_FULL,
@@ -265,19 +148,19 @@ void init() {
     tusb_init(BOARD_TUH_RHPORT, &host_init);
 }
 
-void task() {
+void task(midi2::m2bridge& bridge) {
     tuh_task();
     tud_task();
 
-    // RX drain happens in tud_midi2_rx_cb / tuh_midi2_rx_cb below.
+    bool mounted = tud_midi2_n_mounted(0);
+    bridge.setDeviceMounted(mounted);
+    bridge.setDeviceAltSetting(mounted ? tud_midi2_n_alt_setting(0) : 0);
 
-    // Forward 1 message in each direction per task() call. With a 1 ms
-    // typical loop period this caps each direction at ~1 kmsg/s, well
-    // above MIDI 2.0 bursts and well below USB FS bandwidth.
-    forward_upstream_to_device();
-    forward_downstream_to_upstream();
-
-    surface_drops();
+    midi2::RxRing<64>::Slot slot;
+    while (g_dev_rx_ring.pop(slot)) {
+        bridge.feedDeviceRx(slot.ump, slot.words);
+    }
+    bridge.task();
 
 #if MIDI2CPP_BRIDGE_WATCHDOG_MS > 0
     watchdog_tick(now_ms());
@@ -285,35 +168,20 @@ void task() {
 }
 
 bool upstream_present() {
-    return g_active_idx != 0xFF && g_idx_mounted[g_active_idx];
+    for (uint8_t i = 0; i < MIDI2CPP_HOST_MAX_DEVICES; ++i) {
+        if (tuh_midi2_mounted(i)) return true;
+    }
+    return false;
 }
 
 bool downstream_present() {
-    return g_device_mounted;
+    return tud_midi2_n_mounted(0) && tud_midi2_n_alt_setting(0) == 1;
 }
 
 bool send_to_pc(const uint32_t* words, uint8_t count) {
-    if (!g_device_mounted) return false;
-    if (tud_midi2_n_alt_setting(0) != 1) return false;
-    if (count == 0 || count > 4 || words == nullptr) return false;
-    uint32_t off  = 0;
-    uint32_t spin = 0;
-    while (off < count) {
-        off += tud_midi2_n_ump_write(0, words + off, (uint32_t)(count - off));
-        if (off >= count) break;
-        tud_task();
-        if (++spin > 20000) return false;   // bounded: host gone or wedged
-    }
-    return true;
+    if (words == nullptr || count == 0 || count > 4) return false;
+    return platform_dev_write_fn(words, count) == count;
 }
-
-void onHostMount(HostMountFn fn)             { g_on_host_mount     = std::move(fn); }
-void onHostUnmount(HostUnmountFn fn)         { g_on_host_unmount   = std::move(fn); }
-void onForwardUpstream(ForwardFn fn)         { g_on_fwd_upstream   = std::move(fn); }
-void onForwardDownstream(ForwardFn fn)       { g_on_fwd_downstream = std::move(fn); }
-void onDeviceMount(DeviceLifecycleFn fn)     { g_on_device_mount   = std::move(fn); }
-void onDeviceUnmount(DeviceLifecycleFn fn)   { g_on_device_unmount = std::move(fn); }
-void onDrop(DropFn fn)                       { g_on_drop           = std::move(fn); }
 
 }  // namespace feather_bridge
 
@@ -323,48 +191,53 @@ void onDrop(DropFn fn)                       { g_on_drop           = std::move(f
 extern "C" {
 
 void tuh_midi2_mount_cb(uint8_t idx, const tuh_midi2_mount_cb_t* m) {
-    if (idx >= feather_bridge::MAX_HOST_DEVICES || !m) return;
+    if (idx >= MIDI2CPP_HOST_MAX_DEVICES || !m) return;
+    if (!feather_bridge::g_bridge) return;
     feather_bridge::g_alt_setting[idx] = m->alt_setting_active;
-    feather_bridge::g_idx_mounted[idx] = true;
-    if (feather_bridge::g_active_idx == 0xFF) {
-        feather_bridge::g_active_idx = idx;
+    if (m->alt_setting_active == 0) {
+        // MIDI 1.0 byte stream: platform-managed slot 0, bytes flow via
+        // feedHostMidi1Bytes in tuh_midi2_rx_cb below.
+        feather_bridge::g_bridge->slotSetActive(0, true, 0);
+        return;
     }
-    if (feather_bridge::g_on_host_mount) {
-        feather_bridge::g_on_host_mount(idx, m->protocol_version);
-    }
+    feather_bridge::g_bridge->host().notifyDeviceMounted(
+        idx, m->protocol_version, m->rx_cable_count,
+        m->alt_setting_active, 0x0200);
 }
 
 void tuh_midi2_umount_cb(uint8_t idx) {
-    if (idx >= feather_bridge::MAX_HOST_DEVICES) return;
+    if (idx >= MIDI2CPP_HOST_MAX_DEVICES) return;
+    if (!feather_bridge::g_bridge) return;
+    if (feather_bridge::g_alt_setting[idx] == 0) {
+        feather_bridge::g_bridge->slotSetActive(0, false, 0);
+    } else {
+        feather_bridge::g_bridge->host().notifyDeviceUnmounted(idx);
+    }
     feather_bridge::g_alt_setting[idx] = 0;
-    feather_bridge::g_idx_mounted[idx] = false;
-    if (feather_bridge::g_active_idx == idx) {
-        feather_bridge::g_active_idx = 0xFF;
-        for (uint8_t i = 0; i < feather_bridge::MAX_HOST_DEVICES; ++i) {
-            if (feather_bridge::g_idx_mounted[i]) {
-                feather_bridge::g_active_idx = i;
-                break;
-            }
-        }
-    }
-    if (feather_bridge::g_on_host_unmount) {
-        feather_bridge::g_on_host_unmount(idx);
-    }
 }
 
 void tuh_midi2_descriptor_cb(uint8_t /*idx*/, const tuh_midi2_descriptor_cb_t* /*d*/) {
-    // bcdMSC not needed by the bridge, the m2host class would consume
-    // it but here we forward UMP raw, so no use.
 }
 
 void tuh_midi2_rx_cb(uint8_t idx, uint32_t /*xferred_bytes*/) {
-    feather_bridge::drain_upstream_rx(idx);
+    if (!feather_bridge::g_bridge) return;
+    uint32_t buf[16];
+    while (true) {
+        uint32_t n = tuh_midi2_ump_read(idx, buf, 16);
+        if (n == 0) break;
+        if (feather_bridge::g_alt_setting[idx] == 0) {
+            // Each word is a USB-MIDI 1.0 cable event; the bridge's
+            // ByteStreamConverter uplifts it (RP2040 is little-endian,
+            // the in-memory bytes ARE the packet bytes).
+            feather_bridge::g_bridge->feedHostMidi1Bytes(
+                0, reinterpret_cast<const uint8_t*>(buf), n * 4);
+        } else {
+            feather_bridge::g_bridge->feedHostRx(idx, buf, n);
+        }
+    }
 }
 
-void tuh_midi2_tx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {
-    // No pacing logic on TX completion, drain is rate-limited by
-    // task()'s "1 message per call" forwarding.
-}
+void tuh_midi2_tx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {}
 
 }  // extern "C"
 
@@ -373,54 +246,57 @@ void tuh_midi2_tx_cb(uint8_t /*idx*/, uint32_t /*xferred_bytes*/) {
  *--------------------------------------------------------------------*/
 extern "C" {
 
-void tud_mount_cb(void) {
-    feather_bridge::g_device_mounted = true;
-    if (feather_bridge::g_on_device_mount) feather_bridge::g_on_device_mount();
-}
-
-void tud_umount_cb(void) {
-    feather_bridge::g_device_mounted = false;
-    if (feather_bridge::g_on_device_unmount) feather_bridge::g_on_device_unmount();
-}
-
-void tud_suspend_cb(bool /*remote_wakeup_en*/) {
-    feather_bridge::g_device_mounted = false;
-}
-
-void tud_resume_cb(void) {
-    feather_bridge::g_device_mounted = true;
-}
-
 void tud_midi2_rx_cb(uint8_t /*itf*/) {
-    feather_bridge::drain_downstream_rx();
+    uint32_t buf[16];
+    while (true) {
+        uint32_t n = tud_midi2_n_ump_read(0, buf, 16);
+        if (n == 0) break;
+        uint32_t i = 0;
+        while (i < n) {
+            uint8_t wc = midi2_msg_word_count((uint8_t)((buf[i] >> 28) & 0x0F));
+            if (wc == 0 || i + wc > n) break;
+            feather_bridge::g_dev_rx_ring.push(0, &buf[i], wc);
+            i += wc;
+        }
+    }
 }
 
-void tud_midi2_set_itf_cb(uint8_t /*itf*/, uint8_t /*alt*/) {
-    // Alt state polled via tud_midi2_n_alt_setting in drain/forward paths.
+// Intercept every UMP Stream message: enqueue it for the bridge's
+// multi-FB responder and keep the driver's built-in responder silent.
+// Stream Config Requests return NEGOTIATED_* so the driver still
+// records the protocol for tud_midi2_n_protocol.
+tud_midi2_stream_result_t tud_midi2_stream_msg_cb(uint8_t /*itf*/,
+                                                  const uint32_t* ump_words) {
+    feather_bridge::g_dev_rx_ring.push(0, ump_words, 4);
+    uint16_t status = (uint16_t)((ump_words[0] >> 16) & 0x3FF);
+    if (status == 0x005) {   // Stream Configuration Request
+        uint8_t protocol = (uint8_t)((ump_words[0] >> 8) & 0xFF);
+        return (protocol == 0x01) ? MIDI2_STREAM_NEGOTIATED_MIDI1
+                                  : MIDI2_STREAM_NEGOTIATED_MIDI2;
+    }
+    return MIDI2_STREAM_HANDLED;
 }
+
+void tud_midi2_set_itf_cb(uint8_t /*itf*/, uint8_t /*alt*/) {}
 
 bool tud_midi2_get_req_itf_cb(uint8_t /*rhport*/,
                                const tusb_control_request_t* /*request*/) {
     return false;
 }
 
-// One bidirectional Function Block over Group 1. The #3738 built-in Stream
-// responder derives the FB Info (direction + group span) from this GTB.
+// One bidirectional Group Terminal Block spanning all 16 groups
+// (M2-104 Appendix I): Function Blocks live inside it, declared
+// dynamically by the bridge's Stream responder.
 static const uint8_t k_gtb_desc[] = {
     TUD_MIDI2_GTB_HEADER(1),
     TUD_MIDI2_GTB_BLOCK(/*id*/ 1, MIDI2_GTB_BIDIRECTIONAL,
-                        /*first_group*/ 0, /*num_groups*/ 1, /*stridx*/ 0),
+                        /*first_group*/ 0, /*num_groups*/ 16, /*stridx*/ 0),
 };
 
 const uint8_t* tud_midi2_gtb_desc_cb(uint8_t itf, uint16_t* len) {
     (void)itf;
     *len = (uint16_t)sizeof(k_gtb_desc);
     return k_gtb_desc;
-}
-
-const char* tud_midi2_fb_name_cb(uint8_t itf, uint8_t fb_idx) {
-    (void)itf;
-    return (fb_idx == 0) ? "Bridge" : "";
 }
 
 }  // extern "C"

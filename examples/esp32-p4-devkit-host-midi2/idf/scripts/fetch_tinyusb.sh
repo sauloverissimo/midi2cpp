@@ -22,7 +22,7 @@ TARGET="${IDF_DIR}/external/tinyusb"
 # already includes the MIDI 2.0 driver merged via PR #3571):
 #   alt-walk bcdMSC defer that lets CFG_TUH_MIDI and CFG_TUH_MIDI2
 #   coexist (used by the dual-stack bridge sibling at
-#   ../../esp32-p4-devkit-bridge-midi2/), and an opt-in user responder
+#   ../../esp32-p4-devkit-bridge2-midi2/), and an opt-in user responder
 #   via CFG_TUD_MIDI2_USER_RESPONDER (device-side feature, no effect
 #   on this host-only build, kept in lockstep with the bridge sibling
 #   because the bridge symlinks this clone).

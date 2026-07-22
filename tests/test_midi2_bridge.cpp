@@ -697,6 +697,33 @@ static void test_bridge_downstream_routes_via_binding(void) {
     PASS();
 }
 
+
+static void test_bridge_traffic_tap_observes_both_directions(void) {
+    TEST("onTraffic tap sees forwarded UMP in both directions");
+    capture_reset();
+    upstream_reset();
+    test_set_now(1000);
+    m2bridge br;
+    make_bridge(br);
+    mount_on_slot(br, 0, 0, "DEV-A");
+
+    static uint32_t up_cnt, down_cnt;
+    up_cnt = down_cnt = 0;
+    br.onTraffic([](bool to_pc, const uint32_t*, uint8_t) {
+        if (to_pc) ++down_cnt; else ++up_cnt;
+    });
+
+    uint32_t note_on[2];
+    make_note_on(note_on, 0, 0, 60, 0xFFFF);
+    br.feedHostRx(0, note_on, 2);          // device -> PC
+    CHECK_EQ(down_cnt, 1u, "tap saw the downstream forward");
+
+    make_note_on(note_on, 1, 0, 61, 0x8000);
+    br.feedDeviceRx(note_on, 2);           // PC -> device (slot 0 window)
+    CHECK_EQ(up_cnt, 1u, "tap saw the upstream route");
+    PASS();
+}
+
 int main(void) {
     std::printf("\n[m2bridge]\n");
 
@@ -719,6 +746,7 @@ int main(void) {
     test_bridge_new_identity_binds_first_free_and_persists();
     test_bridge_unidentified_gets_ephemeral_slot_after_timeout();
     test_bridge_downstream_routes_via_binding();
+    test_bridge_traffic_tap_observes_both_directions();
     test_bridge_group_rewrite_slot1();
     test_bridge_group_rewrite_slot3_max();
     test_bridge_drops_out_of_range_slot();

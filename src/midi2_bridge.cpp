@@ -88,6 +88,7 @@ struct BridgeState {
     int8_t   slotToHostIdx[Bridge::MAX_SLOTS];
     uint32_t mountedAtMs[MIDI2CPP_HOST_MAX_DEVICES] = {};
     Bridge::SlotBindingChangedFn binding_changed;
+    Bridge::TrafficFn            traffic_tap;
 
     bool begun = false;
 };
@@ -131,6 +132,7 @@ static void forward_ump_to_pc(BridgeState* s, uint8_t idx,
                    | ((uint32_t)(out_group & 0x0F) << 24);
             for (uint8_t w = 1; w < wcount; ++w) out[w] = words[i + w];
             (void)s->downstream_write(out, wcount);
+            if (s->traffic_tap) s->traffic_tap(true, out, wcount);
         }
         i += wcount;
     }
@@ -516,6 +518,10 @@ void Bridge::onSlotBindingChanged(SlotBindingChangedFn fn) {
     st(_state)->binding_changed = std::move(fn);
 }
 
+void Bridge::onTraffic(TrafficFn fn) {
+    st(_state)->traffic_tap = std::move(fn);
+}
+
 const char* Bridge::slotBinding(uint8_t slot) const {
     auto* s = st(_state);
     return (slot < Bridge::MAX_SLOTS) ? s->binding[slot] : "";
@@ -576,6 +582,7 @@ void Bridge::feedDeviceRx(const uint32_t* words, size_t count) {
                        | ((uint32_t)(in_group % s->groupsPerSlot) << 24);
                 for (uint8_t w = 1; w < wc; ++w) out[w] = words[i + w];
                 s->upstream_write((uint8_t)s->slotToHostIdx[slot], out, wc);
+                if (s->traffic_tap) s->traffic_tap(false, out, wc);
                 routed = true;
             }
         }

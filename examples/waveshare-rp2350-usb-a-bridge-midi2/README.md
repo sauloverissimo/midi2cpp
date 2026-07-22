@@ -14,7 +14,7 @@ Transparent USB MIDI 2.0 bridge on the **Waveshare RP2350-USB-A**. Runs TinyUSB 
 PC / DAW ───── USB-C ───────────►│ Waveshare RP2350-USB-A           │
                                  │   rhport 0 (native USB device)   │
                                  │      ▲                           │
-                                 │      │ ump_router (1 msg/iter)   │
+                                 │      │ midi2::m2bridge             │
                                  │      ▼                           │
                                  │   rhport 1 (PIO-USB host, GP12/13)│
                                  └──────────────────────────────────┘
@@ -25,7 +25,9 @@ PC / DAW ───── USB-C ───────────►│ Waveshare
                                   (or MIDI 1.0, uplifted)
 ```
 
-USB-MIDI 1.0 uplift on the host side: upstream `alt=0` cable events (CIN 0x8..0xE) become UMP MT 0x2 so the PC always sees clean MIDI 2.0.
+One device slot (groups 1-4) plus the bridge's own Function Block (groups 5-16), where its MIDI-CI responder lives. The slot is identity-bound inside `midi2::m2bridge`; single-slot topology, so no persistence is needed.
+
+USB-MIDI 1.0 uplift on the host side: upstream `alt=0` cable events become UMP MT 0x2 in the slot window, so the PC always sees clean MIDI 2.0.
 
 ## USB identity
 
@@ -36,8 +38,8 @@ What the PC sees on the device side (USB-C):
 | VID:PID | `cafe:4077` (development-only) |
 | Product | `RP2350 USB-A Bridge MIDI 2.0` |
 | Manufacturer | `midi2.diy` |
-| MIDI 2.0 Groups | 16 (1:1 passthrough, group N upstream becomes group N to PC) |
-| Function Blocks | 1 (covers all groups) |
+| MIDI 2.0 Groups | 16 (1 slot of 4 + the bridge's own FB on groups 5-16) |
+| Function Blocks | 2: the identity-bound device slot + the bridge itself |
 
 ## Build
 
@@ -86,16 +88,19 @@ Plug any USB MIDI 2.0 device into the USB-A jack, plug the USB-C into a PC. Expe
 
 ## Spec coverage
 
-Full UMP pass-through bridge.
+Bridge. Any message type from the upstream device is forwarded into the slot window except MT 0x0 (utility), 0xE (reserved) and 0xF (Stream), which are owned locally.
 
-| UMP MT | Direction | Spec | Notes |
-|---|---|---|---|
-| 0x0 Utility | both | M2-104-UM §3 | JR Timestamp passthrough |
-| 0x2 MIDI 1.0 Channel Voice in UMP | upstream→PC | M2-104-UM §6 | uplifted from `alt=0` USB-MIDI 1.0 cable events |
-| 0x4 MIDI 2.0 Channel Voice | both | M2-104-UM §7 | NoteOn / Off, CC, Pitch Bend, Per-Note family, all forwarded |
-| 0xF UMP Stream | both | M2-104-UM §11 | Endpoint Discovery answered locally on each side, not proxied |
+| UMP MT | Spec | Bridge behaviour |
+|---|---|---|
+| 0x0 Utility | M2-104-UM §7.2 | not forwarded; owned locally |
+| 0x2 MIDI 1.0 Channel Voice | M2-104-UM §7.3 | forwarded with group rewrite (also the MIDI 1.0 alt 0 uplift destination) |
+| 0x3 SysEx7 | M2-104-UM §7.7 | forwarded with group rewrite |
+| 0x4 MIDI 2.0 Channel Voice | M2-104-UM §7.4 | forwarded with group rewrite |
+| 0x5 SysEx8 / Mixed Data | M2-104-UM §7.8-7.9 | forwarded with group rewrite |
+| 0xD Flex Data | M2-104-UM §7.5 | forwarded with group rewrite |
+| 0xF UMP Stream | M2-104-UM §7.1 | not forwarded; bridge owns Endpoint + FB Discovery on both sides |
 
-MIDI-CI is not bridged: each USB link runs its own Initiator / Responder when applicable.
+MIDI-CI: the slot window is exclusive, so PC MIDI-CI reaches the upstream device end to end; the bridge's own `m2ci` answers only on groups 5-16.
 
 ## Showcase
 
@@ -105,25 +110,22 @@ Three modes, switching automatically based on connectivity.
 
 **`Showcase`** (PC mounted, no upstream on USB-A): bridge emits its own UMP from the device side so a connected DAW can validate the link without an upstream.
 
-- Chromatic walk C4 to B4: NoteOn / Off every 250 ms (24 steps total, MT 0x4, group 0, ch 0, vel `0xC000`)
+- Chromatic walk C4 to B4: NoteOn / Off every 250 ms (24 steps total, MT 0x4, group 5 [the bridge FB], ch 0, vel `0xC000`)
 - CC #74 (Brightness) 32-bit sweep every 6 s (5 points across the 32-bit range)
 
 **`Bridging`** (PC mounted, upstream on USB-A): showcase pauses, forward path takes over.
 
-- Upstream UMP flows raw to the PC (group preserved, no remap)
+- Upstream UMP flows to the PC in the slot window (groups 1-4)
 - PC UMP flows to the upstream when the upstream is MIDI 2.0 (alt=1)
 - USB-MIDI 1.0 upstream cable events uplifted to UMP MT 0x2
 
 UART debug on GP0 mirrors mount events.
 
-## v0.1 scope and limitations
+## Scope and limitations
 
-- **R13 desolder is mandatory.** Without it, the host side never enumerates. With it, the USB-A port stops working as a device on this board.
-- **Single upstream device** at a time (idx 0). A second device plugged in is enumerated by TinyUSB but not forwarded; no traffic flows.
-- **MIDI 1.0 uplift is one-way**: upstream cable events become UMP MT 0x2 on the PC. PC to upstream UMP is forwarded only when the upstream is MIDI 2.0; MIDI 1.0 alt=0 downstream UMP is dropped silently.
-- **Group remap is 1:1**: whatever group the upstream emits is the group the PC sees.
-- **No CI bridging**: each USB link runs its own MIDI-CI Initiator / Responder when applicable.
-- **No SSD1306 onboard**: the OLED is optional, wire one to GP2 / GP3 on a breadboard if you want the visual log.
+- **Single upstream device** at a time (one slot). A second device plugged in is enumerated by TinyUSB but not placed; no traffic flows for it.
+- **MIDI 1.0 uplift is one-way**: upstream cable events become UMP MT 0x2 in the slot window. PC-to-upstream traffic reaches MIDI 2.0 upstreams only.
+- **Group windows**: upstream traffic lands on groups 1-4 (the slot window); the bridge's own MIDI-CI answers on groups 5-16.
 
 ## Hot-swap caveat
 

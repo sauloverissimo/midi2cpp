@@ -56,8 +56,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 pico_sdk_init()
 
 # ---------------------------------------------------------------------------
-# midi2 (C99), only midi2_msg_word_count is used by the router. Pull
-# the single .c from the parent library tree to keep the binary lean.
+# midi2cpp: the C99 core plus the m2bridge composition (Device + Host +
+# CI + Bridge) pulled from the parent library tree.
 # ---------------------------------------------------------------------------
 set(MIDI2CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
@@ -67,9 +67,12 @@ set(MIDI2CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 # ---------------------------------------------------------------------------
 add_executable(adafruit-feather-rp2040-bridge-midi2-showcase
     ${MIDI2CPP_ROOT}/src/midi2.c
+    ${MIDI2CPP_ROOT}/src/midi2_device.cpp
+    ${MIDI2CPP_ROOT}/src/midi2_host.cpp
+    ${MIDI2CPP_ROOT}/src/midi2_ci.cpp
+    ${MIDI2CPP_ROOT}/src/midi2_bridge.cpp
     src/main.cpp
     src/feather_bridge.cpp
-    src/ump_router.c
     src/usb_descriptors.c
     src/display.c
 )
@@ -78,6 +81,7 @@ target_include_directories(adafruit-feather-rp2040-bridge-midi2-showcase PRIVATE
 target_link_libraries(adafruit-feather-rp2040-bridge-midi2-showcase
     PRIVATE
         pico_stdlib
+        pico_rand               # get_rand_32, MUID entropy
         hardware_i2c            # SSD1306 over I2C1
         tinyusb_device
         tinyusb_host

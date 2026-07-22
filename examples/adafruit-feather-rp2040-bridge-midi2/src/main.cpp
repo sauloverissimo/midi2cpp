@@ -5,14 +5,11 @@
  *
  *   PC <- USB-C (rhport 0, native), Feather, USB-A (rhport 1, PIO-USB) -> upstream device
  *
- * UMP flows raw between the two stacks via ump_router. SSD1306 OLED
- * shows live forwarded traffic with arrow markers:
+ * All bridge behaviour lives in midi2::m2bridge (identity-bound slot,
+ * group window, Stream Discovery, MIDI-CI faces, MIDI 1.0 uplift).
+ * SSD1306 OLED shows live forwarded traffic with arrow markers:
  *   '>' upstream USB-A -> PC
  *   '<' PC             -> upstream USB-A
- *
- * Upstream MIDI 1.0 (alt=0) devices are uplifted to UMP MT 0x2 so the
- * PC always sees clean MIDI 2.0. PC->upstream MIDI 1.0 conversion is
- * v0.2 work; the bridge logs a warning and drops those messages.
  */
 #include <cstdio>
 #include <cstring>
@@ -176,53 +173,31 @@ void format_ump(const uint32_t* w, uint8_t count, char arrow,
     }
 }
 
+midi2::m2bridge g_bridge;
+
+// MIDI-CI identity + category backing for the bridge's own face (its
+// Function Block on groups 5-16). Model id is fleet-unique.
+constexpr uint8_t  kManufacturerId[3] = {0x7D, 0x00, 0x00};
+constexpr uint16_t kFamily            = 0x0001;
+constexpr uint16_t kModel             = 0x0015;   // fleet-unique (devices 0x0001.., bridges 0x0014..)
+constexpr uint32_t kVersion           = 0x00010000;
+constexpr const char* kEndpointName   = "Feather RP2040 Bridge MIDI 2.0";
+constexpr const char* kProductInstance = "feather-rp2040-bridge-0001";
+const uint8_t kProfileId[5] = {0x7E, 0x00, 0x00, 0x01, 0x00};   // GM 1
+const char kDeviceInfo[] =
+    "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[21,0],"
+     "\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
+     "\"family\":\"Bridge\",\"model\":\"Feather RP2040 Bridge MIDI 2.0\","
+     "\"version\":\"0.0.1\"}";
+const char kChannelList[] = "[{\"title\":\"Bridge\",\"channel\":1}]";
+const char kProgramList[] = "[{\"title\":\"Default\",\"bankPC\":[0,0,0]}]";
+
 void install_callbacks() {
-    feather_bridge::onHostMount([](uint8_t idx, uint8_t protocol_version) {
+    g_bridge.onTraffic([](bool to_pc, const uint32_t* words, uint8_t count) {
         char line[32];
-        std::snprintf(line, sizeof(line), "[%u] %s mounted",
-                       (unsigned)idx,
-                       protocol_version >= 1 ? "MIDI 2.0" : "MIDI 1.0");
-        display_log(line, COLOR_INFO);
-        display_status("Bridging");
-    });
-
-    feather_bridge::onHostUnmount([](uint8_t idx) {
-        char line[32];
-        std::snprintf(line, sizeof(line), "[%u] unmounted", (unsigned)idx);
-        display_log(line, COLOR_WARN);
-        display_status("Waiting...");
-    });
-
-    feather_bridge::onDeviceMount([] {
-        display_log("PC mounted", COLOR_SYS);
-    });
-
-    feather_bridge::onDeviceUnmount([] {
-        display_log("PC unmounted", COLOR_WARN);
-    });
-
-    feather_bridge::onForwardUpstream(
-        [](const uint32_t* words, uint8_t count) {
-            char line[32];
-            format_ump(words, count, '>', 0, line, sizeof(line));
-            display_log(line, COLOR_UPSTREAM);
-            ++g_count_upstream;
-        });
-
-    feather_bridge::onForwardDownstream(
-        [](const uint32_t* words, uint8_t count) {
-            char line[32];
-            format_ump(words, count, '<', 0, line, sizeof(line));
-            display_log(line, COLOR_DOWNSTREAM);
-            ++g_count_downstream;
-        });
-
-    feather_bridge::onDrop([](ump_source_t src, uint32_t total) {
-        char line[32];
-        std::snprintf(line, sizeof(line), "drop %s n=%lu",
-                       src == UMP_SOURCE_HOST ? "host" : "dev",
-                       (unsigned long)total);
-        display_log(line, COLOR_WARN);
+        format_ump(words, count, to_pc ? '>' : '<', 0, line, sizeof(line));
+        display_log(line, to_pc ? COLOR_UPSTREAM : COLOR_DOWNSTREAM);
+        if (to_pc) ++g_count_upstream; else ++g_count_downstream;
     });
 }
 
@@ -235,7 +210,8 @@ void install_callbacks() {
 //   - Chromatic C4->B4 walk: NoteOn/Off every 250 ms (24 steps total)
 //   - Every 6 s: a short CC#74 32-bit sweep on ch0
 //
-// All UMPs are MIDI 2.0 Channel Voice (MT 0x4) on group 0, ch 0.
+// All UMPs are MIDI 2.0 Channel Voice (MT 0x4) on the bridge's own
+// Function Block (group index 4; slot 0 owns groups 0-3), ch 0.
 // Emission stops automatically when an upstream device mounts; the
 // forward path then takes over.
 // ----------------------------------------------------------------------------
@@ -245,7 +221,7 @@ void emit_note_step(uint32_t step) {
     uint8_t status = note_on ? 0x90 : 0x80;
     uint32_t w[2];
     w[0] = ((uint32_t)0x4 << 28)
-         | ((uint32_t)0x0 << 24)
+         | ((uint32_t)0x4 << 24)      // bridge FB first group
          | ((uint32_t)status << 16)
          | ((uint32_t)note << 8);
     w[1] = note_on ? ((uint32_t)0xC000u << 16) : 0;
@@ -266,7 +242,7 @@ void emit_cc_sweep() {
     for (uint8_t i = 0; i < 5; ++i) {
         uint32_t w[2];
         w[0] = ((uint32_t)0x4 << 28)
-             | ((uint32_t)0x0 << 24)
+             | ((uint32_t)0x4 << 24)      // bridge FB first group
              | ((uint32_t)0xB0 << 16)   // CC ch 0
              | ((uint32_t)74 << 8);     // CC#74
         w[1] = kValues[i];
@@ -300,8 +276,26 @@ int main() {
     display_init();
     sleep_ms(1500);
 
+    // Single upstream port: slot 0 = groups 1-4, bridge FB = groups 5-16.
+    g_bridge.setNumSlots(1);
+    g_bridge.setManufacturerId(kManufacturerId);
+    g_bridge.setFamily(kFamily);
+    g_bridge.setModel(kModel);
+    g_bridge.setVersion(kVersion);
+    g_bridge.setEndpointName(kEndpointName);
+    g_bridge.setProductInstanceId(kProductInstance);
+
     install_callbacks();
-    feather_bridge::init();
+    feather_bridge::init(g_bridge);
+
+    g_bridge.ci().addProfile(kProfileId, /*alwaysOn*/ false);
+    g_bridge.ci().addPropertyStatic("DeviceInfo",  kDeviceInfo);
+    g_bridge.ci().addPropertyStatic("ChannelList", kChannelList);
+    g_bridge.ci().addPropertyStatic("ProgramList", kProgramList);
+    g_bridge.ci().setMidiReport(/*msg_data_control*/ 0x01,
+                                /*system bitmap*/    0x00000000FFFFFFFFull,
+                                /*channel bitmap*/   0xFFFFFFFFFFFFFFFFull,
+                                /*note bitmap*/      0xFFFFFFFFFFFFFFFFull);
 
     display_live_begin();
     display_status("Waiting...");
@@ -311,7 +305,7 @@ int main() {
     Mode mode = Mode::Waiting;
 
     while (true) {
-        feather_bridge::task();
+        feather_bridge::task(g_bridge);
 
         uint32_t now = (uint32_t)(time_us_64() / 1000ULL);
         bool pc_present       = feather_bridge::downstream_present();

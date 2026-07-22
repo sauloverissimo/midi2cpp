@@ -183,6 +183,13 @@ public:
     // (bindSlot) and persists changes via onSlotBindingChanged.
     using SlotBindingChangedFn = std::function<void(uint8_t slot,
                                                     const char* key)>;
+
+    // Optional traffic observer for UIs: fires once per forwarded UMP
+    // message. to_pc = true for upstream device -> PC, false for
+    // PC -> upstream device.
+    using TrafficFn = std::function<void(bool to_pc, const uint32_t* words,
+                                         uint8_t count)>;
+    void onTraffic(TrafficFn fn);
     void bindSlot(uint8_t slot, const char* key);
     void onSlotBindingChanged(SlotBindingChangedFn fn);
     const char* slotBinding(uint8_t slot) const;   // "" = unbound
