@@ -7,32 +7,71 @@ mirrored from the upstream midi2 C99 policy.
 
 ## [Unreleased]
 
+## [0.7.0]
+
 ### Added
 
+- `midi2::Bridge` (`m2bridge`): reusable multi-slot USB MIDI 2.0 bridge
+  composing `m2device` + `m2ci` + `m2host`, with per-slot group windows,
+  group rewrite in both directions, a multi-FB Stream Discovery responder
+  and MIDI 1.0 alt 0 byte uplift with cable-to-group mapping.
+- Identity-bound slots: a Function Block number follows the upstream
+  device identity (complete Product Instance Id, else Endpoint Name), so
+  a board keeps its block across power cycles (M2-104 7.1.8). Bindings
+  persist through `bindSlot` / `onSlotBindingChanged`, wired to NVS on
+  the ESP32-P4 recipe. Binding keys have a single owner and upgrade to
+  the Product Instance Id.
+- The bridge exposes its own Function Block on the groups left over by
+  the slot windows, where its MIDI-CI responder is discoverable.
+- `Bridge::onTraffic` tap and `Bridge::setPlacementTimeoutMs`.
+- Host `DeviceIdentity` completeness flags (`endpointNameComplete`,
+  `productInstanceIdComplete`) and `sawStreamReply`.
 - `Device::sendMds`: single-chunk Mixed Data Set sender.
-- `tools/compliance-audit.py`: static compliance audit for the device recipes.
+- `m2ci` flows the configured category support bits into the Discovery
+  Reply.
+- `daisyseed-host-midi2` HOST_STRESS build flag: zero-loss receiver mode
+  for wire throughput measurement.
 - `rp2350-pico2-midi2` recipe (default RP2350 target) and the
   `hello-midi2-arduino` baseline sketch.
 - Full-surface coverage burst on the compact device recipes.
 
 ### Changed
 
+- Bridge recipes unified on `midi2::Bridge`:
+  `adafruit-feather-rp2040-bridge-midi2` and
+  `waveshare-rp2350-usb-a-bridge-midi2` are thin platform glues, and the
+  inline-glue `esp32-p4-devkit-bridge-midi2` is superseded by the
+  `m2bridge` variant.
+- Host auto-discovery defers to the first task tick, paces retries at
+  3 s per MIDI-CI 5.5.5 and stops once the device replies.
 - Generic `board_midi2` core shared by the TinyUSB recipes; board identity
   lives entirely in the configuration parameters.
 - Fleet-unique MIDI-CI model ids; function block names follow the endpoint
   name.
 - Every device recipe backs the advertised MIDI-CI categories: GM 1 profile,
   Process Inquiry MIDI report, SysEx8 and Mixed Data Set coverage.
-- Vendored midi2 amalgam refreshed (re-announce via Discovery after MUID
-  invalidate or collision).
+- Vendored midi2 amalgam refreshed (device identity field byte order per
+  M2-104 Figure 14; re-announce via Discovery after MUID invalidate or
+  collision).
 
 ### Fixed
 
+- Bridge device windows are exclusive: broadcast MIDI-CI addressed to a
+  slot's groups reaches the upstream device only, never the bridge's own
+  responder.
+- Endpoint Info declares JR timestamp transmit only when the heartbeat is
+  actually enabled.
+- Function Block Names are pushed only for complete, changed texts.
+- RP2040 bridge recipes pace upstream forwarding, defer display work to
+  the main loop and gate device writes on USB suspend.
 - `Device::feedRx` slices multi-packet bursts per UMP packet.
 - Boot MUID seeds from the installed RNG, with per-chip entropy sources on
   the native CMake recipes.
 - TinyUSB glue drains RX through an SPSC ring and applies bounded TX
   backpressure with mounted/alt guards.
+- Daisy Seed device recipe moves USB RX decoding out of interrupt context
+  through the same shared ring, so multi-packet MIDI-CI reassembly is never
+  reentered under inquiry bursts.
 - UMP test bench: spec-valid catalog vectors and coherent stream identity.
 
 ## [0.6.1]

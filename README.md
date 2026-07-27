@@ -150,7 +150,7 @@ The library itself carries no external dependencies; a handful of recipes pin th
 
 ### Recipes by build system
 
-29 recipes ship under [`examples/`](examples/), grouped by build path:
+28 recipes ship under [`examples/`](examples/), grouped by build path:
 
 | Build system | Count | Recipes |
 |---|:-:|---|
@@ -161,7 +161,7 @@ The library itself carries no external dependencies; a handful of recipes pin th
 | **Arduino IDE / arduino-cli** | 4 | [`teensy41-midi2`](examples/teensy41-midi2), [`teensy41-control-surface`](examples/teensy41-control-surface), [`teensy41-host-midi2`](examples/teensy41-host-midi2), [`hello-midi2-arduino`](examples/hello-midi2-arduino) |
 | **libDaisy / Makefile** | 2 | [`daisyseed-midi2`](examples/daisyseed-midi2), [`daisyseed-host-midi2`](examples/daisyseed-host-midi2) |
 
-By role: 16 device, 6 host, 4 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench, 1 transport-agnostic starter ([`hello-midi2-arduino`](examples/hello-midi2-arduino)).
+By role: 16 device, 6 host, 3 bridge, 1 multi-transport (BLE + ESP-NOW, no USB PID), 1 deterministic UMP test bench, 1 transport-agnostic starter ([`hello-midi2-arduino`](examples/hello-midi2-arduino)).
 
 ## Install
 
@@ -180,14 +180,14 @@ git clone https://github.com/sauloverissimo/midi2cpp.git ~/Arduino/libraries/mid
 Published on the [PlatformIO Registry](https://registry.platformio.org/libraries/sauloverissimo/midi2cpp):
 
 ```ini
-lib_deps = sauloverissimo/midi2cpp @ ^0.6.1
+lib_deps = sauloverissimo/midi2cpp @ ^0.7.0
 ```
 
 Or pin by git tag:
 
 ```ini
 lib_deps =
-  https://github.com/sauloverissimo/midi2cpp.git#v0.6.1
+  https://github.com/sauloverissimo/midi2cpp.git#v0.7.0
 ```
 
 That is all you need: midi2cpp bundles the midi2 C99 core, so there is no separate `midi2` dependency to install.
@@ -202,7 +202,7 @@ Published on the [ESP Component Registry](https://components.espressif.com/compo
 # main/idf_component.yml
 dependencies:
   idf: ">=5.0"
-  sauloverissimo/midi2cpp: ">=0.6.1"
+  sauloverissimo/midi2cpp: ">=0.7.0"
 ```
 
 The midi2 core is bundled inside midi2cpp, so nothing else is declared. `idf.py reconfigure` drops midi2cpp into `managed_components/`.
@@ -223,7 +223,7 @@ include(FetchContent)
 FetchContent_Declare(
     midi2cpp
     GIT_REPOSITORY https://github.com/sauloverissimo/midi2cpp.git
-    GIT_TAG        v0.6.1
+    GIT_TAG        v0.7.0
 )
 FetchContent_MakeAvailable(midi2cpp)
 ```

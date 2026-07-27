@@ -23,3 +23,7 @@ Wire the two transport hooks to the USB MIDI 2.0 driver your platform ships, and
 - `loop()`: drain inbound UMP into `midi.feedRx(words, count)` before `midi.task()`.
 
 The MIDI-CI bootstrap in this sketch is the Workbench-validated baseline used by every certified recipe in this repository; keep the identity fields in sync (the `ci.begin` bytes and the `DeviceInfo` JSON must match). The [board recipes](../../README.md#boards) show the wiring done for each supported board, transport included.
+
+## License
+
+MIT, inherits the parent [midi2cpp LICENSE](../../LICENSE).
