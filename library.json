@@ -12,8 +12,15 @@
     }
   ],
   "license": "MIT",
-  "frameworks": ["arduino"],
-  "platforms": ["raspberrypi", "teensy", "espressif32", "nordicnrf52"],
+  "frameworks": [
+    "arduino"
+  ],
+  "platforms": [
+    "raspberrypi",
+    "teensy",
+    "espressif32",
+    "nordicnrf52"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/sauloverissimo/midi2cpp.git"
@@ -21,14 +28,27 @@
   "headers": "midi2cpp.h",
   "export": {
     "exclude": [
-      "tests/build/*", "build/*", ".github/*", "scripts/*",
-      "examples/*/build", "examples/*/build/*",
-      "examples/*/idf/build", "examples/*/idf/build/*",
-      "examples/*/idf/external", "examples/*/idf/external/*",
-      "examples/*/idf/managed_components", "examples/*/idf/managed_components/*",
+      "tests/build/*",
+      "build/*",
+      ".github/*",
+      "scripts/*",
+      "examples/*/build",
+      "examples/*/build/*",
+      "examples/*/idf/build",
+      "examples/*/idf/build/*",
+      "examples/*/idf/external",
+      "examples/*/idf/external/*",
+      "examples/*/idf/managed_components",
+      "examples/*/idf/managed_components/*",
       "examples/*/idf/dependencies.lock",
-      "examples/*/idf/sdkconfig", "examples/*/idf/sdkconfig.old",
-      "examples/*/pio/.pio", "examples/*/pio/.pio/*"
+      "examples/*/idf/sdkconfig",
+      "examples/*/idf/sdkconfig.old",
+      "examples/*/pio/.pio",
+      "examples/*/pio/.pio/*",
+      "examples/*/board",
+      "examples/*/board/*",
+      "examples/*/monitor",
+      "examples/*/monitor/*"
     ]
   }
 }
