@@ -1168,12 +1168,14 @@ ByteStreamConverter::~ByteStreamConverter() {
 
 bool ByteStreamConverter::feed(uint8_t byte) {
     auto* s = bsc(_state);
-    bool ready = midi2_conv_feed(&s->conv, byte);
-    if (ready) {
+    if (!midi2_conv_feed(&s->conv, byte)) return false;
+    // One byte can complete more than one message (M2-104-UM 7.7.1: Real-Time
+    // interleaved in SysEx, or a status byte terminating it). Drain them all,
+    // firing the callback once per message, in wire order.
+    do {
         if (s->ump_cb) s->ump_cb(s->conv.ump, s->conv.ump_words);
-        return true;
-    }
-    return false;
+    } while (midi2_conv_next(&s->conv));
+    return true;
 }
 
 void ByteStreamConverter::onUmp(UmpCb cb) {

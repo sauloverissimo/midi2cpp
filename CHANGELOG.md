@@ -7,6 +7,17 @@ mirrored from the upstream midi2 C99 policy.
 
 ## [Unreleased]
 
+### Changed
+
+- `ByteStreamConverter::feed` now drains every message a fed byte completes,
+  firing the `onUmp` callback once per message in wire order. Per M2-104-UM
+  7.7.1 a single MIDI 1.0 byte can complete two UMP messages (a Real-Time
+  byte interleaved in a SysEx, or a status byte terminating one); previously
+  only one callback fired per byte. Bridge recipes inherit the behaviour
+  through the per-slot converters with no changes.
+- Vendored midi2 core updated to include `midi2_conv_next()` and the 7.7.1
+  interspersing rules (see the midi2 changelog for details).
+
 ## [0.7.0]
 
 ### Added

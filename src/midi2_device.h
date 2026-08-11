@@ -364,6 +364,9 @@ public:
   ByteStreamConverter(uint8_t group = 0);
   ~ByteStreamConverter();
 
+  // Feed one MIDI 1.0 byte; returns true when at least one UMP message was
+  // completed. The callback fires once per message: a single byte can
+  // complete two (M2-104-UM 7.7.1 interspersing), delivered in wire order.
   bool feed(uint8_t byte);
   using UmpCb = std::function<void(const uint32_t* words, uint8_t count)>;
   void onUmp(UmpCb cb);

@@ -160,6 +160,33 @@ static void test_bsc_reset_clears_running_status(void) {
     PASS();
 }
 
+static void test_bsc_realtime_in_sysex_two_callbacks(void) {
+    TEST("ByteStreamConverter: F8 inside SysEx -> two callbacks, wire order");
+    ByteStreamConverter conv(/*group*/ 0);
+    uint32_t first[2] = {0, 0};
+    uint32_t words[8] = {0};
+    int fired = 0;
+    conv.onUmp([&](const uint32_t* w, uint8_t n) {
+        if (fired < 8) words[fired] = w[0];
+        if (fired == 0 && n >= 2) { first[0] = w[0]; first[1] = w[1]; }
+        ++fired;
+    });
+
+    conv.feed(0xF0);
+    conv.feed(0x0A); conv.feed(0x0B); conv.feed(0x0C);
+    conv.feed(0x0D); conv.feed(0x0F);
+    // Real-Time clock lands mid-SysEx: one feed() call, two messages.
+    CHECK(conv.feed(0xF8), "feed reports messages ready");
+    CHECK_EQ(fired, 2, "two callbacks from a single byte");
+    CHECK_EQ(first[0], 0x30150A0Bu, "partial SysEx packet first (START, 5 bytes)");
+    CHECK_EQ(first[1], 0x0C0D0F00u, "payload preserved");
+    CHECK_EQ(words[1], 0x10F80000u, "clock second, keeping wire order");
+
+    conv.feed(0xF7);
+    CHECK_EQ(fired, 3, "SysEx end closes the message");
+    PASS();
+}
+
 int main(void) {
     test_sendSysEx7_fragments_20_bytes();
     test_sendSysEx8_fragments_40_bytes();
@@ -169,5 +196,6 @@ int main(void) {
     test_bsc_sysex_complete();
     test_bsc_setGroup_changes_emitted_group();
     test_bsc_reset_clears_running_status();
+    test_bsc_realtime_in_sysex_two_callbacks();
     REPORT_AND_EXIT();
 }
