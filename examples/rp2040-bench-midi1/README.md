@@ -15,11 +15,10 @@ Hold BOOTSEL, drag `build/rp2040-bench-midi1.uf2` onto the Pico, open the
 serial port:
 
 ```
-PASS CV status ends streamed SysEx
-  bytes         : F0 01 02 03 04 05 06 07 08 90 3C 7F
-  midi2         : 30160102 03040506 30320708 00000000 20903C7F
-  AM_MIDI2.0Lib : 30160102 03040506
-  note          : conversions differ, compare the words above
+PASS duplicate F7
+  bytes         : F0 21 22 23 24 25 F7 F7
+  midi2         : 30052122 23242500
+  AM_MIDI2.0Lib : 30052122 23242500
 ```
 
 `sender/` carries a deterministic MIDI 1.0 stress sender (ATmega32U4,
