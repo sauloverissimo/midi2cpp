@@ -135,6 +135,7 @@ Validated on real hardware against TinyUSB upstream. midi2cpp is one of several 
 | **Waveshare RP2040 Pi Zero** | RP2040 | ✅ | - | - | ✅ | TinyUSB | [`waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2) |
 | **Adafruit Feather RP2040 USB Host** | RP2040 | ✅ | ✅ | ✅ | ✅ | TinyUSB, PIO-USB | [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2), [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2), Pico-PIO-USB `675543b` |
 | **RP2040 Pro Micro (Tenstar Robot)** | RP2040 | ✅ | - | - | ✅ | TinyUSB | [`rp2040-promicro-ump-test-bench`](examples/rp2040-promicro-ump-test-bench), deterministic UMP emitter for Windows MIDI Services testing |
+| **Raspberry Pi Pico** (conformance bench) | RP2040 | - | - | - | - | stdio serial | [`rp2040-bench-midi1`](examples/rp2040-bench-midi1), MIDI 1.0 bytestream to UMP conformance bench, malformed-input vectors, optional AM_MIDI2.0Lib side-by-side |
 | **Waveshare RP2350-USB-A** | RP2350 | ✅ | ✅ | ✅ | ✅ | TinyUSB, PIO-USB on GP12/GP13 | [`waveshare-rp2350-usb-a-midi2`](examples/waveshare-rp2350-usb-a-midi2) (device), [`waveshare-rp2350-usb-a-bridge-midi2`](examples/waveshare-rp2350-usb-a-bridge-midi2) (bridge), R13 hardware mod for host mode |
 | **Raspberry Pi Pico 2** | RP2350 | ✅ | - | - | ✅ | TinyUSB | [`rp2350-pico2-midi2`](examples/rp2350-pico2-midi2) |
 | **ESP32-C6-DevKitC-1** | ESP32-C6 | ![WIP](https://img.shields.io/badge/-WIP-orange.svg) | - | - | - | BLE-MIDI 1.0 + ESP-NOW | [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2), wireless (BLE-MIDI + ESP-NOW), no USB-OTG |
@@ -150,11 +151,11 @@ The library itself carries no external dependencies; a handful of recipes pin th
 
 ### Recipes by build system
 
-28 recipes ship under [`examples/`](examples/), grouped by build path:
+29 recipes ship under [`examples/`](examples/), grouped by build path:
 
 | Build system | Count | Recipes |
 |---|:-:|---|
-| **Pico SDK** | 9 | [`rp2040-midi2`](examples/rp2040-midi2), [`waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2), [`rp2350-pico2-midi2`](examples/rp2350-pico2-midi2), [`waveshare-rp2350-usb-a-midi2`](examples/waveshare-rp2350-usb-a-midi2), [`waveshare-rp2350-usb-a-bridge-midi2`](examples/waveshare-rp2350-usb-a-bridge-midi2), [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2), [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2), [`rp2040-promicro-ump-test-bench`](examples/rp2040-promicro-ump-test-bench), [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2) |
+| **Pico SDK** | 10 | [`rp2040-midi2`](examples/rp2040-midi2), [`waveshare-rp2040-midi2`](examples/waveshare-rp2040-midi2), [`rp2350-pico2-midi2`](examples/rp2350-pico2-midi2), [`waveshare-rp2350-usb-a-midi2`](examples/waveshare-rp2350-usb-a-midi2), [`waveshare-rp2350-usb-a-bridge-midi2`](examples/waveshare-rp2350-usb-a-bridge-midi2), [`adafruit-feather-rp2040-host-midi2`](examples/adafruit-feather-rp2040-host-midi2), [`adafruit-feather-rp2040-bridge-midi2`](examples/adafruit-feather-rp2040-bridge-midi2), [`rp2040-promicro-ump-test-bench`](examples/rp2040-promicro-ump-test-bench), [`rp2040-bench-midi1`](examples/rp2040-bench-midi1), [`t-picoc3-device-midi2`](examples/t-picoc3-device-midi2) |
 | **ESP-IDF** | 6 | [`arduino-nano-esp32-midi2`](examples/arduino-nano-esp32-midi2), [`esp32-s3-devkitc-usb-midi2`](examples/esp32-s3-devkitc-usb-midi2), [`esp32-p4-devkit-usb-midi2`](examples/esp32-p4-devkit-usb-midi2), [`esp32-p4-devkit-host-midi2`](examples/esp32-p4-devkit-host-midi2), [`esp32-p4-devkit-bridge2-midi2`](examples/esp32-p4-devkit-bridge2-midi2), [`t-display-s3-midi2`](examples/t-display-s3-midi2) |
 | **PlatformIO + ESP32_Host_MIDI** | 3 | [`esp32-c6-devkitc-multi-midi2`](examples/esp32-c6-devkitc-multi-midi2), [`esp32-s3-devkitc-host-midi2`](examples/esp32-s3-devkitc-host-midi2), [`t-display-s3-shield-host-midi2`](examples/t-display-s3-shield-host-midi2) |
 | **TinyUSB native CMake** | 4 | [`xiao-samd21-midi2`](examples/xiao-samd21-midi2), [`nrf52840-promicro-midi2`](examples/nrf52840-promicro-midi2), [`ra4m1-weact-device-midi2`](examples/ra4m1-weact-device-midi2), [`weact-STM32F411CEU6-blackpill-device-midi2`](examples/weact-STM32F411CEU6-blackpill-device-midi2) |
