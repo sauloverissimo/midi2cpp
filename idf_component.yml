@@ -6,16 +6,16 @@
 ##
 ##   # in your_app/main/idf_component.yml
 ##   dependencies:
-##     sauloverissimo/midi2cpp: ">=0.7.0"
+##     sauloverissimo/midi2cpp: ">=0.8.0"
 ##
 ## The Component Manager clones midi2cpp into managed_components/,
 ## ESP-IDF picks it up as a component because the top-level CMakeLists
 ## detects ESP_PLATFORM and calls idf_component_register at the top of
-## the file. midi2 (the C99 core) is pulled transitively because it
-## is declared in the dependencies block below.
+## the file. The midi2 C99 core is bundled in src/, so there is no
+## separate midi2 dependency to declare.
 
 description: "C++ MIDI 2.0 platform: a C++17 callback-first wrapper that bundles the portable midi2 C99 core. Covers UMP transport (M2-104), MIDI-CI with Appendix E (M2-101), Property Exchange Subscribe/Notify, Profile Configuration, Process Inquiry, Flex Data, and Bit Scaling (M2-115)."
-version: "0.7.0"
+version: "0.8.0"
 url: "https://github.com/sauloverissimo/midi2cpp"
 documentation: "https://github.com/sauloverissimo/midi2cpp#readme"
 issues: "https://github.com/sauloverissimo/midi2cpp/issues"

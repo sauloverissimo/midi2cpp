@@ -1,5 +1,4 @@
-// midi2cpp v0.1.0
-// C++17 Arduino-style wrapper for MIDI 2.0 on embedded devices.
+// midi2cpp: C++17 Arduino-style wrapper for MIDI 2.0 on embedded devices.
 // Built over the portable midi2 C99 library (vendored at src/midi2.h).
 //
 // Usage in sketch:

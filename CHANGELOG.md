@@ -5,7 +5,13 @@ All notable changes to `midi2cpp` are recorded here. Format follows
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
-## [Unreleased]
+## [0.8.0]
+
+### Added
+
+- `rp2040-bench-midi1`: MIDI 1.0 bytestream to UMP conformance bench on the
+  Raspberry Pi Pico (Pico SDK, stdio only), with malformed-input vectors and
+  an optional AM_MIDI2.0Lib side-by-side build.
 
 ### Changed
 
