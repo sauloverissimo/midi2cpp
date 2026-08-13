@@ -83,6 +83,7 @@ static char const *string_desc_arr[] = {
     "midi2.diy",  /* 1: Manufacturer                   */
     "WeAct BlackPill F411 MIDI 2.0",         /* 2: Product                        */
     "WeActBlackPillF411-0001",    /* 3: Serial (static fallback)       */
+    "WeAct BlackPill F411 MIDI 2.0", /* 4: Group Terminal Block name      */
 };
 
 static uint16_t _desc_str[32 + 1];

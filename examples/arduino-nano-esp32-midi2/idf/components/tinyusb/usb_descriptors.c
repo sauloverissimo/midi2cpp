@@ -80,6 +80,7 @@ static char const *string_desc_arr[] = {
     "midi2.diy",  /* 1: Manufacturer                   */
     "Arduino Nano ESP32 MIDI 2.0",          /* 2: Product                        */
     "ArduinoNanoESP32-0001",     /* 3: Serial (static fallback)       */
+    "Arduino Nano ESP32 MIDI 2.0", /* 4: Group Terminal Block name      */
 };
 
 static uint16_t _desc_str[32 + 1];

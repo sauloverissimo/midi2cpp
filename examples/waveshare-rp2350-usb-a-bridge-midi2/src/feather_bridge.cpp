@@ -342,10 +342,14 @@ bool tud_midi2_get_req_itf_cb(uint8_t /*rhport*/,
 // One bidirectional Group Terminal Block spanning all 16 groups
 // (M2-104 Appendix I): Function Blocks live inside it, declared
 // dynamically by the bridge's Stream responder.
+// stridx 4 names this block from string_desc_arr (usb_descriptors.c). Hosts
+// that read only the static GTB descriptor, such as Windows MIDI Services,
+// show an empty block name when it is 0. The Function Blocks inside this
+// block are still declared dynamically by the Stream responder below.
 static const uint8_t k_gtb_desc[] = {
     TUD_MIDI2_GTB_HEADER(1),
     TUD_MIDI2_GTB_BLOCK(/*id*/ 1, MIDI2_GTB_BIDIRECTIONAL,
-                        /*first_group*/ 0, /*num_groups*/ 16, /*stridx*/ 0),
+                        /*first_group*/ 0, /*num_groups*/ 16, /*stridx*/ 4),
 };
 
 const uint8_t* tud_midi2_gtb_desc_cb(uint8_t itf, uint16_t* len) {

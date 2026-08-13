@@ -81,6 +81,7 @@ static char const *string_desc_arr[] = {
     "midi2.diy",  /* 1: Manufacturer                   */
     "XIAO SAMD21 MIDI 2.0",                 /* 2: Product                        */
     "XiaoSAMD21-0001",            /* 3: Serial (static fallback)       */
+    "XIAO SAMD21 MIDI 2.0",       /* 4: Group Terminal Block name      */
 };
 
 static uint16_t _desc_str[32 + 1];

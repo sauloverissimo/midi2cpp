@@ -80,6 +80,7 @@ static char const *string_desc_arr[] = {
     "midi2.diy",  /* 1: Manufacturer                   */
     "LILYGO T-PicoC3 MIDI 2.0",                    /* 2: Product                        */
     NULL,                         /* 3: Serial: computed at runtime   */
+    "LILYGO T-PicoC3 MIDI 2.0",   /* 4: Group Terminal Block name      */
 };
 
 static uint16_t _desc_str[32 + 1];

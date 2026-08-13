@@ -82,6 +82,7 @@ static char const *string_desc_arr[] = {
     "midi2.diy",  /* 1: Manufacturer                   */
     "nRF52840 Pro Micro MIDI 2.0",           /* 2: Product                        */
     "Nrf52840ProMicro-0001",      /* 3: Serial (static fallback)       */
+    "nRF52840 Pro Micro MIDI 2.0", /* 4: Group Terminal Block name      */
 };
 
 static uint16_t _desc_str[32 + 1];

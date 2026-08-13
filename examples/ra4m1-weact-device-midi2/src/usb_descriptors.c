@@ -81,6 +81,7 @@ static char const *string_desc_arr[] = {
     "midi2.diy",  /* 1: Manufacturer                   */
     "WeAct RA4M1 MIDI 2.0",                 /* 2: Product                        */
     "WeActRA4M1-0001",            /* 3: Serial (static fallback)       */
+    "WeAct RA4M1 MIDI 2.0",       /* 4: Group Terminal Block name      */
 };
 
 static uint16_t _desc_str[32 + 1];
