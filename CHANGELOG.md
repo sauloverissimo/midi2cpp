@@ -5,6 +5,20 @@ All notable changes to `midi2cpp` are recorded here. Format follows
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
+## [0.9.0]
+
+### Changed
+
+- Bundled midi2 core updated to v0.10.0.
+- `Device::sendFbInfo` and the `onFbInfo` callback drop the `protocol`
+  argument, which the Function Block Info Notification does not carry, and
+  take `maxSysex8Streams` as a count instead of a bool.
+
+### Fixed
+
+- Recipes declare the same Software Revision over Property Exchange and
+  Device Identity.
+
 ## [0.8.0]
 
 ### Added
