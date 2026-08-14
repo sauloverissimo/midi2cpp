@@ -395,13 +395,10 @@ void tramp_fb_discovery(uint8_t fb_num, uint8_t filter, void* ctx) {
 void tramp_fb_info(bool active, uint8_t fb_num,
                    uint8_t direction, uint8_t ui_hint,
                    uint8_t fg, uint8_t ng, uint8_t civ,
-                   uint8_t max_sx8, uint8_t protocol, void* ctx) {
+                   uint8_t max_sx8, void* ctx) {
     auto* s = static_cast<DeviceState*>(ctx);
-    // The C99 callback delivers max_sysex8_streams (uint8_t count); the
-    // wrapper currently exposes a coarser bool (does this FB support SysEx8?).
-    // Forward boolean presence so users at least know the capability exists.
     if (s->cb_fb_info) s->cb_fb_info(active, fb_num, direction, ui_hint,
-                                     fg, ng, civ, /*sysex8*/ max_sx8 != 0, protocol);
+                                     fg, ng, civ, max_sx8);
 }
 void tramp_clip(bool start, void* ctx) {
     auto* s = static_cast<DeviceState*>(ctx);
@@ -937,12 +934,11 @@ bool Device::sendStreamConfigNotify(uint8_t protocol) {
 bool Device::sendFbInfo(bool active, uint8_t fbNum,
                         uint8_t direction, uint8_t uiHint,
                         uint8_t firstGroup, uint8_t numGroups,
-                        uint8_t midiCiVer, bool sysex8, uint8_t protocol) {
+                        uint8_t midiCiVer, uint8_t maxSysex8Streams) {
     uint32_t words[4] = {0};
-    const uint8_t max_sx8 = sysex8 ? 1 : 0;
     midi2_msg_stream_fb_info(words, active, fbNum, direction, uiHint,
                               firstGroup, numGroups,
-                              midiCiVer, max_sx8, protocol);
+                              midiCiVer, maxSysex8Streams);
     return device_write(st(_state), words, 4);
 }
 

@@ -293,7 +293,7 @@ void tramp_fb_info(bool active, uint8_t fb_num,
                     uint8_t /*direction*/, uint8_t /*ui_hint*/,
                     uint8_t /*first_group*/, uint8_t /*num_groups*/,
                     uint8_t /*midi_ci_ver*/, uint8_t /*max_sysex8_streams*/,
-                    uint8_t /*protocol*/, void* ctx) {
+                    void* ctx) {
     // For v0.1 we only track the FB count via tramp_endpoint_info. Detailed
     // per-FB topology lands when the bridge example needs it.
     (void)active; (void)fb_num; (void)ctx;

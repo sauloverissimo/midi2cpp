@@ -151,13 +151,13 @@ public:
   // currently active on the endpoint after a host Stream Config Request.
   bool sendStreamConfigNotify(uint8_t protocol);
   // Function Block Info Notification (status 0x11). Replies to host-side
-  // Function Block Discovery with topology + protocol of the FB.
-  // direction: 0x01=Receiver, 0x02=Sender, 0x03=Bidirectional (M2-104 §7.1.3).
+  // Function Block Discovery with the topology of the FB.
+  // direction: 0x01=Receiver, 0x02=Sender, 0x03=Bidirectional (M2-104 §7.1.8).
   // uiHint:    0x00=Undeclared, 0x01=Receiver, 0x02=Sender, 0x03=Sender+Receiver.
   bool sendFbInfo(bool active, uint8_t fbNum,
                   uint8_t direction, uint8_t uiHint,
                   uint8_t firstGroup, uint8_t numGroups,
-                  uint8_t midiCiVer, bool sysex8, uint8_t protocol);
+                  uint8_t midiCiVer, uint8_t maxSysex8Streams);
   bool sendFbNameUpdate(uint8_t fbIdx, const char* name);
   // UMP Stream messages (MT 0xF) are endpoint-wide, not group-scoped (M2-104 §7.1).
   bool sendStartOfClip();
@@ -279,7 +279,7 @@ public:
   using FbInfoCb            = std::function<void(bool active, uint8_t fbNum,
                                                  uint8_t direction, uint8_t uiHint,
                                                  uint8_t firstGroup, uint8_t numGroups,
-                                                 uint8_t ciVersion, bool sysex8, uint8_t protocol)>;
+                                                 uint8_t ciVersion, uint8_t maxSysex8Streams)>;
   using ClipCb              = std::function<void(uint8_t group, uint16_t status)>;
 
   void onEndpointDiscovery(EndpointDiscoveryCb cb);

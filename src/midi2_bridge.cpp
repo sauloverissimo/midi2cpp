@@ -154,8 +154,7 @@ static void push_fb_info(BridgeState* s, uint8_t idx) {
                          /*first_group*/ base,
                          /*num_groups*/  s->groupsPerSlot,
                          /*midi_ci_ver*/ 0x02,
-                         /*sysex8*/      false,
-                         /*protocol*/    0x02);
+                         /*max_sysex8*/  0);
 }
 
 static void push_fb_name(BridgeState* s, uint8_t idx) {
@@ -299,8 +298,7 @@ static void push_bridge_fb_info(BridgeState* s) {
                          /*first_group*/ bridge_fb_first_group(s),
                          /*num_groups*/  ng,
                          /*midi_ci_ver*/ 0x02,
-                         /*sysex8*/      false,
-                         /*protocol*/    0x02);
+                         /*max_sysex8*/  0);
 }
 
 static void push_bridge_fb_name(BridgeState* s) {
