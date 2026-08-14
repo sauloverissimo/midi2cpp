@@ -71,7 +71,7 @@ int main(void) {
     midi.sendDeviceIdentity(kMfrId, kFamilyId, kModelId, kVersion);
     midi.sendEndpointNameUpdate("DaisySeed");
     midi.sendProductInstanceIdUpdate("DaisySeed-showcase-0001");
-    midi.sendFbInfo(true, 0, 3, 3, 0, 1, /*midiCiVer*/ 0x02, false, /*protocol*/ 0x02);
+    midi.sendFbInfo(true, 0, 3, 3, 0, 1, /*midiCiVer*/ 0x02, /*sysex8*/ true, /*protocol*/ 0x02);
     midi.sendFbNameUpdate(0, "Main");
 
     // MIDI-CI: identity + profile + 2 properties
