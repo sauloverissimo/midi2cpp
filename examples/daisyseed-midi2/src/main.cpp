@@ -20,7 +20,7 @@ static midi2::m2ci        ci(backend.device());
 static const uint8_t  kMfrId[3]     = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId     = 0x0001;
 static const uint16_t kModelId      = 0x0003;
-static const uint32_t kVersion      = 0x00010000;
+static const uint32_t kVersion      = 0x00000400;
 static const uint8_t  kProfileGm[5] = {0x7E, 0x00, 0x00, 0x01, 0x00};
 static const char     kDeviceInfo[] =
     "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[3,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
@@ -58,8 +58,7 @@ int main(void) {
                             /*direction*/ 3 /*Bidirectional*/,
                             /*uiHint*/ 3 /*Bidirectional*/,
                             /*firstGroup*/ 0, /*numGroups*/ 1,
-                            /*midiCiVer*/ 0x02, /*sysex8*/ true,
-                            /*protocol*/ 0x02);
+                            /*midiCiVer*/ 0x02, /*maxSysex8*/ 1);
         if (filter & 0x02) midi.sendFbNameUpdate(0, "Main");
     });
     midi.onStreamConfigRequest([&midi](uint8_t protocol) {
@@ -71,7 +70,7 @@ int main(void) {
     midi.sendDeviceIdentity(kMfrId, kFamilyId, kModelId, kVersion);
     midi.sendEndpointNameUpdate("DaisySeed");
     midi.sendProductInstanceIdUpdate("DaisySeed-showcase-0001");
-    midi.sendFbInfo(true, 0, 3, 3, 0, 1, /*midiCiVer*/ 0x02, /*sysex8*/ true, /*protocol*/ 0x02);
+    midi.sendFbInfo(true, 0, 3, 3, 0, 1, /*midiCiVer*/ 0x02, /*maxSysex8*/ 1);
     midi.sendFbNameUpdate(0, "Main");
 
     // MIDI-CI: identity + profile + 2 properties

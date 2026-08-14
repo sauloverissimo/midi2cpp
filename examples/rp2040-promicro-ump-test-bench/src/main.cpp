@@ -52,7 +52,7 @@ using namespace midi2;
 static const uint8_t  kMfrId[3]      = {0x7D, 0x00, 0x00};  // educational prefix
 static const uint16_t kFamilyId      = 0x0001;
 static const uint16_t kModelId       = 0x000D;
-static const uint32_t kVersion       = 0x00010000;
+static const uint32_t kVersion       = 0x00000400;
 
 /*--------------------------------------------------------------------+
  * Bench state

@@ -22,8 +22,8 @@ static m2device midi;
 static m2ci     ci(midi);
 
 /* Identity: keep the ci.begin bytes and the DeviceInfo JSON in sync.
- * 0x7D is the educational SysEx prefix; version 0x00010000 encodes to
- * versionId [0,0,4,0] on the wire (7 bits per byte). */
+ * 0x7D is the educational SysEx prefix; the Software Revision is the four
+ * bytes 00 00 04 00, matching versionId [0,0,4,0]. */
 static const uint8_t kMfrId[3]   = {0x7D, 0x00, 0x00};
 static const uint8_t kProfile[5] = {0x7E, 0x00, 0x00, 0x01, 0x00};  // GM 1
 

@@ -181,7 +181,7 @@ midi2::m2bridge g_bridge;
 constexpr uint8_t  kManufacturerId[3] = {0x7D, 0x00, 0x00};
 constexpr uint16_t kFamily            = 0x0001;
 constexpr uint16_t kModel             = 0x0015;   // fleet-unique (devices 0x0001.., bridges 0x0014..)
-constexpr uint32_t kVersion           = 0x00010000;
+constexpr uint32_t kVersion           = 0x00000400;
 constexpr const char* kEndpointName   = "Feather RP2040 Bridge MIDI 2.0";
 constexpr const char* kProductInstance = "feather-rp2040-bridge-0001";
 const uint8_t kProfileId[5] = {0x7E, 0x00, 0x00, 0x01, 0x00};   // GM 1

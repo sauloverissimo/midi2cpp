@@ -36,7 +36,7 @@ static m2bridge g_bridge;
 static constexpr uint8_t  kManufacturerId[3] = {0x7D, 0x00, 0x00};
 static constexpr uint16_t kFamily            = 0x0001;
 static constexpr uint16_t kModel             = 0x0014;   // fleet-unique (devices use 0x0001..0x0012)
-static constexpr uint32_t kVersion           = 0x00010000;
+static constexpr uint32_t kVersion           = 0x00000400;
 static constexpr const char* kEndpointName     = "ESP32-P4 Bridge2 MIDI 2.0";
 static constexpr const char* kProductInstance = "ESP32P4Bridge2-0001";
 

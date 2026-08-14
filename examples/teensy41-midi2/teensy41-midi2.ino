@@ -26,7 +26,7 @@ static uint8_t  demo_note = 60;
 static const uint8_t  kMfrId[3]    = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId    = 0x0001;
 static const uint16_t kModelId     = 0x0001;
-static const uint32_t kVersion     = 0x00010000;
+static const uint32_t kVersion     = 0x00000400;
 static const uint8_t  kProfileGm[5] = {0x7E, 0x00, 0x00, 0x01, 0x00};
 static const char     kDeviceInfo[] =
     "{\"manufacturerId\":[125,0,0],\"familyId\":[1,0],\"modelId\":[1,0],\"versionId\":[0,0,4,0],\"manufacturer\":\"midi2.diy\","
@@ -63,7 +63,7 @@ void setup()
 	                /*direction*/3 /*Bidirectional*/,
 	                /*uiHint*/3   /*Bidirectional*/,
 	                /*firstGroup*/0, /*numGroups*/1,
-	                /*midiCiVer*/0, /*sysex8*/true, /*protocol*/3);
+	                /*midiCiVer*/0, /*maxSysex8*/1);
 	midi.sendFbNameUpdate(0, "Main");
 
 	// MIDI-CI: identity + profile + 2 properties

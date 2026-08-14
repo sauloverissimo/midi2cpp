@@ -62,7 +62,7 @@ using namespace midi2;
 static const uint8_t  kMfrId[3]      = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId      = 0x0001;
 static const uint16_t kModelId       = 0x0009;
-static const uint32_t kVersion       = 0x00010000;
+static const uint32_t kVersion       = 0x00000400;
 static const uint8_t  kProfileId[5]     = {0x7E, 0x00, 0x00, 0x01, 0x00};
 // Endpoint Name = CFG_TUD_MIDI2_EP_NAME, Product Instance Id =
 // CFG_TUD_MIDI2_PRODUCT_ID (tusb_config.h), FB name "Main" =

@@ -350,7 +350,7 @@ const uint8_t  kBenchMfrId[3]     = {0x7D, 0x00, 0x00};
 // view mid-session and corrupts the initiator's device record.
 const uint16_t kBenchFamily       = 0x0001;
 const uint16_t kBenchModel        = 0x000D;   // = kModelId in main.cpp
-const uint32_t kBenchVersion      = 0x00010000;
+const uint32_t kBenchVersion      = 0x00000400;  // = kVersion in main.cpp
 const char     kBenchEndpoint[]   = "RP2040 UMP Bench MIDI 2.0";   // = CFG_TUD_MIDI2_EP_NAME
 const char     kBenchProductInst[] = "UMPReferenceEmitter-bench-0001";  // = CFG_TUD_MIDI2_PRODUCT_ID
 const char     kBenchFbName[]     = "RP2040 UMP Bench MIDI 2.0";   // = FB name (EP name)
@@ -728,12 +728,11 @@ bool catalogEmit(uint8_t idx, midi2::m2device& midi) {
             midi.sendFbInfo(/*active*/ true, /*fb_num*/ 0,
                             /*direction*/ 0x03, /*ui_hint*/ 0x02,
                             /*first_group*/ 0, /*num_groups*/ 1,
-                            /*midi_ci_ver*/ 0x02, /*sysex8*/ false,
-                            /*protocol*/ 0x02);
+                            /*midi_ci_ver*/ 0x02, /*maxSysex8*/ 0);
             uint32_t w[4];
             midi2_msg_stream_fb_info(w, true, 0, /*direction*/ 0x03,
                                      /*ui_hint*/ 0x02, 0, 1, 0x02,
-                                     /*max_sysex8*/ 0, 0x02);
+                                     /*max_sysex8*/ 0);
             log_words(90, "stream fb_info fb=0 bidir grp0..0", w, 4);
         } break;
         case 91: {
