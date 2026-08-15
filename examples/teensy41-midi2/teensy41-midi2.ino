@@ -51,19 +51,40 @@ void setup()
 	backend.begin();
 	auto& midi = backend.device();
 
-	// UMP Stream identity (M2-104-UM Endpoint Discovery)
-	midi.sendEndpointInfo(/*umpVerMajor*/1, /*umpVerMinor*/1,
-	                      /*staticFb*/true, /*numFb*/1,
-	                      /*midi2*/true, /*midi1*/true,
-	                      /*rxJr*/false, /*txJr*/true);
+	// UMP Stream identity (M2-104-UM Endpoint Discovery). The Teensy cores
+	// fork is transport only, so the sketch answers Discovery itself.
+	midi.onEndpointDiscovery([&midi](uint8_t filter) {
+		if (filter & 0x01)
+			midi.sendEndpointInfo(/*umpVerMajor*/1, /*umpVerMinor*/1,
+			                      /*staticFb*/true, /*numFb*/1,
+			                      /*midi2*/true, /*midi1*/true,
+			                      /*rxJr*/false, /*txJr*/true);
+		if (filter & 0x02) midi.sendDeviceIdentity(kMfrId, kFamilyId, kModelId, kVersion);
+		if (filter & 0x04) midi.sendEndpointNameUpdate("Teensy41");
+		if (filter & 0x08) midi.sendProductInstanceIdUpdate("Teensy41-showcase-0001");
+		if (filter & 0x10) midi.sendStreamConfigNotify(/*protocol*/0x02);
+	});
+	midi.onFbDiscovery([&midi](uint8_t fbNum, uint8_t filter) {
+		uint8_t target = (fbNum == 0xFF) ? 0 : fbNum;
+		if (target != 0) return;
+		if (filter & 0x01)
+			midi.sendFbInfo(/*active*/true, /*fbNum*/0,
+			                /*direction*/3 /*Bidirectional*/,
+			                /*uiHint*/3   /*Bidirectional*/,
+			                /*firstGroup*/0, /*numGroups*/1,
+			                /*midiCiVer*/2, /*maxSysex8*/1);
+		if (filter & 0x02) midi.sendFbNameUpdate(0, "Main");
+	});
+	midi.onStreamConfigRequest([&midi](uint8_t protocol) {
+		midi.sendStreamConfigNotify(protocol);
+	});
+
+	// Unsolicited identity at boot for hosts that captured enumeration early.
+	midi.sendEndpointInfo(1, 1, true, 1, true, true, false, true);
 	midi.sendDeviceIdentity(kMfrId, kFamilyId, kModelId, kVersion);
 	midi.sendEndpointNameUpdate("Teensy41");
 	midi.sendProductInstanceIdUpdate("Teensy41-showcase-0001");
-	midi.sendFbInfo(/*active*/true, /*fbNum*/0,
-	                /*direction*/3 /*Bidirectional*/,
-	                /*uiHint*/3   /*Bidirectional*/,
-	                /*firstGroup*/0, /*numGroups*/1,
-	                /*midiCiVer*/2, /*maxSysex8*/1);
+	midi.sendFbInfo(true, 0, 3, 3, 0, 1, 2, 1);
 	midi.sendFbNameUpdate(0, "Main");
 
 	// MIDI-CI: identity + profile + 2 properties

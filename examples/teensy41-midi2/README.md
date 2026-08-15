@@ -21,7 +21,7 @@ USB MIDI 2.0 device on the **Teensy 4.1** (Cortex-M7 @ 600 MHz, 1 MB SRAM). Firs
 | iSerial | per-board chip serial |
 | Endpoint Name | `Teensy41` |
 | Product Instance ID | `Teensy41-showcase-0001` |
-| FB 0 | `Main` (Bidirectional, Group 0 in API / `Group 1-1` in ALSA, both protocols). Name visible in Windows MIDI Services Console; Linux ALSA shows `Group 1-1` since the cores fork GTB descriptor currently emits `iBlockItem = 0` (no Block Name string yet). |
+| FB 0 | `Main` (Bidirectional, Group 0 in API / `Group 1-1` in ALSA, both protocols). The sketch answers Function Block Discovery, so the name reaches hosts that ask over UMP Stream, including Linux ALSA and the MIDI 2.0 Workbench. Windows MIDI Services Console reads it from the GTB descriptor, which the cores fork emits with `iBlockItem = 0`. |
 | MIDI-CI Manufacturer ID | `{0x7D, 0x00, 0x00}` (MMA educational prefix) |
 
 Forking into a real product requires replacing both VID and PID per USB-IF rules (pid.codes, V-USB sub-allocation, or USB-IF VID).
