@@ -36,9 +36,9 @@ constexpr const char* TAG = "arduino-nano-esp32-midi2";
 #define LED_BUILTIN_GPIO  48
 #endif
 
-void platform_write_fn(const uint32_t* words, size_t count) {
+size_t platform_write_fn(const uint32_t* words, size_t count) {
     // UMP writes require mounted + Alt Setting 1; the driver returns 0 otherwise.
-    if (!tud_midi2_n_mounted(0) || tud_midi2_n_alt_setting(0) != 1) return;
+    if (!tud_midi2_n_mounted(0) || tud_midi2_n_alt_setting(0) != 1) return 0;
     // Full TX FIFO mid-burst is backpressure, not an error: the USB task
     // drains on its own thread; yield and retry (bounded).
     uint32_t off = 0;
@@ -47,8 +47,8 @@ void platform_write_fn(const uint32_t* words, size_t count) {
         off += tud_midi2_n_ump_write(0, words + off, (uint32_t)(count - off));
         if (off >= count) break;
         vTaskDelay(1);
-        if (++spin > 100) return;     // ~100 ms: host gone
-    }
+        if (++spin > 100) return off;     // ~100 ms: host gone
+    }    return count;
 }
 
 uint32_t platform_now_fn() {

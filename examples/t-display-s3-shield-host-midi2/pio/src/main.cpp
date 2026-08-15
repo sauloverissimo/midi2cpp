@@ -76,8 +76,8 @@ static void onUMPFromUsb(void* ctx, const uint32_t* words, uint8_t count) {
 // m2host -> USB host (runs on core 1, main loop)
 // ---------------------------------------------------------------------------
 
-static void onUMPToUsb(uint8_t /*idx*/, const uint32_t* words, size_t count) {
-    usbMIDI2.sendUMPMessage(words, (uint8_t)count);
+static size_t onUMPToUsb(uint8_t /*idx*/, const uint32_t* words, size_t count) {
+    return usbMIDI2.sendUMPMessage(words, (uint8_t)count) ? count : 0;
 }
 
 // ---------------------------------------------------------------------------

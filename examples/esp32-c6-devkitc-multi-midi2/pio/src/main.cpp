@@ -107,7 +107,9 @@ static void sendBytesAllTransports(const uint8_t* data, uint8_t len) {
     if (g_espNow.isConnected()) g_espNow.sendMidiMessage(data, len);
 }
 
-static void onUmpFromDevice(const uint32_t* words, size_t count) {
+// Radio fan-out has no per-transport back-pressure; the fan-out accepts
+// every word and each radio applies its own queueing.
+static size_t onUmpFromDevice(const uint32_t* words, size_t count) {
     size_t i = 0;
     while (i < count) {
         uint8_t mt = (uint8_t)((words[i] >> 28) & 0x0Fu);
@@ -141,6 +143,7 @@ static void onUmpFromDevice(const uint32_t* words, size_t count) {
             }
         }
     }
+    return count;
 }
 
 // ---------------------------------------------------------------------------

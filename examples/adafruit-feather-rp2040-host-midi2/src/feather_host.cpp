@@ -49,10 +49,11 @@ namespace {
 // on mount fires three small SysEx7 inquiries back-to-back so we pay
 // three URBs there; for steady-state Channel Voice traffic the flush
 // matches the message rate and keeps roundtrip times tight.
-void platform_write_fn(uint8_t idx, const uint32_t* words, size_t count) {
-    if (!tuh_midi2_mounted(idx)) return;
-    tuh_midi2_ump_write(idx, words, (uint32_t)count);
+size_t platform_write_fn(uint8_t idx, const uint32_t* words, size_t count) {
+    if (!tuh_midi2_mounted(idx)) return 0;
+    uint32_t written = tuh_midi2_ump_write(idx, words, (uint32_t)count);
     tuh_midi2_write_flush(idx);
+    return (size_t)written;
 }
 
 // Monotonic millisecond clock used by m2host for CI Discovery timeout.

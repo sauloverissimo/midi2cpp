@@ -482,11 +482,11 @@ void Bridge::begin() {
     // capture s by value (raw pointer) since the Bridge owns the state
     // for its full lifetime.
     auto* state = s;
-    s->device.setWriteFn([state](const uint32_t* w, size_t n) {
-        if (state->downstream_write) state->downstream_write(w, n);
+    s->device.setWriteFn([state](const uint32_t* w, size_t n) -> size_t {
+        return state->downstream_write ? state->downstream_write(w, n) : 0;
     });
-    s->host.setWriteFn([state](uint8_t idx, const uint32_t* w, size_t n) {
-        if (state->upstream_write) state->upstream_write(idx, w, n);
+    s->host.setWriteFn([state](uint8_t idx, const uint32_t* w, size_t n) -> size_t {
+        return state->upstream_write ? state->upstream_write(idx, w, n) : 0;
     });
     if (s->now) {
         s->device.setNowFn(s->now);

@@ -37,12 +37,14 @@ void Midi1ParseCb(uint8_t*, size_t, void*) {}
 // Outbound UMP (host to device): Endpoint Discovery, MIDI-CI inquiries,
 // and any user sends. Tx picks UMP vs MIDI 1.0 framing from the active
 // alt setting of the connected device.
-void HostWriteFn(uint8_t /*idx*/, const uint32_t* words, size_t count)
+size_t HostWriteFn(uint8_t /*idx*/, const uint32_t* words, size_t count)
 {
-    if(s_transport_up)
-        s_transport.Tx(reinterpret_cast<uint8_t*>(
-                            const_cast<uint32_t*>(words)),
-                        count * 4);
+    if(!s_transport_up)
+        return 0;
+    s_transport.Tx(reinterpret_cast<uint8_t*>(
+                        const_cast<uint32_t*>(words)),
+                    count * 4);
+    return count;   // transport reports no back-pressure
 }
 
 void USBH_ClassActive(void* /*data*/)

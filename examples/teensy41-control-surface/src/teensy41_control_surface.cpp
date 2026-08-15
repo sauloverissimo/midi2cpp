@@ -7,8 +7,8 @@ namespace teensy41 {
 
 void Backend::begin(uint16_t jrHeartbeatMs)
 {
-	dev_.setWriteFn([](const uint32_t *words, size_t count) {
-		usbMIDI2.write(words, (uint8_t)count);
+	dev_.setWriteFn([](const uint32_t *words, size_t count) -> size_t {
+		return (size_t)usbMIDI2.write(words, (uint8_t)count);
 	});
 	dev_.setNowFn([]() -> uint32_t { return millis(); });
 	dev_.setMounted(true); // Teensy native USB is always-on once enumerated

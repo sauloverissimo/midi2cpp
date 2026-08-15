@@ -43,10 +43,11 @@ uint16_t g_bcdMSC[midi2::Host::MAX_DEVICES] = {0x0200, 0x0200, 0x0200, 0x0200};
 
 namespace {
 
-void platform_write_fn(uint8_t idx, const uint32_t* words, size_t count) {
-    if (!tuh_midi2_mounted(idx)) return;
-    tuh_midi2_ump_write(idx, words, (uint32_t)count);
+size_t platform_write_fn(uint8_t idx, const uint32_t* words, size_t count) {
+    if (!tuh_midi2_mounted(idx)) return 0;
+    uint32_t written = tuh_midi2_ump_write(idx, words, (uint32_t)count);
     tuh_midi2_write_flush(idx);
+    return (size_t)written;
 }
 
 uint32_t platform_now_fn() {

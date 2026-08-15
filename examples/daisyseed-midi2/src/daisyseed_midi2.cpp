@@ -38,9 +38,10 @@ void Backend::begin(uint16_t jrHeartbeatMs) {
     s_transport.SetUmpCallback(UmpRxCb, this);
     s_transport.StartRx(NoopParseCb, nullptr);
 
-    dev_.setWriteFn([](const uint32_t* words, size_t count) {
+    dev_.setWriteFn([](const uint32_t* words, size_t count) -> size_t {
         s_transport.Tx(reinterpret_cast<uint8_t*>(const_cast<uint32_t*>(words)),
                        count * 4);
+        return count;   // transport reports no back-pressure
     });
     dev_.setNowFn([]() -> uint32_t { return daisy::System::GetNow(); });
     dev_.setMounted(true);

@@ -318,10 +318,12 @@ public:
 
   // Outbound UMP. Library calls fn(words, count) for every sendXxx() and for
   // the JR Timestamp heartbeat. The caller forwards to the platform's USB
-  // MIDI write API. Returning is implicit, back-pressure is reported via
-  // the bool return of sendXxx() (set false from inside `fn` by tracking
-  // via the captured context, or just queue and return).
-  using WriteFn = std::function<void(const uint32_t* words, size_t count)>;
+  // MIDI write API and returns the words the transport actually accepted:
+  // count on success, less when the sink is full. Multi-packet senders stop
+  // at the first short write instead of leaving a gap mid-message, and
+  // sendXxx() returns false so the caller can retry the whole message. A
+  // transport with no back-pressure information returns count.
+  using WriteFn = std::function<size_t(const uint32_t* words, size_t count)>;
   void setWriteFn(WriteFn fn);
 
   // Inbound UMP. Caller invokes feedRx(words, count) from its USB MIDI RX

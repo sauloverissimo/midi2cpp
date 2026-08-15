@@ -93,9 +93,12 @@ public:
     // ------------------------------------------------------------------
     // Platform contract, caller wires these to its USB host stack.
     // ------------------------------------------------------------------
-    using WriteFn = std::function<void(uint8_t idx,
-                                        const uint32_t* words,
-                                        size_t count)>;
+    // Returns the words the transport accepted: count on success, fewer
+    // when the sink is full. Multi-packet senders stop at the first short
+    // write; a transport with no back-pressure information returns count.
+    using WriteFn = std::function<size_t(uint8_t idx,
+                                          const uint32_t* words,
+                                          size_t count)>;
     void setWriteFn(WriteFn fn);
 
     // Inbound UMP from a connected device. Caller drains the platform USB

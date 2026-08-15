@@ -34,9 +34,9 @@ namespace {
 
 // Outbound UMP: invoked by the library for every sendXxx() and the
 // JR heartbeat. Forwards to TinyUSB MIDI 2.0 stream write.
-void platform_write_fn(const uint32_t* words, size_t count) {
+size_t platform_write_fn(const uint32_t* words, size_t count) {
     // UMP writes require mounted + Alt Setting 1; the driver returns 0 otherwise.
-    if (!tud_midi2_n_mounted(0) || tud_midi2_n_alt_setting(0) != 1) return;
+    if (!tud_midi2_n_mounted(0) || tud_midi2_n_alt_setting(0) != 1) return 0;
     // Full TX FIFO mid-burst is backpressure, not an error: pump tud_task()
     // and retry (bounded). Dropping would truncate a multi-packet reply.
     uint32_t off = 0;
@@ -45,8 +45,8 @@ void platform_write_fn(const uint32_t* words, size_t count) {
         off += tud_midi2_n_ump_write(0, words + off, (uint32_t)(count - off));
         if (off >= count) break;
         tud_task();
-        if (++spin > 20000) return;   // bounded: host gone
-    }
+        if (++spin > 20000) return off;   // bounded: host gone
+    }    return count;
 }
 
 // Monotonic millisecond clock used by the JR heartbeat.

@@ -330,11 +330,12 @@ static void test_host_sendNoteOn_emits_via_write_fn(void) {
     m2host h;
 
     uint8_t captured_idx = 0xFF;
-    h.setWriteFn([&](uint8_t idx, const uint32_t* w, size_t n) {
+    h.setWriteFn([&](uint8_t idx, const uint32_t* w, size_t n) -> size_t {
         captured_idx = idx;
         for (size_t i = 0; i < n && g_captured_tx_len < CAPTURE_MAX; ++i) {
             g_captured_tx[g_captured_tx_len++] = w[i];
         }
+        return n;
     });
     h.begin();
     // Disable auto-discover so notifyDeviceMounted does not flood the
@@ -358,7 +359,7 @@ static void test_host_sendNoteOn_emits_via_write_fn(void) {
 static void test_host_sender_blocks_when_unmounted(void) {
     TEST("Senders return false when target idx is not mounted");
     m2host h;
-    h.setWriteFn([](uint8_t, const uint32_t*, size_t) {});
+    h.setWriteFn([](uint8_t, const uint32_t*, size_t n) -> size_t { return n; });
     h.begin();
     // No notifyDeviceMounted, so idx 0 stays unmounted.
     CHECK(!h.noteOn(0, 0, 60, 0xC000), "noteOn refused on unmounted idx");
@@ -373,10 +374,11 @@ static void test_host_sendDiscoveryInquiry_emits_sysex7(void) {
     m2host h;
 
     capture_reset();
-    h.setWriteFn([&](uint8_t /*idx*/, const uint32_t* w, size_t n) {
+    h.setWriteFn([&](uint8_t /*idx*/, const uint32_t* w, size_t n) -> size_t {
         for (size_t i = 0; i < n && g_captured_tx_len < CAPTURE_MAX; ++i) {
             g_captured_tx[g_captured_tx_len++] = w[i];
         }
+        return n;
     });
     // Deterministic MUID from a known RNG.
     h.setRngFn([] { return 0xCAFEBABEu; });

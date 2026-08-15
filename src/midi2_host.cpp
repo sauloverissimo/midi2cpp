@@ -33,8 +33,7 @@ static uint32_t sysex_send_trampoline(const uint32_t* words, uint32_t count,
                                       void* context) {
     auto* c = static_cast<SysExSendCtx*>(context);
     if (!c || !c->write_fn || !*c->write_fn) return 0;
-    (*c->write_fn)(c->idx, words, count);
-    return count;
+    return (uint32_t)(*c->write_fn)(c->idx, words, count);
 }
 
 // ============================================================================
@@ -721,8 +720,8 @@ bool Host::sendNoteOn(uint8_t idx, uint8_t group, uint8_t channel,
     if (!s->identities[idx].mounted || !s->write_fn) return false;
     uint32_t words[2];
     midi2_msg_note_on(words, group, channel, note, velocity, attrType, attrData);
-    s->write_fn(idx, words, 2);
-    return true;
+    return s->write_fn(idx, words, 2) == 2;
+
 }
 bool Host::sendNoteOff(uint8_t idx, uint8_t group, uint8_t channel,
                         uint8_t note, uint16_t velocity,
@@ -732,8 +731,8 @@ bool Host::sendNoteOff(uint8_t idx, uint8_t group, uint8_t channel,
     if (!s->identities[idx].mounted || !s->write_fn) return false;
     uint32_t words[2];
     midi2_msg_note_off(words, group, channel, note, velocity, attrType, attrData);
-    s->write_fn(idx, words, 2);
-    return true;
+    return s->write_fn(idx, words, 2) == 2;
+
 }
 bool Host::sendCC(uint8_t idx, uint8_t group, uint8_t channel,
                   uint8_t index, uint32_t value) {
@@ -742,8 +741,8 @@ bool Host::sendCC(uint8_t idx, uint8_t group, uint8_t channel,
     if (!s->identities[idx].mounted || !s->write_fn) return false;
     uint32_t words[2];
     midi2_msg_cc(words, group, channel, index, value);
-    s->write_fn(idx, words, 2);
-    return true;
+    return s->write_fn(idx, words, 2) == 2;
+
 }
 bool Host::sendPitchBend(uint8_t idx, uint8_t group, uint8_t channel,
                          uint32_t value) {
@@ -752,8 +751,8 @@ bool Host::sendPitchBend(uint8_t idx, uint8_t group, uint8_t channel,
     if (!s->identities[idx].mounted || !s->write_fn) return false;
     uint32_t words[2];
     midi2_msg_pitch_bend(words, group, channel, value);
-    s->write_fn(idx, words, 2);
-    return true;
+    return s->write_fn(idx, words, 2) == 2;
+
 }
 bool Host::sendChannelPressure(uint8_t idx, uint8_t group, uint8_t channel,
                                 uint32_t value) {
@@ -762,8 +761,8 @@ bool Host::sendChannelPressure(uint8_t idx, uint8_t group, uint8_t channel,
     if (!s->identities[idx].mounted || !s->write_fn) return false;
     uint32_t words[2];
     midi2_msg_chan_pressure(words, group, channel, value);
-    s->write_fn(idx, words, 2);
-    return true;
+    return s->write_fn(idx, words, 2) == 2;
+
 }
 bool Host::sendPolyPressure(uint8_t idx, uint8_t group, uint8_t channel,
                              uint8_t note, uint32_t value) {
@@ -772,8 +771,8 @@ bool Host::sendPolyPressure(uint8_t idx, uint8_t group, uint8_t channel,
     if (!s->identities[idx].mounted || !s->write_fn) return false;
     uint32_t words[2];
     midi2_msg_poly_pressure(words, group, channel, note, value);
-    s->write_fn(idx, words, 2);
-    return true;
+    return s->write_fn(idx, words, 2) == 2;
+
 }
 
 bool Host::noteOn(uint8_t idx, uint8_t channel, uint8_t note, uint16_t velocity) {

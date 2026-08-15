@@ -22,10 +22,11 @@ bool         g_was_connected = false;
 // heartbeat injection. Forwards to USBHost_t36 fork's writeUMP for the
 // addressed device idx. Only idx 0 is wired; multi-device via hub is a
 // future recipe extension (D-040 candidate).
-void platform_write_fn(uint8_t idx, const uint32_t* words, size_t count) {
-    if (idx != 0) return;
-    if (!midi1.umpMode()) return;
+size_t platform_write_fn(uint8_t idx, const uint32_t* words, size_t count) {
+    if (idx != 0) return 0;
+    if (!midi1.umpMode()) return 0;
     midi1.writeUMP(words, (uint8_t)count);
+    return count;   // transport reports no back-pressure
 }
 
 // Monotonic millisecond clock used by midi2::Host for CI Discovery

@@ -93,15 +93,13 @@ static inline DeviceState* st(void* p) {
 // Used by SysEx and UMP Stream senders that fragment internally.
 static uint32_t device_write_trampoline(const uint32_t* words, uint32_t count, void* context);
 
-// Routes outgoing UMP through the caller-supplied write_fn. Returns true if
-// the function accepted the words, false if no write_fn was set. The
-// platform decides what "accepted" means: a TinyUSB-backed binding can use
-// the captured context to track back-pressure and signal it back via the
-// bool return of sendXxx(). The library itself stays platform-agnostic.
+// Routes outgoing UMP through the caller-supplied write_fn. Returns true
+// only when the transport accepted every word; a short write means the sink
+// is full and the message did not go out whole, so the caller sees false
+// and can retry. The library itself stays platform-agnostic.
 static bool device_write(DeviceState* s, const uint32_t* words, size_t n) {
     if (!s->write_fn) return false;
-    s->write_fn(words, n);
-    return true;
+    return s->write_fn(words, n) == n;
 }
 
 // Platform contract setters
@@ -153,7 +151,10 @@ static uint32_t platform_now_ms(DeviceState* s) {
 
 static uint32_t device_write_trampoline(const uint32_t* words, uint32_t count, void* context) {
     auto* s = static_cast<DeviceState*>(context);
-    return device_write(s, words, count) ? count : 0;
+    if (!s->write_fn) return 0;
+    // The C99 core stops a multi-packet reply at the first short write, so
+    // the transport's own count goes through unmodified.
+    return (uint32_t)s->write_fn(words, count);
 }
 
 // ============================================================================

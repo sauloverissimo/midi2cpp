@@ -36,10 +36,11 @@ inline void capture_reset() {
     std::memset(g_captured_tx, 0, sizeof(g_captured_tx));
 }
 
-inline void capture_write(const uint32_t* words, size_t n) {
+inline size_t capture_write(const uint32_t* words, size_t n) {
     for (size_t i = 0; i < n && g_captured_tx_len < CAPTURE_MAX; ++i) {
         g_captured_tx[g_captured_tx_len++] = words[i];
     }
+    return n;
 }
 
 // Test clock: tests set g_test_now_ms before each task() to drive the JR
