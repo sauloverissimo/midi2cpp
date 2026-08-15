@@ -63,7 +63,7 @@ void setup()
 	                /*direction*/3 /*Bidirectional*/,
 	                /*uiHint*/3   /*Bidirectional*/,
 	                /*firstGroup*/0, /*numGroups*/1,
-	                /*midiCiVer*/0, /*maxSysex8*/1);
+	                /*midiCiVer*/2, /*maxSysex8*/1);
 	midi.sendFbNameUpdate(0, "Main");
 
 	// MIDI-CI: identity + profile + 2 properties

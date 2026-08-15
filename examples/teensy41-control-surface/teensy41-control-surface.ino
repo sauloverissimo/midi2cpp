@@ -96,7 +96,7 @@ void setup()
 	                /*direction*/3 /*Bidirectional*/,
 	                /*uiHint*/3   /*Bidirectional*/,
 	                /*firstGroup*/0, /*numGroups*/1,
-	                /*midiCiVer*/0, /*maxSysex8*/0);
+	                /*midiCiVer*/2, /*maxSysex8*/0);
 	midi.sendFbNameUpdate(0, "Control Surface");
 
 	// MIDI-CI: identity + PE resources (same package as teensy41-midi2)
