@@ -181,14 +181,14 @@ git clone https://github.com/sauloverissimo/midi2cpp.git ~/Arduino/libraries/mid
 Published on the [PlatformIO Registry](https://registry.platformio.org/libraries/sauloverissimo/midi2cpp):
 
 ```ini
-lib_deps = sauloverissimo/midi2cpp @ ^0.9.0
+lib_deps = sauloverissimo/midi2cpp @ ^0.10.0
 ```
 
 Or pin by git tag:
 
 ```ini
 lib_deps =
-  https://github.com/sauloverissimo/midi2cpp.git#v0.9.0
+  https://github.com/sauloverissimo/midi2cpp.git#v0.10.0
 ```
 
 That is all you need: midi2cpp bundles the midi2 C99 core, so there is no separate `midi2` dependency to install.
@@ -203,7 +203,7 @@ Published on the [ESP Component Registry](https://components.espressif.com/compo
 # main/idf_component.yml
 dependencies:
   idf: ">=5.0"
-  sauloverissimo/midi2cpp: ">=0.9.0"
+  sauloverissimo/midi2cpp: ">=0.10.0"
 ```
 
 The midi2 core is bundled inside midi2cpp, so nothing else is declared. `idf.py reconfigure` drops midi2cpp into `managed_components/`.
@@ -224,7 +224,7 @@ include(FetchContent)
 FetchContent_Declare(
     midi2cpp
     GIT_REPOSITORY https://github.com/sauloverissimo/midi2cpp.git
-    GIT_TAG        v0.9.0
+    GIT_TAG        v0.10.0
 )
 FetchContent_MakeAvailable(midi2cpp)
 ```

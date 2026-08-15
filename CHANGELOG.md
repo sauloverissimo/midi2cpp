@@ -5,6 +5,22 @@ All notable changes to `midi2cpp` are recorded here. Format follows
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 mirrored from the upstream midi2 C99 policy.
 
+## [0.10.0]
+
+### Changed
+
+- `Device::WriteFn` and `Host::WriteFn` return the words the transport
+  accepted instead of void, matching the Bridge contract; multi-packet
+  senders stop at the first short write and `sendXxx()` reports it.
+- Recipes pin TinyUSB at the master commit carrying the complete UMP
+  stream discovery responder.
+
+### Added
+
+- TinyUSB device recipes answer the Device Identity Notification and
+  declare their MIDI-CI version and SysEx8 stream count through the
+  built-in responder.
+
 ## [0.9.0]
 
 ### Changed
