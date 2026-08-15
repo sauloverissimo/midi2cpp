@@ -65,6 +65,19 @@ static const uint8_t  kMfrId[3]        = {0x7D, 0x00, 0x00};
 static const uint16_t kFamilyId        = 0x0001;
 static const uint16_t kModelId         = 0x000E;
 static const uint32_t kVersion         = 0x00000400;
+
+#include "tusb.h"
+
+// Answers the UMP Stream Device Identity Notification with the same
+// four values MIDI-CI Discovery reports.
+extern "C" bool tud_midi2_device_identity_cb(uint8_t itf, tud_midi2_device_identity_t* identity) {
+    (void)itf;
+    identity->manufacturer = ((uint32_t)kMfrId[0] << 16) | ((uint32_t)kMfrId[1] << 8) | kMfrId[2];
+    identity->family       = kFamilyId;
+    identity->model        = kModelId;
+    identity->sw_revision  = kVersion;
+    return true;
+}
 static const uint8_t  kProfileId[5]    = {0x7E, 0x00, 0x00, 0x01, 0x00};
 
 // Subscribable property value. Updated every cycle so subscribers see

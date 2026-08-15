@@ -71,6 +71,10 @@ extern "C" {
 /* Product Instance Id reported by the #3738 built-in Stream responder. */
 #define CFG_TUD_MIDI2_PRODUCT_ID           "XiaoSAMD21-showcase-0001"
 
+/* Function Block capabilities served by the built-in Stream responder. */
+#define CFG_TUD_MIDI2_FB_CI_VERSION      2
+#define CFG_TUD_MIDI2_FB_SYSEX8_STREAMS  1
+
 /* TX/RX buffers tuned smaller for SAMD21 (32 KB SRAM). The library
  * still handles bursts via its own retry-on-backpressure pattern; the
  * smaller buffer just means more frequent USB transactions, which is

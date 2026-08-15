@@ -74,6 +74,10 @@ extern "C" {
 /* Product Instance Id reported by the #3738 built-in Stream responder. */
 #define CFG_TUD_MIDI2_PRODUCT_ID           "Nrf52840ProMicro-showcase-0001"
 
+/* Function Block capabilities served by the built-in Stream responder. */
+#define CFG_TUD_MIDI2_FB_CI_VERSION      2
+#define CFG_TUD_MIDI2_FB_SYSEX8_STREAMS  1
+
 /* TX/RX buffers tuned for the nRF52840 SRAM headroom. The library
  * still uses retry-on-backpressure, so the larger buffers just give
  * more burst tolerance for SysEx / Property Exchange flows that the

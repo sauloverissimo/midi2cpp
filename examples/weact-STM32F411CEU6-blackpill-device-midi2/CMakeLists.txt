@@ -31,7 +31,7 @@ if(NOT DEFINED TINYUSB_PATH AND NOT DEFINED ENV{TINYUSB_PATH})
     FetchContent_Declare(
         tinyusb
         GIT_REPOSITORY https://github.com/hathach/tinyusb.git
-        GIT_TAG        536157cb98fbc40329c9695281506fe7f04e526f
+        GIT_TAG        9fb2f9cb3f8e30fa9ca2a32f4cdc6f0fb07a5be3
         GIT_SHALLOW    FALSE
     )
     FetchContent_MakeAvailable(tinyusb)

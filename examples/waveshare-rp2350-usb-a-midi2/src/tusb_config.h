@@ -68,6 +68,10 @@ extern "C" {
 /* Product Instance Id reported by the #3738 built-in Stream responder. */
 #define CFG_TUD_MIDI2_PRODUCT_ID           "waveshare-RP2350-USB-A-showcase-0001"
 
+/* Function Block capabilities served by the built-in Stream responder. */
+#define CFG_TUD_MIDI2_FB_CI_VERSION      2
+#define CFG_TUD_MIDI2_FB_SYSEX8_STREAMS  1
+
 /* TX buffer sized for short bursts of UMP words during playback. */
 
 #ifdef __cplusplus

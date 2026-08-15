@@ -75,6 +75,10 @@ extern "C" {
 #define CFG_TUD_MIDI2_EP_NAME              "STM32F411 MIDI 2.0"
 #define CFG_TUD_MIDI2_PRODUCT_ID           "STM32F411-MIDI2-showcase-0001"
 
+/* Function Block capabilities served by the built-in Stream responder. */
+#define CFG_TUD_MIDI2_FB_CI_VERSION      2
+#define CFG_TUD_MIDI2_FB_SYSEX8_STREAMS  1
+
 /* TX/RX buffers stay at the BSP defaults. The STM32F411 has 128 KB SRAM
  * headroom, and the library uses retry-on-backpressure, so the showcase
  * emission rate is comfortably absorbed.

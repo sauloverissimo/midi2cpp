@@ -18,7 +18,7 @@ TARGET="${IDF_DIR}/external/tinyusb"
 
 # Tracks the same ref as the Pico SDK recipes. Update in lockstep.
 TINYUSB_REPO="https://github.com/hathach/tinyusb.git"
-TINYUSB_REF="536157cb98fbc40329c9695281506fe7f04e526f"
+TINYUSB_REF="9fb2f9cb3f8e30fa9ca2a32f4cdc6f0fb07a5be3"
 
 mkdir -p "${IDF_DIR}/external"
 

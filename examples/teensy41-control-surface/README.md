@@ -83,7 +83,7 @@ teensy41-control-surface/
 | Area | Coverage |
 |---|---|
 | MIDI 2.0 Channel Voice (MT 0x4) | Note On/Off with 16-bit velocity (switches), 32-bit CC (pots) |
-| UMP Stream (MT 0xF) | Endpoint Info, Device Identity, Endpoint Name, Product Instance Id, FB Info + Name (boot burst; cores fork answers GET_DESCRIPTOR GTB) |
+| UMP Stream (MT 0xF) | Endpoint Info, Device Identity, Endpoint Name, Product Instance Id, FB Info + Name (answered on Discovery, plus a boot announcement; cores fork serves the named GTB over GET_DESCRIPTOR) |
 | MIDI-CI (SysEx7) | Discovery, Profile Inquiry (GM 1), Property Exchange (DeviceInfo, ChannelList, ProgramList + built-in ResourceList), Process Inquiry |
 | RX handling | NoteOn/Off, CC, Program Change printed to Serial |
 

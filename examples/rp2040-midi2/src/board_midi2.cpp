@@ -30,9 +30,9 @@ namespace {
 
 // Outbound UMP: invoked by the library for every sendXxx() and the
 // JR heartbeat. Forwards to TinyUSB MIDI 2.0 stream write.
-void platform_write_fn(const uint32_t* words, size_t count) {
+size_t platform_write_fn(const uint32_t* words, size_t count) {
     // UMP writes require mounted + Alt Setting 1; the driver returns 0 otherwise.
-    if (!tud_midi2_n_mounted(0) || tud_midi2_n_alt_setting(0) != 1) return;
+    if (!tud_midi2_n_mounted(0) || tud_midi2_n_alt_setting(0) != 1) return 0;
     // Full TX FIFO mid-burst is backpressure, not an error: pump tud_task()
     // and retry (bounded). Dropping would truncate a multi-packet reply.
     uint32_t off = 0;
@@ -41,8 +41,8 @@ void platform_write_fn(const uint32_t* words, size_t count) {
         off += tud_midi2_n_ump_write(0, words + off, (uint32_t)(count - off));
         if (off >= count) break;
         tud_task();
-        if (++spin > 20000) return;   // bounded: host gone
-    }
+        if (++spin > 20000) return off;   // bounded: host gone
+    }    return count;
 }
 
 // Monotonic millisecond clock used by the JR heartbeat.
@@ -158,6 +158,18 @@ const uint8_t* tud_midi2_gtb_desc_cb(uint8_t itf, uint16_t* len) {
 const char* tud_midi2_fb_name_cb(uint8_t itf, uint8_t fb_idx) {
     (void)itf;
     return (fb_idx == 0) ? CFG_TUD_MIDI2_EP_NAME : "";
+}
+
+// Same four values the application declares over MIDI-CI, answered here for
+// hosts that ask over UMP Stream instead. Without this the host reads an
+// all-zero manufacturer.
+bool tud_midi2_device_identity_cb(uint8_t itf, tud_midi2_device_identity_t* identity) {
+    (void)itf;
+    identity->manufacturer = midi2_board::kIdentityMfr;
+    identity->family       = midi2_board::kIdentityFamily;
+    identity->model        = midi2_board::kIdentityModel;
+    identity->sw_revision  = midi2_board::kIdentityRevision;
+    return true;
 }
 
 }  // extern "C"

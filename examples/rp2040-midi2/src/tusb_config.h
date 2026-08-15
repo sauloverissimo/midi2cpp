@@ -68,6 +68,13 @@ extern "C" {
 /* Product Instance Id reported by the #3738 built-in Stream responder. */
 #define CFG_TUD_MIDI2_PRODUCT_ID           "rp2040-midi2-showcase-0001"
 
+/* Function Block capabilities this showcase actually implements: MIDI-CI 1.2
+ * (profile, property exchange, process inquiry) and a single SysEx8 stream.
+ * Left at the default of 0 these would read as "no MIDI-CI" and "SysEx8
+ * unsupported" on the host. */
+#define CFG_TUD_MIDI2_FB_CI_VERSION        2
+#define CFG_TUD_MIDI2_FB_SYSEX8_STREAMS    1
+
 
 #ifdef __cplusplus
 }

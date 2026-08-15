@@ -42,6 +42,17 @@ static const uint16_t kFamilyId        = 0x0001;
 static const uint16_t kModelId         = 0x000A;
 static const uint32_t kVersion         = 0x00000400;
 
+// Answers the UMP Stream Device Identity Notification with the same
+// four values MIDI-CI Discovery reports.
+extern "C" bool tud_midi2_device_identity_cb(uint8_t itf, tud_midi2_device_identity_t* identity) {
+    (void)itf;
+    identity->manufacturer = ((uint32_t)kMfrId[0] << 16) | ((uint32_t)kMfrId[1] << 8) | kMfrId[2];
+    identity->family       = kFamilyId;
+    identity->model        = kModelId;
+    identity->sw_revision  = kVersion;
+    return true;
+}
+
 /*--------------------------------------------------------------------+
  * UMP Stream Discovery is answered by the TinyUSB built-in responder
  * (PR #3738): Endpoint Name from CFG_TUD_MIDI2_EP_NAME, FB direction +

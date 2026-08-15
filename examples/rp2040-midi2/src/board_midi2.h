@@ -17,6 +17,16 @@
 
 namespace midi2_board {
 
+// Device identity, declared once and used by both paths that carry it:
+// MIDI-CI Discovery (application) and the UMP Stream Device Identity
+// Notification (board glue). Keeping one source avoids the two answers
+// drifting apart.
+inline constexpr uint8_t  kIdentityMfrBytes[3] = {0x7D, 0x00, 0x00};
+inline constexpr uint32_t kIdentityMfr         = 0x7D0000;  // first of 3 bytes
+inline constexpr uint16_t kIdentityFamily      = 0x0001;
+inline constexpr uint16_t kIdentityModel       = 0x0004;
+inline constexpr uint32_t kIdentityRevision    = 0x00000400;
+
 // Boots board_init + tusb_init, sets up USB MIDI 2.0 device class, and
 // wires the five midi2cpp platform hooks into the supplied m2device /
 // m2ci. After this returns, the app can register callbacks, send UMPs,
