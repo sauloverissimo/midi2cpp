@@ -37,6 +37,12 @@ arduino-cli upload  -b teensy:avr:teensy41:usb=midi2 -p <port> .
 
 In the Arduino IDE: Tools > USB Type > MIDI2 before pressing Upload.
 
+## Troubleshooting
+
+**`#error "midi2cpp requires C++17 or newer"`.** The Teensyduino in use is older than 1.60, which defaulted to `gnu++14`. Teensyduino 1.60+ already builds with `-std=gnu++17`, so updating removes the error. To stay on an older Teensyduino, add `-std=gnu++17` to `teensy41.build.flags.cpp` in `hardware/teensy/avr/boards.txt`. Reported by **yeahtuna** on the [PJRC forum thread #55239](https://forum.pjrc.com/index.php?threads/midi-2-0.55239/).
+
+**Arduino IDE 1.8.19 (classic).** The paths above target the Arduino IDE 2.x / arduino-cli layout (`~/.arduino15/packages/teensy/hardware/avr/<version>/`). On the classic IDE 1.8.19 the cores fork overlays onto `<arduino>/hardware/teensy/avr/cores/teensy4/`, and `boards.local.txt` goes in `<arduino>/hardware/teensy/avr/`.
+
 ## Hardware
 
 ![teensy41-midi2 board](board/board.png)
